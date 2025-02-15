@@ -102,14 +102,14 @@ void print_message(const std::string& message, const std::string& color) {
 
 // Display the help message
 void print_help() {
-    print_message("cpk - CRUX Package Keeper", NONE);
+    print_message("cpk - CRUX Package Keeper", BLUE);
     print_message("Usage:", NONE);
-    print_message("  cpk update               - Update package database", NONE);
-    print_message("  cpk info      <package>  - Get information about a package", NONE);
-    print_message("  cpk search    <package>  - Search for a package", NONE);
-    print_message("  cpk install   <package>  - Install a package", NONE);
-    print_message("  cpk uninstall <package>  - Uninstall a package", NONE);
-    print_message("  cpk upgrade              - Upgrade installed packages", NONE);
+    print_message("  cpk update               - Update the index of available packages", NONE);
+    print_message("  cpk info      <package>  - Prints information about installed or available packages", NONE);
+    print_message("  cpk search    <package>  - Search for packages", NONE);
+    print_message("  cpk install   <package>  - Install new packages or upgrade packages to the running system", NONE);
+    print_message("  cpk uninstall <package>  - Uninstall packages from the running system", NONE);
+    print_message("  cpk upgrade              - Upgrade the currently installed packages", NONE);
     print_message("  cpk list                 - List installed packages", NONE);
     print_message("  cpk help                 - Show this help message", NONE);
 }
@@ -206,18 +206,8 @@ bool load_cpk_config(const std::string& config_file) {
     return true;
 }
 
-// Function to fetch the cpk repository URL
-std::string get_cpk_repo_url() {
-    return CPK_REPO_URL;
-}
-
-// Function to fetch the cpk directory path
-std::string get_cpk_dir() {
-    return CPK_HOME_DIR;
-}
-
 // Function to execute a shell command and output lines in real-time
-int shellcmd(const std::string& command, const std::vector<std::string>& args, std::string* output) {
+int shellcmd(const std::string& command, const std::vector<std::string>& args, std::string* output, bool show_output) {
     std::string full_command = command;
     for (const std::string& arg : args) {
         full_command += " " + arg;
@@ -235,7 +225,9 @@ int shellcmd(const std::string& command, const std::vector<std::string>& args, s
     // Read and output each line as it's received
     while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
         std::string line(buffer);
-        std::cout << line; // Real-time output
+        if (show_output) {
+            std::cout << line; // Real-time output
+        }
         if (output) (*output) += line; // Store the result if requested
     }
 
@@ -247,6 +239,15 @@ int shellcmd(const std::string& command, const std::vector<std::string>& args, s
     }
 
     return return_code;
+}
+
+// Helper function to run scripts
+bool run_script(const std::string& script_path, const std::string& msg) {
+    if (fs::exists(script_path)) {
+        print_message(msg, BLUE);
+        return shellcmd("sh -x", {script_path}, nullptr) == 0;
+    }
+    return true;
 }
 
 // Function to find compression mode and the full path for package file
@@ -262,4 +263,94 @@ std::string find_pkg_file(const std::string& directory, const std::string& pkgna
     }
 
     return matched_file;
+}
+
+// Helper function to find package details
+bool find_package(const std::string& package_name, std::string& package, std::string& pkgname, std::string& pkgver, std::string& pkgarch) {
+    std::string index_file = CPK_HOME_DIR + "/CPKINDEX";
+    bool result = false;
+
+    if (!fs::exists(index_file)) {
+        print_message("Package index not found. Run `cpk update` first", RED);
+        result = false;
+    } else {
+        std::ifstream file(index_file);  // Open the CPKINDEX file for reading
+        if (!file.is_open()) {
+            print_message("Error opening file: " + index_file, RED);
+            result = false;  // Return an error code if the file cannot be opened
+        }
+        else {
+            std::string index_line;
+            while (std::getline(file, index_line)) {
+                if (index_line.find(package_name + "#") != std::string::npos) {
+                    size_t cpk_pos = index_line.rfind(".cpk");
+                    size_t last_dot = index_line.rfind('.', cpk_pos - 1);
+                    size_t hash_pos = index_line.find('#');
+
+                    if (cpk_pos != std::string::npos && last_dot != std::string::npos && hash_pos != std::string::npos) {
+                        pkgname = index_line.substr(0, hash_pos);
+                        pkgver = index_line.substr(hash_pos + 1, last_dot - hash_pos - 1);
+                        pkgarch = index_line.substr(last_dot + 1, cpk_pos - last_dot - 1);
+                        package = index_line;
+                        if (package_name == pkgname) {
+                            result = true;
+                        }
+                    }
+                }
+            }
+        }
+        file.close();  // Close the file
+    }
+
+    if (!result) {
+        print_message("Package not found: " + package_name, RED);
+    }
+
+    return result;
+}
+
+bool is_package_installed(const std::string& package_name) {
+    std::string pkginfo_cmd = "pkginfo";
+    std::vector<std::string> pkginfo_args = { "-i" };
+    std::string pkginfo_output;
+
+    shellcmd(pkginfo_cmd, pkginfo_args, &pkginfo_output, false);
+
+    std::istringstream stream(pkginfo_output);
+    std::string line;
+
+    while (std::getline(stream, line)) {
+        if (line.find(package_name) != std::string::npos) {
+            return true;  // Package found
+        }
+    }
+
+    return false;  // Package not found
+}
+
+int get_number_of_packages() {
+    std::string index_file = CPK_HOME_DIR + "/CPKINDEX";
+    if (!fs::exists(index_file)) {
+        print_message("Package index not found. Run `cpk update` first", RED);
+        return false;
+    }
+
+    std::ifstream file(index_file);  // Open the CPKINDEX file for reading
+    if (!file.is_open()) {
+        print_message("Error opening file: " + index_file, RED);
+        return -1;  // Return an error code if the file cannot be opened
+    }
+
+    int package_count = 0;
+    std::string index_line;
+    
+    // Read the file line by line and count the lines (packages)
+    while (std::getline(file, index_line)) {
+        if (!index_line.empty()) {  // Count only non-empty lines
+            ++package_count;  // Increment for each non-empty line
+        }
+    }
+
+    file.close();  // Close the file
+    return package_count;
 }
