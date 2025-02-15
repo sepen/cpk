@@ -28,7 +28,10 @@ bool extract_package(const std::string &tar_file, const std::string &dest_dir);
 bool parse_pkgfile(const std::string &pkgfile_path, std::string &pkgname, std::string &pkgdesc, std::string &pkgurl, std::string &pkgdeps);
 
 // Function to execute a shell command and return the output
-int shellcmd(const std::string &command, const std::vector<std::string> &args, std::string* output = nullptr);
+int shellcmd(const std::string& command, const std::vector<std::string>& args, std::string* output, bool show_output = true);
+
+// Helper function to run scripts
+bool run_script(const std::string& script_path, const std::string& msg);
 
 // Function to print colored messages to the console (if enabled in config)
 void print_message(const std::string &message, const std::string &color);
@@ -51,7 +54,15 @@ std::string get_cpk_repo_url();
 // Function to fetch the cpk directory path
 std::string get_cpk_dir();
 
+// Function to find compression mode and the full path for package file
 std::string find_pkg_file(const std::string& directory, const std::string& pkgname, const std::string& pkgver);
+
+// Helper function to find package details
+bool find_package(const std::string& package_name, std::string& package, std::string& pkgname, std::string& pkgver, std::string& pkgarch);
+
+int get_number_of_packages();
+
+bool is_package_installed(const std::string& package_name);
 
 #endif  // UTILS_H
 
