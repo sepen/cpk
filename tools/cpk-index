@@ -1,0 +1,11 @@
+#!/bin/bash
+
+[ $# -eq 1 ] || exit 0 
+REPO_DIR=$1
+
+find "${REPO_DIR}" \
+    -maxdepth 1 -mindepth 1 \
+    -type f -name '*.cpk' \
+    -exec basename {} \; \
+    | sort -rn > "${REPO_DIR}"/CPKINDEX.tmp && \
+    mv "${REPO_DIR}"/CPKINDEX.tmp "${REPO_DIR}"/CPKINDEX
