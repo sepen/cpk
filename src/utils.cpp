@@ -122,23 +122,27 @@ void print_message(const std::string& message, const std::string& color) {
 
 // Display the help message
 void print_help() {
-    print_message("CRUX Package Keeper", BLUE);
-    print_message("Usage:", NONE);
+    print_message("CRUX Package Keeper - package management tool for CRUX Linux", BLUE);
+
+    print_message("\nUsage:", NONE);
     print_message("  cpk <command> [options]", NONE);
-    print_message("Commands:", NONE);
-    print_message("  update                Update the index of available packages", NONE);
-    print_message("  info      <package>   Prints information about installed or available packages", NONE);
-    print_message("  search    <package>   Search for packages", NONE);
-    print_message("  install   <package>   Install new packages or upgrade packages to the running system", NONE);
-    print_message("  uninstall <package>   Uninstall packages from the running system", NONE);
-    print_message("  upgrade               Upgrade the currently installed packages", NONE);
-    print_message("  list                  List installed packages", NONE);
-    print_message("  verify    <package>   Checks integrity against stored checksums and signatures", NONE);
-    print_message("  help                  Show this help message", NONE);
-    print_message("Options:", NONE);
-    print_message("  -r, --root    <path>  Specify alternative installation root", NONE);
-    print_message("  -v, --verbose <int>   Verbose level for output messages (default 0)", NONE);
-    return;
+
+    print_message("\nCommands:", NONE);
+    print_message("  update                 Update the index of available packages", NONE);
+    print_message("  info <package>         Show information about installed or available packages", NONE);
+    print_message("  search <word|package>  Search for packages by name or keyword", NONE);
+    print_message("  install <package>      Install or upgrade packages on the system", NONE);
+    print_message("  uninstall <package>    Remove packages from the system", NONE);
+    print_message("  upgrade                Upgrade all installed packages to the latest versions", NONE);
+    print_message("  list                   List all installed packages", NONE);
+    print_message("  verify <package>       Verify integrity of package source files", NONE);
+    print_message("  help                   Show this help message", NONE);
+
+    print_message("\nOptions:", NONE);
+    print_message("  -r, --root <path>      Specify an alternative installation root directory", NONE);
+    print_message("  -v, --verbose <int>    Set the verbosity level for output messages (default: 0)", NONE);
+
+    print_message("\nFor more details, visit https://github.com/sepen/cpk/", NONE);
 }
 
 // Function to extract tarball
