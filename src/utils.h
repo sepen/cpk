@@ -15,7 +15,7 @@ std::string url_encode(const std::string& value);
 std::string url_decode(const std::string& value);
 std::string ltrim(const std::string& str);
 static size_t write_data(void *ptr, size_t size, size_t nmemb, FILE *stream);
-bool download_file(const std::string& url, const std::string &file_path);
+bool download_file(const std::string& url, const std::string &file_path, bool overwrite = false);
 bool prompt_user(const std::string &file_path);
 bool extract_package(const std::string &tar_file, const std::string &dest_dir);
 bool parse_pkgfile(const std::string &pkgfile_path, std::string &pkgname, std::string &pkgdesc, std::string &pkgurl, std::string &pkgdeps);
@@ -30,6 +30,8 @@ std::string find_pkg_file(const std::string& directory, const std::string& pkgna
 bool find_package(const std::string& package_name, std::string& package, std::string& pkgname, std::string& pkgver, std::string& pkgarch);
 bool is_package_installed(const std::string& package_name);
 int get_number_of_packages();
+bool change_directory(const std::string& path);
+std::vector<std::string> find_public_keys(const std::string& directory);
 
 #endif  // UTILS_H
 

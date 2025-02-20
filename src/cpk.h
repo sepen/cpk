@@ -22,6 +22,7 @@ void cmd_uninstall(const std::vector<std::string>& args);
 void cmd_upgrade(const std::vector<std::string>& args);
 void cmd_list(const std::vector<std::string>& args);
 void cmd_build(const std::vector<std::string>& args);
+void cmd_verify(const std::vector<std::string>& args);
 void cmd_clean(const std::vector<std::string>& args);
 
 #endif // CPK_H

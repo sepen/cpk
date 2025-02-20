@@ -65,10 +65,12 @@ int main(int argc, char* argv[]) {
         cmd_upgrade(args);
     } else if (command == "list") {
         cmd_list(args);
-    } else if (command == "clean") {
-        cmd_clean(args);
     } else if (command == "build") {
         cmd_build(args);
+    } else if (command == "verify") {
+        cmd_verify(args);
+    } else if (command == "clean") {
+        cmd_clean(args);
     } else {
         print_help();
     }
@@ -81,9 +83,9 @@ void cmd_update(const std::vector<std::string>& args) {
     const std::string index_url = CPK_REPO_URL + "/CPKINDEX";
     const std::string index_file = CPK_HOME_DIR + "/CPKINDEX";
 
-    print_message("Updating the index of available packages", BLUE);
+    print_message("Updating index of available packages", BLUE);
 
-    if (!download_file(index_url, index_file)) {
+    if (!download_file(index_url, index_file, true)) {
         print_message("Failed to update index file " + index_file, RED);
         return;
     }
@@ -269,6 +271,69 @@ void cmd_upgrade(const std::vector<std::string>& args) {
 void cmd_build(const std::vector<std::string>& args) {
     print_message("Not implemented yet", YELLOW);
     return;
+}
+
+// Function to check the integrity of packages against their stored checksums and signatures
+void cmd_verify(const std::vector<std::string>& args) {
+    if (args.empty()) {
+        print_message("Package name is required", RED);
+        return;
+    }
+
+    std::string package, pkgname, pkgver, pkgarch;
+    if (!find_package(args[0], package, pkgname, pkgver, pkgarch)) return;
+
+    std::string package_url = CPK_REPO_URL + "/" + url_encode(package);
+    std::string package_source = CPK_HOME_DIR + "/" + pkgname + "/" + pkgver;
+    std::string package_path = CPK_HOME_DIR + "/" + package;
+
+    if (!fs::is_directory(package_source)) {
+        if (!download_file(package_url, package_path) || !extract_package(package_path, CPK_HOME_DIR)) {
+            print_message("Failed to retrieve package info", RED);
+            return;
+        }
+    }
+
+    // Change to the package source directory
+    if (!change_directory(package_source)) {
+        print_message("Failed to change directory to: " + package_source, RED);
+        return;
+    }
+
+    // Find public keys in /etc/ports/
+    std::vector<std::string> pub_keys = find_public_keys("/etc/ports/");
+    if (pub_keys.empty()) {
+        print_message("No public keys found in /etc/ports/", RED);
+        return;
+    }
+
+    // Download missing source files
+    std::string pkgmk_cmd = "pkgmk";
+    std::vector<std::string> pkgmk_args = { "-do" };
+    std::string pkgmk_output;
+
+    int ret = shellcmd(pkgmk_cmd, pkgmk_args, &pkgmk_output, false);
+
+    if (ret != 0) {
+        print_message("Failed to download missing source files", RED);
+        return;
+    }
+
+    // Try each public key until one works
+    for (const std::string& public_key : pub_keys) {
+        std::string signature_cmd = "signify";
+        std::vector<std::string> signature_args = { "-q", "-C", "-p", public_key, "-x", ".signature" };
+        std::string signature_output;
+
+        int ret = shellcmd(signature_cmd, signature_args, &signature_output, false);
+
+        if (ret == 0) {
+            print_message("Verification successful with key: " + public_key, NONE);
+            return; // Stop on first success
+        }
+    }
+
+    print_message("Verification failed for all keys in /etc/ports/", RED);
 }
 
 // Function to clean cache contents
