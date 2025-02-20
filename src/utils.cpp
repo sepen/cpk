@@ -42,6 +42,26 @@ std::string url_encode(const std::string &value) {
     return encoded.str();
 }
 
+// URL-decodes special characters in the given string
+std::string url_decode(const std::string &value) {
+    std::ostringstream decoded;
+    for (size_t i = 0; i < value.length(); i++) {
+        if (value[i] == '%' && i + 2 < value.length()) {
+            std::istringstream hex_stream(value.substr(i + 1, 2));
+            int hex_value;
+            if (hex_stream >> std::hex >> hex_value) {
+                decoded << static_cast<char>(hex_value);
+                i += 2; // Skip next two hex characters
+            }
+        } else if (value[i] == '+') {
+            decoded << ' '; // Convert '+' to space
+        } else {
+            decoded << value[i]; // Normal character
+        }
+    }
+    return decoded.str();
+}
+
 // Prompt user for confirmation
 bool prompt_user(const std::string& message) {
     std::string response;
@@ -54,14 +74,14 @@ bool prompt_user(const std::string& message) {
 bool download_file(const std::string &url, const std::string &file_path) {
 
     if (fs::exists(file_path)) {
-        print_message("Updating " + file_path, NONE);
+        return true;
     } else {
-        print_message("Fetching " + file_path, NONE);
+        print_message("Fetching " + url_decode(url), NONE);
     }
     
     FILE *fp = fopen(file_path.c_str(), "wb");
     if (fp == nullptr) {
-        print_message("Failed to open index file for writting " + file_path, RED);
+        print_message("Failed to file for writting " + file_path, RED);
         return false;
     }
 
@@ -102,16 +122,22 @@ void print_message(const std::string& message, const std::string& color) {
 
 // Display the help message
 void print_help() {
-    print_message("cpk - CRUX Package Keeper", BLUE);
+    print_message("CRUX Package Keeper", BLUE);
     print_message("Usage:", NONE);
-    print_message("  cpk update               - Update the index of available packages", NONE);
-    print_message("  cpk info      <package>  - Prints information about installed or available packages", NONE);
-    print_message("  cpk search    <package>  - Search for packages", NONE);
-    print_message("  cpk install   <package>  - Install new packages or upgrade packages to the running system", NONE);
-    print_message("  cpk uninstall <package>  - Uninstall packages from the running system", NONE);
-    print_message("  cpk upgrade              - Upgrade the currently installed packages", NONE);
-    print_message("  cpk list                 - List installed packages", NONE);
-    print_message("  cpk help                 - Show this help message", NONE);
+    print_message("  cpk <command> [options]", NONE);
+    print_message("Commands:", NONE);
+    print_message("  update                Update the index of available packages", NONE);
+    print_message("  info      <package>   Prints information about installed or available packages", NONE);
+    print_message("  search    <package>   Search for packages", NONE);
+    print_message("  install   <package>   Install new packages or upgrade packages to the running system", NONE);
+    print_message("  uninstall <package>   Uninstall packages from the running system", NONE);
+    print_message("  upgrade               Upgrade the currently installed packages", NONE);
+    print_message("  list                  List installed packages", NONE);
+    print_message("  help                  Show this help message", NONE);
+    print_message("Options:", NONE);
+    print_message("  -r, --root    <path>  Specify alternative installation root", NONE);
+    print_message("  -v, --verbose <int>   Verbose level for output messages (default 0)", NONE);
+    return;
 }
 
 // Function to extract tarball
@@ -124,7 +150,9 @@ bool extract_package(const std::string& tar_file, const std::string& dest_dir) {
 
     // Open the archive
     if (archive_read_open_filename(a, tar_file.c_str(), 10240) != ARCHIVE_OK) {
-        std::cerr << "Error opening archive: " << archive_error_string(a) << std::endl;
+        if (CPK_VERBOSE > 0) {
+            std::cerr << "Error opening archive: " << archive_error_string(a) << std::endl;
+        }
         archive_read_free(a);
         return false;
     }
@@ -132,7 +160,9 @@ bool extract_package(const std::string& tar_file, const std::string& dest_dir) {
     // Read and extract entries
     while (archive_read_next_header(a, &entry) == ARCHIVE_OK) {
         const char* entry_name = archive_entry_pathname(entry);
-        std::cout << "Extracting: " << entry_name << std::endl;
+        if (CPK_VERBOSE > 0) {
+            std::cout << "Extracting: " << entry_name << std::endl;
+        }
 
         // Modify the entry's path to include the destination directory
         std::string dest_path = dest_dir + "/" + entry_name;
@@ -140,7 +170,9 @@ bool extract_package(const std::string& tar_file, const std::string& dest_dir) {
 
         // Extract with the ARCHIVE_EXTRACT_TIME flag
         if (archive_read_extract(a, entry, ARCHIVE_EXTRACT_TIME) != ARCHIVE_OK) {
-            std::cerr << "Error extracting file: " << archive_error_string(a) << std::endl;
+            if (CPK_VERBOSE > 0) {
+                std::cerr << "Error extracting file: " << archive_error_string(a) << std::endl;
+            }
             archive_read_free(a);
             return false;
         }

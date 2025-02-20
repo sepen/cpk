@@ -5,9 +5,13 @@
 #include <vector>
 
 // Global variables (set via config file)
+extern std::string CPK_CONF_FILE;
 extern std::string CPK_REPO_URL;
 extern std::string CPK_HOME_DIR;
+extern std::string CPK_INSTALL_ROOT;
+
 extern bool CPK_COLOR_MODE;
+extern bool CPK_VERBOSE;
 
 // Function prototypes for package management commands
 void cmd_update(const std::vector<std::string>& args);

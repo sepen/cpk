@@ -9,22 +9,26 @@ namespace fs = std::filesystem;
 std::string CPK_CONF_FILE = "/etc/cpk.conf";
 std::string CPK_REPO_URL = "https://cpk.user.ninja";
 std::string CPK_HOME_DIR = "/var/lib/cpk";
+std::string CPK_INSTALL_ROOT = "/";
+
 bool CPK_COLOR_MODE = true;
+bool CPK_VERBOSE = false;
 
 int main(int argc, char* argv[]) {
-    std::string config_file = CPK_CONF_FILE;
-    
     // Parse command-line arguments
     std::vector<std::string> command_args;
-    bool config_parsed = false;
 
     for (int i = 1; i < argc; ++i) {
-        if ((std::string(argv[i]) == "--config-file" || std::string(argv[i]) == "-c") && i + 1 < argc) {
-            config_file = argv[i + 1];
-            i++; // Skip the next argument as it's the file path
-            config_parsed = true; // Mark that we've parsed the config flag
+        std::string arg = argv[i];
+
+        if ((arg == "--config-file" || arg == "-c") && i + 1 < argc) {
+            CPK_CONF_FILE = argv[++i];  // Increment i after consuming argument
+        } else if ((arg == "--root" || arg == "-r") && i + 1 < argc) {
+            CPK_INSTALL_ROOT = argv[++i];
+        } else if ((arg == "--verbose" || arg == "-v")) {
+            CPK_VERBOSE = true;
         } else {
-            command_args.push_back(argv[i]); // Collect remaining command arguments
+            command_args.push_back(arg);  // Collect remaining command arguments
         }
     }
 
@@ -35,8 +39,10 @@ int main(int argc, char* argv[]) {
     }
 
     // Load the configuration file
-    if (!load_cpk_config(config_file)) {
-        print_message("Failed to load configuration file: " + config_file, RED);
+    if (!load_cpk_config(CPK_CONF_FILE)) {
+        if (CPK_VERBOSE) {
+            print_message("Failed to load config file " + CPK_CONF_FILE, RED);
+        }
         return 1;
     }
 
@@ -44,6 +50,7 @@ int main(int argc, char* argv[]) {
     std::string command = command_args[0];
     std::vector<std::string> args(command_args.begin() + 1, command_args.end());
 
+    // Execute the corresponding command
     if (command == "update") {
         cmd_update(args);
     } else if (command == "info") {
@@ -75,10 +82,10 @@ void cmd_update(const std::vector<std::string>& args) {
     const std::string index_file = CPK_HOME_DIR + "/CPKINDEX";
 
     print_message("Updating the index of available packages", BLUE);
-    print_message("Fetching " + index_url, NONE);
 
     if (!download_file(index_url, index_file)) {
-        print_message("Failed to update index file: " + index_file, RED);
+        print_message("Failed to update index file " + index_file, RED);
+        return;
     }
 
     int package_count = get_number_of_packages();
@@ -152,12 +159,13 @@ void cmd_search(const std::vector<std::string>& args) {
     }
 
     file.close();
+    return;
 }
 
 // Function to install a package
 void cmd_install(const std::vector<std::string>& args) {
     if (args.empty()) {
-        print_message("Package name is required", NONE);
+        print_message("Package name is required", RED);
         return;
     }
 
@@ -165,16 +173,17 @@ void cmd_install(const std::vector<std::string>& args) {
     if (!find_package(args[0], package, pkgname, pkgver, pkgarch)) return;
 
     if (is_package_installed(pkgname)) {
-        print_message("Package is already installed", NONE);
+        print_message("Package is already installed", RED);
         return;
     }
 
     std::string package_url = CPK_REPO_URL + "/" + url_encode(package);
     std::string package_source = CPK_HOME_DIR + "/" + pkgname + "/" + pkgver;
+    std::string package_path = CPK_HOME_DIR + "/" + package;
 
     if (!fs::is_directory(package_source)) {
-        if (!download_file(package_url, package_source) || !extract_package(package_source, CPK_HOME_DIR)) {
-            print_message("Failed to retrieve package", RED);
+        if (!download_file(package_url, package_path) || !extract_package(package_path, CPK_HOME_DIR)) {
+            print_message("Failed to retrieve package info", RED);
             return;
         }
     }
@@ -185,20 +194,30 @@ void cmd_install(const std::vector<std::string>& args) {
         return;
     }
 
-    if (!run_script(package_source + "/pre-install", "Running pre-install")) {
-        print_message("Pre-install script failed", RED);
-        return;
+    if (CPK_INSTALL_ROOT != "/") {
+        if (!run_script(package_source + "/pre-install", "Running pre-install")) {
+            print_message("Pre-install script failed", RED);
+            return;
+        }
+        else {
+            print_message("Skipping pre-install script", NONE);
+        }
     }
 
     print_message("Installing " + package, BLUE);
-    if (shellcmd("pkgadd", {package_file}, nullptr) != 0) {
+    if (shellcmd("pkgadd", {package_file, "-r", CPK_INSTALL_ROOT}, nullptr) != 0) {
         print_message("Failed to install package", RED);
         return;
     }
 
-    if (!run_script(package_source + "/post-install", "Running post-install")) {
-        print_message("Post-install script failed", RED);
-        return;
+    if (CPK_INSTALL_ROOT != "/") {
+        if (!run_script(package_source + "/post-install", "Running post-install")) {
+            print_message("Post-install script failed", RED);
+            return;
+        }
+        else {
+            print_message("Skipping post-install script", NONE);
+        }
     }
 
     std::string readme_path = package_source + "/README";
@@ -211,6 +230,7 @@ void cmd_install(const std::vector<std::string>& args) {
     }
 
     print_message("Package installed successfully", NONE);
+    return;
 }
 
 // Function to uninstall a package
@@ -226,6 +246,7 @@ void cmd_uninstall(const std::vector<std::string>& args) {
     }
 
     shellcmd(pkgrm_cmd, pkgrm_args, &pkgrm_output, false);
+    return;
 }
 
 // Function to list installed packages
@@ -235,16 +256,19 @@ void cmd_list(const std::vector<std::string>& args) {
     std::string pkginfo_output;
 
     shellcmd(pkginfo_cmd, pkginfo_args, &pkginfo_output);
+    return;
 }
 
 // Function to upgrade installed packages
 void cmd_upgrade(const std::vector<std::string>& args) {
-    print_message("Not implemented yet.", YELLOW);
+    print_message("Not implemented yet", YELLOW);
+    return;
 }
 
 // Function to build a package using pkgmk
 void cmd_build(const std::vector<std::string>& args) {
-    print_message("Not implemented yet.", YELLOW);
+    print_message("Not implemented yet", YELLOW);
+    return;
 }
 
 // Function to clean cache contents
@@ -264,4 +288,6 @@ void cmd_clean(const std::vector<std::string>& args) {
     } else {
         print_message("Path does not exists or is not a directory " + CPK_HOME_DIR, RED);
     }
+
+    return;
 }
