@@ -71,13 +71,13 @@ bool prompt_user(const std::string& message) {
 }
 
 // Function to download a file from a URL
-bool download_file(const std::string &url, const std::string &file_path) {
+bool download_file(const std::string &url, const std::string &file_path, bool overwrite) {
 
-    if (fs::exists(file_path)) {
+    if (fs::exists(file_path) && !overwrite) {
         return true;
-    } else {
-        print_message("Fetching " + url_decode(url), NONE);
     }
+
+    print_message("Fetching " + url_decode(url), NONE);
     
     FILE *fp = fopen(file_path.c_str(), "wb");
     if (fp == nullptr) {
@@ -133,6 +133,7 @@ void print_help() {
     print_message("  uninstall <package>   Uninstall packages from the running system", NONE);
     print_message("  upgrade               Upgrade the currently installed packages", NONE);
     print_message("  list                  List installed packages", NONE);
+    print_message("  verify    <package>   Checks integrity against stored checksums and signatures", NONE);
     print_message("  help                  Show this help message", NONE);
     print_message("Options:", NONE);
     print_message("  -r, --root    <path>  Specify alternative installation root", NONE);
@@ -244,6 +245,8 @@ int shellcmd(const std::string& command, const std::vector<std::string>& args, s
     for (const std::string& arg : args) {
         full_command += " " + arg;
     }
+    // Redirect stderr to stdout so both are captured
+    full_command += " 2>&1";
 
     char buffer[128];
     if (output) output->clear();  // Clear the output if provided
@@ -385,4 +388,21 @@ int get_number_of_packages() {
 
     file.close();  // Close the file
     return package_count;
+}
+
+bool change_directory(const std::string& path) {
+    return chdir(path.c_str()) == 0;
+}
+
+// Function to find all `.pub` files in `/etc/ports/`
+std::vector<std::string> find_public_keys(const std::string& directory) {
+    std::vector<std::string> pub_keys;
+
+    for (const auto& entry : fs::directory_iterator(directory)) {
+        if (entry.is_regular_file() && entry.path().extension() == ".pub") {
+            pub_keys.push_back(entry.path().string());
+        }
+    }
+
+    return pub_keys;
 }
