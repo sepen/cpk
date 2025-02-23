@@ -4,12 +4,12 @@
 #include <string>
 #include <vector>
 
-// Define color constants
-const std::string RED    = "\033[31m";
-const std::string GREEN  = "\033[32m";
-const std::string BLUE   = "\033[34m";
-const std::string YELLOW = "\033[33m";
-const std::string NONE   = "\033[0m";  // Reset color to default
+const std::string RED    = "\033[31m"; // error
+const std::string GREEN  = "\033[32m"; // success
+const std::string BLUE   = "\033[34m"; // header
+const std::string YELLOW = "\033[33m"; // not success
+const std::string BOLD   = "\033[1m";
+const std::string NONE   = "\033[0m";
 
 std::string url_encode(const std::string& value);
 std::string url_decode(const std::string& value);
@@ -21,7 +21,8 @@ bool extract_package(const std::string &tar_file, const std::string &dest_dir);
 bool parse_pkgfile(const std::string &pkgfile_path, std::string &pkgname, std::string &pkgdesc, std::string &pkgurl, std::string &pkgdeps);
 int shellcmd(const std::string& command, const std::vector<std::string>& args, std::string* output, bool show_output = true);
 bool run_script(const std::string& script_path, const std::string& msg);
-void print_message(const std::string &message, const std::string &color);
+void print_header(const std::string &message, const std::string &color = NONE);
+void print_message(const std::string &message, const std::string &color = NONE);
 void print_help();
 bool output_colors_enabled();
 bool load_cpk_config(const std::string &config_file);
