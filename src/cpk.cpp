@@ -11,7 +11,7 @@ std::string CPK_REPO_URL = "https://cpk.user.ninja";
 std::string CPK_HOME_DIR = "/var/lib/cpk";
 std::string CPK_INSTALL_ROOT = "/";
 
-bool CPK_COLOR_MODE = true;
+bool CPK_COLOR_MODE = false;
 bool CPK_VERBOSE = false;
 
 int main(int argc, char* argv[]) {
@@ -80,24 +80,39 @@ int main(int argc, char* argv[]) {
 
 // Function to update the list of available packages
 void cmd_update(const std::vector<std::string>& args) {
-    const std::string index_url = CPK_REPO_URL + "/CPKINDEX";
+    if(!fs::is_directory(CPK_HOME_DIR)) {
+        print_message("Home directory does not exists " + CPK_HOME_DIR, RED);
+        return;
+    }
+
     const std::string index_file = CPK_HOME_DIR + "/CPKINDEX";
+    if (!fs::exists(index_file)) {
+        print_header("Initializing index of available packages", BLUE);
+    }
+    else {
+        print_header("Updating index of available packages", BLUE);
+    }
 
-    print_message("Updating index of available packages", BLUE);
-
+    const std::string index_url = CPK_REPO_URL + "/CPKINDEX";
     if (!download_file(index_url, index_file, true)) {
         print_message("Failed to update index file " + index_file, RED);
         return;
     }
 
     int package_count = get_number_of_packages();
-    print_message(std::to_string(package_count)+ " packages available", NONE);
+    print_message(std::to_string(package_count)+ " packages available");
 }
 
 // Function to display package information
 void cmd_info(const std::vector<std::string>& args) {
     if (args.empty()) {
-        print_message("Package name is required", RED);
+        print_message("Package name is required", YELLOW);
+        return;
+    }
+
+    const std::string index_file = CPK_HOME_DIR + "/CPKINDEX";
+    if (!fs::exists(index_file)) {
+        print_message("Package index not found. Run `cpk update` first", YELLOW);
         return;
     }
 
@@ -122,24 +137,23 @@ void cmd_info(const std::vector<std::string>& args) {
         return;
     }
 
-    print_message("Name         | " + pkgname, NONE);
-    print_message("Version      | " + pkgver, NONE);
-    print_message("Arch         | " + pkgarch, NONE);
-    print_message("Description  | " + ltrim(pkgdesc), NONE);
-    print_message("URL          | " + ltrim(pkgurl), NONE);
-    print_message("Dependencies | " + ltrim(pkgdeps), NONE);
+    print_message("Name         | " + pkgname);
+    print_message("Version      | " + pkgver);
+    print_message("Arch         | " + pkgarch);
+    print_message("Description  | " + ltrim(pkgdesc));
+    print_message("URL          | " + ltrim(pkgurl));
+    print_message("Dependencies | " + ltrim(pkgdeps));
 }
 
 // Function to search for a package or description
 void cmd_search(const std::vector<std::string>& args) {
     if (args.empty()) {
-        print_message("Search argument is required", NONE);
+        print_message("Search argument is required");
         return;
     }
-
     std::string search_term = args[0];
-    std::string index_file = CPK_HOME_DIR + "/CPKINDEX";
 
+    std::string index_file = CPK_HOME_DIR + "/CPKINDEX";
     if (!fs::exists(index_file)) {
         print_message("Package index not found. Run `cpk update` first", RED);
         return;
@@ -152,12 +166,12 @@ void cmd_search(const std::vector<std::string>& args) {
     while (std::getline(file, index_line)) {
         if (index_line.find(search_term) != std::string::npos) {
             found = true;
-            print_message(index_line, NONE);
+            print_message(index_line);
         }
     }
 
     if (!found) {
-        print_message("No matching packages found", NONE);
+        print_message("No matching packages found", YELLOW);
     }
 
     file.close();
@@ -171,11 +185,19 @@ void cmd_install(const std::vector<std::string>& args) {
         return;
     }
 
+    std::string index_file = CPK_HOME_DIR + "/CPKINDEX";
+    if (!fs::exists(index_file)) {
+        print_message("Package index not found. Run `cpk update` first", RED);
+        return;
+    }
+
     std::string package, pkgname, pkgver, pkgarch;
     if (!find_package(args[0], package, pkgname, pkgver, pkgarch)) return;
 
+    print_header("Installing package " + pkgname, BLUE);
+
     if (is_package_installed(pkgname)) {
-        print_message("Package is already installed", RED);
+        print_message("Package is already installed", YELLOW);
         return;
     }
 
@@ -192,51 +214,46 @@ void cmd_install(const std::vector<std::string>& args) {
 
     std::string package_file = find_pkg_file(package_source, pkgname, pkgver);
     if (!fs::exists(package_file)) {
-        print_message("Package file not found", RED);
+        print_message("Package file not found", YELLOW);
         return;
     }
 
-    if (CPK_INSTALL_ROOT != "/") {
-        if (!run_script(package_source + "/pre-install", "Running pre-install")) {
-            print_message("Pre-install script failed", RED);
-            return;
-        }
-        else {
-            print_message("Skipping pre-install script", NONE);
-        }
-    }
+    // run pre-install script if exists
+    run_script(package_source + "/pre-install", "Running pre-install script");
 
-    print_message("Installing " + package, BLUE);
+    // install the package with pkgadd
+    print_header("Running pkgadd " + package, BLUE);
     if (shellcmd("pkgadd", {package_file, "-r", CPK_INSTALL_ROOT}, nullptr) != 0) {
         print_message("Failed to install package", RED);
         return;
     }
 
-    if (CPK_INSTALL_ROOT != "/") {
-        if (!run_script(package_source + "/post-install", "Running post-install")) {
-            print_message("Post-install script failed", RED);
-            return;
-        }
-        else {
-            print_message("Skipping post-install script", NONE);
-        }
-    }
+    // run post-install script if exists
+    run_script(package_source + "/post-install", "Running post-install script");
 
+    // print contents of README if exists
     std::string readme_path = package_source + "/README";
     if (fs::exists(readme_path)) {
-        print_message("Printing README", BLUE);
+        print_header("Printing package's README file", BLUE);
         if (shellcmd("cat", {readme_path}, nullptr) != 0) {
-            print_message("Failed to print README file", RED);
+            print_message("Failed to print package's README file", RED);
             return;
         }
     }
 
-    print_message("Package installed successfully", NONE);
+    print_message("Package installed successfully");
     return;
 }
 
 // Function to uninstall a package
 void cmd_uninstall(const std::vector<std::string>& args) {
+
+    std::string index_file = CPK_HOME_DIR + "/CPKINDEX";
+    if (!fs::exists(index_file)) {
+        print_message("Package index not found. Run `cpk update` first", RED);
+        return;
+    }
+
     std::string pkgrm_cmd = "pkgrm";
     std::vector<std::string> pkgrm_args = args;
     std::string pkgrm_output;
@@ -277,6 +294,12 @@ void cmd_build(const std::vector<std::string>& args) {
 void cmd_verify(const std::vector<std::string>& args) {
     if (args.empty()) {
         print_message("Package name is required", RED);
+        return;
+    }
+
+    std::string index_file = CPK_HOME_DIR + "/CPKINDEX";
+    if (!fs::exists(index_file)) {
+        print_message("Package index not found. Run `cpk update` first", RED);
         return;
     }
 
@@ -328,7 +351,7 @@ void cmd_verify(const std::vector<std::string>& args) {
         int ret = shellcmd(signature_cmd, signature_args, &signature_output, false);
 
         if (ret == 0) {
-            print_message("Verification successful with key: " + public_key, NONE);
+            print_message("Verification successful with key: " + public_key);
             return; // Stop on first success
         }
     }
@@ -349,7 +372,7 @@ void cmd_clean(const std::vector<std::string>& args) {
             }
             fs::remove_all(entry);
         }
-        print_message("Cache contents deleted successfully", NONE);
+        print_message("Cache contents deleted successfully");
     } else {
         print_message("Path does not exists or is not a directory " + CPK_HOME_DIR, RED);
     }

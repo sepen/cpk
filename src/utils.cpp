@@ -77,7 +77,7 @@ bool download_file(const std::string &url, const std::string &file_path, bool ov
         return true;
     }
 
-    print_message("Fetching " + url_decode(url), NONE);
+    print_message("Fetching " + url_decode(url));
     
     FILE *fp = fopen(file_path.c_str(), "wb");
     if (fp == nullptr) {
@@ -110,6 +110,16 @@ bool download_file(const std::string &url, const std::string &file_path, bool ov
     return res == CURLE_OK;
 }
 
+// Function to print colored header (if enabled in config)
+void print_header(const std::string& message, const std::string& color) {
+    if (CPK_COLOR_MODE) {
+        std::cout << color << "==> \033[0m\033[1m" << message << "\033[0m" << std::endl;
+    } else {
+        std::cout << "==> " << message << std::endl;
+    }
+    return;
+}
+
 // Function to print colored messages (if enabled in config)
 void print_message(const std::string& message, const std::string& color) {
     if (CPK_COLOR_MODE) {
@@ -122,27 +132,25 @@ void print_message(const std::string& message, const std::string& color) {
 
 // Display the help message
 void print_help() {
-    print_message("CRUX Package Keeper - package management tool for CRUX Linux", BLUE);
+    print_message("\033[1mCRUX Package Keeper - package management tool for CRUX Linux\033[0m");
 
-    print_message("\nUsage:", NONE);
-    print_message("  cpk <command> [options]", NONE);
+    print_message("\nUsage:");
+    print_message("  cpk <command> [options]");
 
-    print_message("\nCommands:", NONE);
-    print_message("  update                 Update the index of available packages", NONE);
-    print_message("  info <package>         Show information about installed or available packages", NONE);
-    print_message("  search <word|package>  Search for packages by name or keyword", NONE);
-    print_message("  install <package>      Install or upgrade packages on the system", NONE);
-    print_message("  uninstall <package>    Remove packages from the system", NONE);
-    print_message("  upgrade                Upgrade all installed packages to the latest versions", NONE);
-    print_message("  list                   List all installed packages", NONE);
-    print_message("  verify <package>       Verify integrity of package source files", NONE);
-    print_message("  help                   Show this help message", NONE);
+    print_message("\nCommands:");
+    print_message("  update                 Update the index of available packages");
+    print_message("  info <package>         Show information about installed or available packages");
+    print_message("  search <word|package>  Search for packages by name or keyword");
+    print_message("  install <package>      Install or upgrade packages on the system");
+    print_message("  uninstall <package>    Remove packages from the system");
+    print_message("  upgrade                Upgrade all installed packages to the latest versions");
+    print_message("  list                   List all installed packages");
+    print_message("  verify <package>       Verify integrity of package source files");
+    print_message("  help                   Show this help message");
 
-    print_message("\nOptions:", NONE);
-    print_message("  -r, --root <path>      Specify an alternative installation root directory", NONE);
-    print_message("  -v, --verbose <int>    Set the verbosity level for output messages (default: 0)", NONE);
-
-    print_message("\nFor more details, visit https://github.com/sepen/cpk/", NONE);
+    print_message("\nOptions:");
+    print_message("  -r, --root <path>      Specify an alternative installation root directory");
+    print_message("  -v, --verbose <int>    Set the verbosity level for output messages (default: 0)");
 }
 
 // Function to extract tarball
@@ -282,9 +290,18 @@ int shellcmd(const std::string& command, const std::vector<std::string>& args, s
 
 // Helper function to run scripts
 bool run_script(const std::string& script_path, const std::string& msg) {
-    if (fs::exists(script_path)) {
-        print_message(msg, BLUE);
-        return shellcmd("sh -x", {script_path}, nullptr) == 0;
+    if (!fs::exists(script_path)) {
+        return false;
+    }
+    // pre-install and post-install scripts do not support alternative installation root
+    if (CPK_INSTALL_ROOT == "/") {
+        print_message("Skipping script " + script_path, YELLOW);
+    } else {
+        print_header(msg, GREEN);
+        if (shellcmd("sh -x", {script_path}, nullptr) != 0) {
+            print_message("Failed to execute script " + script_path, RED);
+            return false;
+        }
     }
     return true;
 }
