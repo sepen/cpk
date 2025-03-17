@@ -3,6 +3,7 @@
 #include <fstream>
 #include <iostream>
 #include <filesystem>
+#include <set>
 
 namespace fs = std::filesystem;
 
@@ -67,6 +68,8 @@ int main(int argc, char* argv[]) {
         cmd_upgrade(args);
     } else if (command == "list") {
         cmd_list(args);
+    } else if (command == "diff") {
+        cmd_diff(args);
     } else if (command == "build") {
         cmd_build(args);
     } else if (command == "verify") {
@@ -279,6 +282,51 @@ void cmd_list(const std::vector<std::string>& args) {
     std::string pkginfo_output;
 
     shellcmd(pkginfo_cmd, pkginfo_args, &pkginfo_output);
+    return;
+}
+
+void cmd_diff(const std::vector<std::string>& args) {
+    // Get installed packages
+    std::string pkginfo_cmd = "pkginfo";
+    std::vector<std::string> pkginfo_args = { "-i" };
+    std::string installed_packages;
+    shellcmd(pkginfo_cmd, pkginfo_args, &installed_packages, false);
+
+    // Compare and display differences
+    std::istringstream installed_stream(installed_packages);
+    std::string diff_packages;
+    bool found_difference = false;
+
+    // Read installed packages line by line and split into name & version
+    std::string installed_pkgname, installed_pkgver;
+    std::string package, pkgname, pkgver, pkgarch;
+    while (installed_stream >> installed_pkgname >> installed_pkgver) {
+        if (find_package(installed_pkgname, package, pkgname, pkgver, pkgarch)) {
+            if (installed_pkgname == pkgname && installed_pkgver != pkgver) {
+                found_difference = true;
+                diff_packages += installed_pkgname + " " + installed_pkgver + " " + pkgver + "\n";
+            }
+        }
+    }
+
+    if (!found_difference) {
+        print_message("No differences found", GREEN);
+    }
+    else {
+        print_message("Differences between installed and available packages");
+        print_message("");
+        print_diff_line_as_table("Package Installed Available");
+        print_message("");
+
+        // TODO: get the diff_packages as separate lines
+        std::istringstream diff_stream(diff_packages);
+        std::string diff_line;
+        while (std::getline(diff_stream, diff_line)) {
+            // Print each line as a table
+            print_diff_line_as_table(diff_line);
+        }
+    }
+
     return;
 }
 
