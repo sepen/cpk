@@ -198,8 +198,8 @@ am__define_uniq_tagged_files = \
     if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; \
   done | $(am__uniquify_input)`
 AM_RECURSIVE_TARGETS = cscope
-am__DIST_COMMON = $(srcdir)/Makefile.in compile depcomp install-sh \
-	missing
+am__DIST_COMMON = $(srcdir)/Makefile.in README.md TODO compile depcomp \
+	install-sh missing
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
 top_distdir = $(distdir)
@@ -221,27 +221,27 @@ am__distuninstallcheck_listfiles = $(distuninstallcheck_listfiles) \
 distcleancheck_listfiles = \
   find . \( -type f -a \! \
             \( -name .nfs* -o -name .smb* -o -name .__afs* \) \) -print
-ACLOCAL = ${SHELL} '/Users/sepen/devel/sepen/cpk/missing' aclocal-1.17
+ACLOCAL = ${SHELL} '/work/missing' aclocal-1.17
 AMTAR = $${TAR-tar}
 AM_DEFAULT_VERBOSITY = 1
-AUTOCONF = ${SHELL} '/Users/sepen/devel/sepen/cpk/missing' autoconf
-AUTOHEADER = ${SHELL} '/Users/sepen/devel/sepen/cpk/missing' autoheader
-AUTOMAKE = ${SHELL} '/Users/sepen/devel/sepen/cpk/missing' automake-1.17
-AWK = awk
+AUTOCONF = ${SHELL} '/work/missing' autoconf
+AUTOHEADER = ${SHELL} '/work/missing' autoheader
+AUTOMAKE = ${SHELL} '/work/missing' automake-1.17
+AWK = gawk
 CC = gcc
 CCDEPMODE = depmode=gcc3
 CFLAGS = -g -O2
 CPPFLAGS = 
 CSCOPE = cscope
 CTAGS = ctags
-CXX = g++ -std=gnu++11
+CXX = g++
 CXXDEPMODE = depmode=gcc3
 CXXFLAGS = -g -O2
 CYGPATH_W = echo
-DEFS = -DPACKAGE_NAME=\"cpk\" -DPACKAGE_TARNAME=\"cpk\" -DPACKAGE_VERSION=\"0.1\" -DPACKAGE_STRING=\"cpk\ 0.1\" -DPACKAGE_BUGREPORT=\"sepen@crux-arm.nu\" -DPACKAGE_URL=\"\" -DPACKAGE=\"cpk\" -DVERSION=\"0.1\" -DHAVE_STDIO_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_STRINGS_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_UNISTD_H=1 -DSTDC_HEADERS=1 -DHAVE_CURL_CURL_H=1 -DHAVE_SYS_STAT_H=1
+DEFS = -DPACKAGE_NAME=\"cpk\" -DPACKAGE_TARNAME=\"cpk\" -DPACKAGE_VERSION=\"0.1\" -DPACKAGE_STRING=\"cpk\ 0.1\" -DPACKAGE_BUGREPORT=\"sepen@crux-arm.nu\" -DPACKAGE_URL=\"\" -DPACKAGE=\"cpk\" -DVERSION=\"0.1\" -DHAVE_STDIO_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_STRINGS_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_UNISTD_H=1 -DSTDC_HEADERS=1 -DHAVE_ARCHIVE_H=1 -DHAVE_ARCHIVE_ENTRY_H=1 -DHAVE_CURL_CURL_H=1 -DHAVE_SYS_STAT_H=1
 DEPDIR = .deps
-ECHO_C = \c
-ECHO_N = 
+ECHO_C = 
+ECHO_N = -n
 ECHO_T = 
 ETAGS = etags
 EXEEXT = 
@@ -251,15 +251,15 @@ INSTALL_PROGRAM = ${INSTALL}
 INSTALL_SCRIPT = ${INSTALL}
 INSTALL_STRIP_PROGRAM = $(install_sh) -c -s
 LDFLAGS = 
-LIBARCHIVE_CFLAGS = -I/opt/homebrew/opt/libarchive/include
-LIBARCHIVE_LIBS = -L/opt/homebrew/opt/libarchive/lib -larchive
+LIBARCHIVE_CFLAGS = 
+LIBARCHIVE_LIBS = -larchive
 LIBCURL_CFLAGS = 
 LIBCURL_LIBS = -lcurl
 LIBOBJS = 
 LIBS = 
 LTLIBOBJS = 
-MAKEINFO = ${SHELL} '/Users/sepen/devel/sepen/cpk/missing' makeinfo
-MKDIR_P = mkdir -p
+MAKEINFO = ${SHELL} '/work/missing' makeinfo
+MKDIR_P = /bin/mkdir -p
 OBJEXT = o
 PACKAGE = cpk
 PACKAGE_BUGREPORT = sepen@crux-arm.nu
@@ -269,17 +269,17 @@ PACKAGE_TARNAME = cpk
 PACKAGE_URL = 
 PACKAGE_VERSION = 0.1
 PATH_SEPARATOR = :
-PKG_CONFIG = /opt/homebrew/bin/pkg-config
+PKG_CONFIG = /usr/bin/pkg-config
 PKG_CONFIG_LIBDIR = 
-PKG_CONFIG_PATH = /opt/homebrew/opt/libarchive/lib/pkgconfig
+PKG_CONFIG_PATH = 
 SET_MAKE = 
 SHELL = /bin/sh
 STRIP = 
 VERSION = 0.1
-abs_builddir = /Users/sepen/devel/sepen/cpk
-abs_srcdir = /Users/sepen/devel/sepen/cpk
-abs_top_builddir = /Users/sepen/devel/sepen/cpk
-abs_top_srcdir = /Users/sepen/devel/sepen/cpk
+abs_builddir = /work
+abs_srcdir = /work
+abs_top_builddir = /work
+abs_top_srcdir = /work
 ac_ct_CC = gcc
 ac_ct_CXX = g++
 am__include = include
@@ -301,7 +301,7 @@ host_alias =
 htmldir = ${docdir}
 includedir = ${prefix}/include
 infodir = ${datarootdir}/info
-install_sh = ${SHELL} /Users/sepen/devel/sepen/cpk/install-sh
+install_sh = ${SHELL} /work/install-sh
 libdir = ${exec_prefix}/lib
 libexecdir = ${exec_prefix}/libexec
 localedir = ${datarootdir}/locale
