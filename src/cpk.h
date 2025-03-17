@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 
+extern const std::string CPK_VERSION;
+
 // Global variables (set via config file)
 extern std::string CPK_CONF_FILE;
 extern std::string CPK_REPO_URL;
@@ -24,5 +26,6 @@ void cmd_list(const std::vector<std::string>& args);
 void cmd_build(const std::vector<std::string>& args);
 void cmd_verify(const std::vector<std::string>& args);
 void cmd_clean(const std::vector<std::string>& args);
+void cmd_version(const std::vector<std::string>& args);
 
 #endif // CPK_H
