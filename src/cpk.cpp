@@ -60,20 +60,20 @@ int main(int argc, char* argv[]) {
         cmd_info(args);
     } else if (command == "search") {
         cmd_search(args);
+    } else if (command == "list") {
+        cmd_list(args);
+    } else if (command == "diff") {
+        cmd_diff(args);
+    } else if (command == "verify") {
+        cmd_verify(args);
+    } else if (command == "build") {
+        cmd_build(args);
     } else if (command == "install" || command == "add") {
         cmd_install(args);
     } else if (command == "uninstall" || command == "del") {
         cmd_uninstall(args);
     } else if (command == "upgrade") {
         cmd_upgrade(args);
-    } else if (command == "list") {
-        cmd_list(args);
-    } else if (command == "diff") {
-        cmd_diff(args);
-    } else if (command == "build") {
-        cmd_build(args);
-    } else if (command == "verify") {
-        cmd_verify(args);
     } else if (command == "clean") {
         cmd_clean(args);
     } else if (command == "version") {
@@ -185,6 +185,179 @@ void cmd_search(const std::vector<std::string>& args) {
     return;
 }
 
+// Function to list installed packages
+void cmd_list(const std::vector<std::string>& args) {
+    std::string pkginfo_cmd = "pkginfo";
+    std::vector<std::string> pkginfo_args = { "-i" };
+    std::string pkginfo_output;
+
+    shellcmd(pkginfo_cmd, pkginfo_args, &pkginfo_output);
+    return;
+}
+
+// Function to compare installed and available packages
+void cmd_diff(const std::vector<std::string>& args) {
+    // Get installed packages
+    std::string pkginfo_cmd = "pkginfo";
+    std::vector<std::string> pkginfo_args = { "-i" };
+    std::string installed_packages;
+    shellcmd(pkginfo_cmd, pkginfo_args, &installed_packages, false);
+
+    // Compare and display differences
+    std::istringstream installed_stream(installed_packages);
+    std::string diff_packages;
+    bool found_difference = false;
+
+    // Read installed packages line by line and split into name & version
+    std::string installed_pkgname, installed_pkgver;
+    std::string package, pkgname, pkgver, pkgarch;
+    while (installed_stream >> installed_pkgname >> installed_pkgver) {
+        if (find_package(installed_pkgname, package, pkgname, pkgver, pkgarch)) {
+            if (installed_pkgname == pkgname && installed_pkgver != pkgver) {
+                found_difference = true;
+                diff_packages += installed_pkgname + " " + installed_pkgver + " " + pkgver + "\n";
+            }
+        }
+    }
+
+    if (!found_difference) {
+        print_message("No differences found", GREEN);
+    }
+    else {
+        print_message("Differences between installed and available packages");
+        print_message("");
+        print_diff_line_as_table("Package Installed Available");
+        print_message("");
+
+        // TODO: get the diff_packages as separate lines
+        std::istringstream diff_stream(diff_packages);
+        std::string diff_line;
+        while (std::getline(diff_stream, diff_line)) {
+            // Print each line as a table
+            print_diff_line_as_table(diff_line);
+        }
+    }
+
+    return;
+}
+
+// Function to check the integrity of packages against their stored checksums and signatures
+void cmd_verify(const std::vector<std::string>& args) {
+    if (args.empty()) {
+        print_message("Package name is required", RED);
+        return;
+    }
+
+    std::string index_file = CPK_HOME_DIR + "/CPKINDEX";
+    if (!fs::exists(index_file)) {
+        print_message("Package index not found. Run `cpk update` first", RED);
+        return;
+    }
+
+    std::string package, pkgname, pkgver, pkgarch;
+    if (!find_package(args[0], package, pkgname, pkgver, pkgarch)) return;
+
+    std::string package_url = CPK_REPO_URL + "/" + url_encode(package);
+    std::string package_source = CPK_HOME_DIR + "/" + pkgname + "/" + pkgver;
+    std::string package_path = CPK_HOME_DIR + "/" + package;
+
+    if (!fs::is_directory(package_source)) {
+        if (!download_file(package_url, package_path) || !extract_package(package_path, CPK_HOME_DIR)) {
+            print_message("Failed to retrieve package info", RED);
+            return;
+        }
+    }
+
+    // Change to the package source directory
+    if (!change_directory(package_source)) {
+        print_message("Failed to change directory to: " + package_source, RED);
+        return;
+    }
+
+    // Find public keys in /etc/ports/
+    std::vector<std::string> pub_keys = find_public_keys("/etc/ports/");
+    if (pub_keys.empty()) {
+        print_message("No public keys found in /etc/ports/", RED);
+        return;
+    }
+
+    // Download missing source files
+    std::string pkgmk_cmd = "pkgmk";
+    std::vector<std::string> pkgmk_args = { "-do" };
+    std::string pkgmk_output;
+
+    int ret = shellcmd(pkgmk_cmd, pkgmk_args, &pkgmk_output, false);
+
+    if (ret != 0) {
+        print_message("Failed to download missing source files", RED);
+        return;
+    }
+
+    // Try each public key until one works
+    for (const std::string& public_key : pub_keys) {
+        std::string signature_cmd = "signify";
+        std::vector<std::string> signature_args = { "-q", "-C", "-p", public_key, "-x", ".signature" };
+        std::string signature_output;
+
+        int ret = shellcmd(signature_cmd, signature_args, &signature_output, false);
+
+        if (ret == 0) {
+            print_message("Verification successful with key: " + public_key);
+            return; // Stop on first success
+        }
+    }
+
+    print_message("Verification failed for all keys in /etc/ports/", RED);
+}
+
+// Function to build a package using pkgmk
+void cmd_build(const std::vector<std::string>& args) {
+    if (args.empty()) {
+        print_message("Package name is required", RED);
+        return;
+    }
+
+    std::string index_file = CPK_HOME_DIR + "/CPKINDEX";
+    if (!fs::exists(index_file)) {
+        print_message("Package index not found. Run `cpk update` first", RED);
+        return;
+    }
+
+    std::string package, pkgname, pkgver, pkgarch;
+    if (!find_package(args[0], package, pkgname, pkgver, pkgarch)) return;
+
+    std::string package_url = CPK_REPO_URL + "/" + url_encode(package);
+    std::string package_source = CPK_HOME_DIR + "/" + pkgname + "/" + pkgver;
+    std::string package_path = CPK_HOME_DIR + "/" + package;
+
+    if (!fs::is_directory(package_source)) {
+        if (!download_file(package_url, package_path) || !extract_package(package_path, CPK_HOME_DIR)) {
+            print_message("Failed to retrieve package info", RED);
+            return;
+        }
+    }
+
+    // Change to the package source directory
+    if (!change_directory(package_source)) {
+        print_message("Failed to change directory to: " + package_source, RED);
+        return;
+    }
+
+    // Build the package using pkgmk
+    std::string pkgmk_cmd = "pkgmk";
+    std::vector<std::string> pkgmk_args = { "-d" };
+    std::string pkgmk_output;
+
+    int ret = shellcmd(pkgmk_cmd, pkgmk_args, &pkgmk_output, true);
+
+    if (ret != 0) {
+        print_message("Failed to build package", RED);
+        return;
+    }
+
+    print_message("Package built successfully");
+}
+
 // Function to install a package
 void cmd_install(const std::vector<std::string>& args) {
     if (args.empty()) {
@@ -275,182 +448,10 @@ void cmd_uninstall(const std::vector<std::string>& args) {
     return;
 }
 
-// Function to list installed packages
-void cmd_list(const std::vector<std::string>& args) {
-    std::string pkginfo_cmd = "pkginfo";
-    std::vector<std::string> pkginfo_args = { "-i" };
-    std::string pkginfo_output;
-
-    shellcmd(pkginfo_cmd, pkginfo_args, &pkginfo_output);
-    return;
-}
-
-void cmd_diff(const std::vector<std::string>& args) {
-    // Get installed packages
-    std::string pkginfo_cmd = "pkginfo";
-    std::vector<std::string> pkginfo_args = { "-i" };
-    std::string installed_packages;
-    shellcmd(pkginfo_cmd, pkginfo_args, &installed_packages, false);
-
-    // Compare and display differences
-    std::istringstream installed_stream(installed_packages);
-    std::string diff_packages;
-    bool found_difference = false;
-
-    // Read installed packages line by line and split into name & version
-    std::string installed_pkgname, installed_pkgver;
-    std::string package, pkgname, pkgver, pkgarch;
-    while (installed_stream >> installed_pkgname >> installed_pkgver) {
-        if (find_package(installed_pkgname, package, pkgname, pkgver, pkgarch)) {
-            if (installed_pkgname == pkgname && installed_pkgver != pkgver) {
-                found_difference = true;
-                diff_packages += installed_pkgname + " " + installed_pkgver + " " + pkgver + "\n";
-            }
-        }
-    }
-
-    if (!found_difference) {
-        print_message("No differences found", GREEN);
-    }
-    else {
-        print_message("Differences between installed and available packages");
-        print_message("");
-        print_diff_line_as_table("Package Installed Available");
-        print_message("");
-
-        // TODO: get the diff_packages as separate lines
-        std::istringstream diff_stream(diff_packages);
-        std::string diff_line;
-        while (std::getline(diff_stream, diff_line)) {
-            // Print each line as a table
-            print_diff_line_as_table(diff_line);
-        }
-    }
-
-    return;
-}
-
 // Function to upgrade installed packages
 void cmd_upgrade(const std::vector<std::string>& args) {
     print_message("Not implemented yet", YELLOW);
     return;
-}
-
-// Function to build a package using pkgmk
-void cmd_build(const std::vector<std::string>& args) {
-    if (args.empty()) {
-        print_message("Package name is required", RED);
-        return;
-    }
-
-    std::string index_file = CPK_HOME_DIR + "/CPKINDEX";
-    if (!fs::exists(index_file)) {
-        print_message("Package index not found. Run `cpk update` first", RED);
-        return;
-    }
-
-    std::string package, pkgname, pkgver, pkgarch;
-    if (!find_package(args[0], package, pkgname, pkgver, pkgarch)) return;
-
-    std::string package_url = CPK_REPO_URL + "/" + url_encode(package);
-    std::string package_source = CPK_HOME_DIR + "/" + pkgname + "/" + pkgver;
-    std::string package_path = CPK_HOME_DIR + "/" + package;
-
-    if (!fs::is_directory(package_source)) {
-        if (!download_file(package_url, package_path) || !extract_package(package_path, CPK_HOME_DIR)) {
-            print_message("Failed to retrieve package info", RED);
-            return;
-        }
-    }
-
-    // Change to the package source directory
-    if (!change_directory(package_source)) {
-        print_message("Failed to change directory to: " + package_source, RED);
-        return;
-    }
-
-    // Build the package using pkgmk
-    std::string pkgmk_cmd = "pkgmk";
-    std::vector<std::string> pkgmk_args = { "-d" };
-    std::string pkgmk_output;
-
-    int ret = shellcmd(pkgmk_cmd, pkgmk_args, &pkgmk_output, true);
-
-    if (ret != 0) {
-        print_message("Failed to build package", RED);
-        return;
-    }
-
-    print_message("Package built successfully");
-}
-
-// Function to check the integrity of packages against their stored checksums and signatures
-void cmd_verify(const std::vector<std::string>& args) {
-    if (args.empty()) {
-        print_message("Package name is required", RED);
-        return;
-    }
-
-    std::string index_file = CPK_HOME_DIR + "/CPKINDEX";
-    if (!fs::exists(index_file)) {
-        print_message("Package index not found. Run `cpk update` first", RED);
-        return;
-    }
-
-    std::string package, pkgname, pkgver, pkgarch;
-    if (!find_package(args[0], package, pkgname, pkgver, pkgarch)) return;
-
-    std::string package_url = CPK_REPO_URL + "/" + url_encode(package);
-    std::string package_source = CPK_HOME_DIR + "/" + pkgname + "/" + pkgver;
-    std::string package_path = CPK_HOME_DIR + "/" + package;
-
-    if (!fs::is_directory(package_source)) {
-        if (!download_file(package_url, package_path) || !extract_package(package_path, CPK_HOME_DIR)) {
-            print_message("Failed to retrieve package info", RED);
-            return;
-        }
-    }
-
-    // Change to the package source directory
-    if (!change_directory(package_source)) {
-        print_message("Failed to change directory to: " + package_source, RED);
-        return;
-    }
-
-    // Find public keys in /etc/ports/
-    std::vector<std::string> pub_keys = find_public_keys("/etc/ports/");
-    if (pub_keys.empty()) {
-        print_message("No public keys found in /etc/ports/", RED);
-        return;
-    }
-
-    // Download missing source files
-    std::string pkgmk_cmd = "pkgmk";
-    std::vector<std::string> pkgmk_args = { "-do" };
-    std::string pkgmk_output;
-
-    int ret = shellcmd(pkgmk_cmd, pkgmk_args, &pkgmk_output, false);
-
-    if (ret != 0) {
-        print_message("Failed to download missing source files", RED);
-        return;
-    }
-
-    // Try each public key until one works
-    for (const std::string& public_key : pub_keys) {
-        std::string signature_cmd = "signify";
-        std::vector<std::string> signature_args = { "-q", "-C", "-p", public_key, "-x", ".signature" };
-        std::string signature_output;
-
-        int ret = shellcmd(signature_cmd, signature_args, &signature_output, false);
-
-        if (ret == 0) {
-            print_message("Verification successful with key: " + public_key);
-            return; // Stop on first success
-        }
-    }
-
-    print_message("Verification failed for all keys in /etc/ports/", RED);
 }
 
 // Function to clean cache contents
