@@ -6,6 +6,8 @@
 
 namespace fs = std::filesystem;
 
+const std::string CPK_VERSION = "0.1";
+
 std::string CPK_CONF_FILE = "/etc/cpk.conf";
 std::string CPK_REPO_URL = "https://cpk.user.ninja";
 std::string CPK_HOME_DIR = "/var/lib/cpk";
@@ -71,6 +73,8 @@ int main(int argc, char* argv[]) {
         cmd_verify(args);
     } else if (command == "clean") {
         cmd_clean(args);
+    } else if (command == "version") {
+        cmd_version(args);
     } else {
         print_help();
     }
@@ -207,7 +211,7 @@ void cmd_install(const std::vector<std::string>& args) {
 
     if (!fs::is_directory(package_source)) {
         if (!download_file(package_url, package_path) || !extract_package(package_path, CPK_HOME_DIR)) {
-            print_message("Failed to retrieve package info", RED);
+            print_message("Failed to retrieve package sources", RED);
             return;
         }
     }
@@ -286,8 +290,50 @@ void cmd_upgrade(const std::vector<std::string>& args) {
 
 // Function to build a package using pkgmk
 void cmd_build(const std::vector<std::string>& args) {
-    print_message("Not implemented yet", YELLOW);
-    return;
+    if (args.empty()) {
+        print_message("Package name is required", RED);
+        return;
+    }
+
+    std::string index_file = CPK_HOME_DIR + "/CPKINDEX";
+    if (!fs::exists(index_file)) {
+        print_message("Package index not found. Run `cpk update` first", RED);
+        return;
+    }
+
+    std::string package, pkgname, pkgver, pkgarch;
+    if (!find_package(args[0], package, pkgname, pkgver, pkgarch)) return;
+
+    std::string package_url = CPK_REPO_URL + "/" + url_encode(package);
+    std::string package_source = CPK_HOME_DIR + "/" + pkgname + "/" + pkgver;
+    std::string package_path = CPK_HOME_DIR + "/" + package;
+
+    if (!fs::is_directory(package_source)) {
+        if (!download_file(package_url, package_path) || !extract_package(package_path, CPK_HOME_DIR)) {
+            print_message("Failed to retrieve package info", RED);
+            return;
+        }
+    }
+
+    // Change to the package source directory
+    if (!change_directory(package_source)) {
+        print_message("Failed to change directory to: " + package_source, RED);
+        return;
+    }
+
+    // Build the package using pkgmk
+    std::string pkgmk_cmd = "pkgmk";
+    std::vector<std::string> pkgmk_args = { "-d" };
+    std::string pkgmk_output;
+
+    int ret = shellcmd(pkgmk_cmd, pkgmk_args, &pkgmk_output, true);
+
+    if (ret != 0) {
+        print_message("Failed to build package", RED);
+        return;
+    }
+
+    print_message("Package built successfully");
 }
 
 // Function to check the integrity of packages against their stored checksums and signatures
@@ -378,4 +424,9 @@ void cmd_clean(const std::vector<std::string>& args) {
     }
 
     return;
+}
+
+// Function to show version information
+void cmd_version(const std::vector<std::string>& args) {
+    print_message("cpk " + CPK_VERSION);
 }

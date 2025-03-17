@@ -147,6 +147,7 @@ void print_help() {
     print_message("  list                   List all installed packages");
     print_message("  verify <package>       Verify integrity of package source files");
     print_message("  help                   Show this help message");
+    print_message("  version                Show version information");
 
     print_message("\nOptions:");
     print_message("  -r, --root <path>      Specify an alternative installation root directory");
