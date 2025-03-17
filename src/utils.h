@@ -32,6 +32,8 @@ bool find_package(const std::string& package_name, std::string& package, std::st
 bool is_package_installed(const std::string& package_name);
 int get_number_of_packages();
 bool change_directory(const std::string& path);
+void print_packages_as_table(const std::vector<std::string>& packages);
+void print_diff_line_as_table(const std::string& line);
 std::vector<std::string> find_public_keys(const std::string& directory);
 
 #endif  // UTILS_H

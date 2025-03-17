@@ -138,16 +138,19 @@ void print_help() {
     print_message("  cpk <command> [options]");
 
     print_message("\nCommands:");
-    print_message("  update                 Update the index of available packages");
-    print_message("  info <package>         Show information about installed or available packages");
-    print_message("  search <word|package>  Search for packages by name or keyword");
-    print_message("  install <package>      Install or upgrade packages on the system");
-    print_message("  uninstall <package>    Remove packages from the system");
-    print_message("  upgrade                Upgrade all installed packages to the latest versions");
-    print_message("  list                   List all installed packages");
-    print_message("  verify <package>       Verify integrity of package source files");
-    print_message("  help                   Show this help message");
-    print_message("  version                Show version information");
+    print_message("  update                Update the index of available packages");
+    print_message("  info <package>        Show information about installed or available packages");
+    print_message("  search <keyword>      Search for packages by name or keyword");
+    print_message("  list                  List all installed packages");
+    print_message("  diff                  Show differences between installed and available packages");
+    print_message("  verify <package>      Verify integrity of package source files");
+    print_message("  build <package>       Build a package from source files");
+    print_message("  install <package>     Install or upgrade packages on the system");
+    print_message("  uninstall <package>   Remove packages from the system");
+    print_message("  upgrade               Upgrade all installed packages to the latest versions");
+    print_message("  clean                 Clean up package source files and temporary directories");
+    print_message("  help                  Show this help message");
+    print_message("  version               Show version information");
 
     print_message("\nOptions:");
     print_message("  -r, --root <path>      Specify an alternative installation root directory");
@@ -359,10 +362,6 @@ bool find_package(const std::string& package_name, std::string& package, std::st
         file.close();  // Close the file
     }
 
-    if (!result) {
-        print_message("Package not found: " + package_name, RED);
-    }
-
     return result;
 }
 
@@ -414,6 +413,35 @@ int get_number_of_packages() {
 
 bool change_directory(const std::string& path) {
     return chdir(path.c_str()) == 0;
+}
+
+void print_packages_as_table(const std::vector<std::string>& packages) {
+    // Print the table header
+    std::cout << std::left << std::setw(30) << "Package Name" << std::setw(10) << "Version" << std::setw(10) << "Arch" << std::endl;
+    std::cout << std::left << std::setw(30) << "------------" << std::setw(10) << "-------" << std::setw(10) << "----" << std::endl;
+
+    // Print the package details
+    for (const std::string& package : packages) {
+        std::string pkgname, pkgver, pkgarch;
+        size_t hash_pos = package.find('#');
+        size_t dot_pos = package.find('.');
+        size_t cpk_pos = package.find(".cpk");
+
+        if (hash_pos != std::string::npos && dot_pos != std::string::npos && cpk_pos != std::string::npos) {
+            pkgname = package.substr(0, hash_pos);
+            pkgver = package.substr(hash_pos + 1, dot_pos - hash_pos - 1);
+            pkgarch = package.substr(dot_pos + 1, cpk_pos - dot_pos - 1);
+            std::cout << std::left << std::setw(30) << pkgname << std::setw(10) << pkgver << std::setw(10) << pkgarch << std::endl;
+        }
+    }
+}
+
+
+void print_diff_line_as_table(const std::string& line) {
+    std::string installed_pkgname, installed_pkgver, pkgver;
+    std::istringstream line_stream(line);
+    line_stream >> installed_pkgname >> installed_pkgver >> pkgver;
+    std::cout << std::left << std::setw(30) << installed_pkgname << std::setw(10) << installed_pkgver << std::setw(10) << pkgver << std::endl;
 }
 
 // Function to find all `.pub` files in `/etc/ports/`
