@@ -4,12 +4,13 @@
 #include <string>
 #include <vector>
 
-const std::string RED    = "\033[31m"; // error
-const std::string GREEN  = "\033[32m"; // success
-const std::string BLUE   = "\033[34m"; // header
-const std::string YELLOW = "\033[33m"; // not success
-const std::string BOLD   = "\033[1m";
-const std::string NONE   = "\033[0m";
+const std::string RED     = "\033[31m"; // error
+const std::string GREEN   = "\033[32m"; // success
+const std::string BLUE    = "\033[34m"; // header
+const std::string YELLOW  = "\033[33m"; // not success
+const std::string BOLD    = "\033[1m";
+const std::string NONE    = "\033[0m";
+const std::string NEWLINE = "\n";
 
 std::string url_encode(const std::string& value);
 std::string url_decode(const std::string& value);
@@ -23,6 +24,7 @@ int shellcmd(const std::string& command, const std::vector<std::string>& args, s
 bool run_script(const std::string& script_path, const std::string& msg);
 void print_header(const std::string &message, const std::string &color = NONE);
 void print_message(const std::string &message, const std::string &color = NONE);
+void print_version();
 void print_help();
 bool output_colors_enabled();
 bool load_cpk_config(const std::string &config_file);
@@ -32,8 +34,8 @@ bool find_package(const std::string& package_name, std::string& package, std::st
 bool is_package_installed(const std::string& package_name);
 int get_number_of_packages();
 bool change_directory(const std::string& path);
-void print_packages_as_table(const std::vector<std::string>& packages);
-void print_diff_line_as_table(const std::string& line);
+void print_fmt_header(const std::string& header_text);
+void print_fmt_lines(const std::string& text);
 std::vector<std::string> find_public_keys(const std::string& directory);
 
 #endif  // UTILS_H
