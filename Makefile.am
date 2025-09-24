@@ -13,3 +13,6 @@ cpk_LDADD = $(LIBARCHIVE_LIBS) $(LIBCURL_LIBS)
 
 sysconfdir = /etc
 sysconf_DATA = cpk.conf
+
+man_MANS     = man/cpk.1
+EXTRA_DIST   = $(man_MANS)
