@@ -77,7 +77,7 @@ bool download_file(const std::string &url, const std::string &file_path, bool ov
         return true;
     }
 
-    print_message("Fetching " + url_decode(url));
+    if (CPK_VERBOSE) print_message("Fetching " + url_decode(url));
     
     FILE *fp = fopen(file_path.c_str(), "wb");
     if (fp == nullptr) {
@@ -130,31 +130,42 @@ void print_message(const std::string& message, const std::string& color) {
     return;
 }
 
+// Function to show version information
+void print_version() {
+    print_message("cpk " + CPK_VERSION);
+}
+
 // Display the help message
 void print_help() {
-    print_message("\033[1mCRUX Package Keeper - package management tool for CRUX Linux\033[0m");
+    print_message("CRUX Package Keeper - package management tool for CRUX Linux");
 
     print_message("\nUsage:");
     print_message("  cpk <command> [options]");
 
     print_message("\nCommands:");
-    print_message("  update                Update the index of available packages");
-    print_message("  info <package>        Show information about installed or available packages");
-    print_message("  search <keyword>      Search for packages by name or keyword");
-    print_message("  list                  List all installed packages");
-    print_message("  diff                  Show differences between installed and available packages");
-    print_message("  verify <package>      Verify integrity of package source files");
-    print_message("  build <package>       Build a package from source files");
-    print_message("  install <package>     Install or upgrade packages on the system");
-    print_message("  uninstall <package>   Remove packages from the system");
-    print_message("  upgrade               Upgrade all installed packages to the latest versions");
-    print_message("  clean                 Clean up package source files and temporary directories");
-    print_message("  help                  Show this help message");
-    print_message("  version               Show version information");
+    print_message("  update                 Update the index of available packages");
+    print_message("  info <package>         Show information about installed or available packages");
+    print_message("  search <keyword>       Search for packages by name or keyword");
+    print_message("  list                   List all installed packages");
+    print_message("  diff                   Show differences between installed and available packages");
+    print_message("  verify <package>       Verify integrity of package source files");
+    print_message("  build <package>        Build a package from source files");
+    print_message("  install <package>      Install or upgrade packages on the system");
+    print_message("  uninstall <package>    Remove packages from the system");
+    print_message("  upgrade                Upgrade all installed packages to the latest versions");
+    print_message("  clean                  Clean up package source files and temporary directories");
+    print_message("  help                   Show this help message");
+    print_message("  version                Show version information");
 
     print_message("\nOptions:");
-    print_message("  -r, --root <path>      Specify an alternative installation root directory");
-    print_message("  -v, --verbose <int>    Set the verbosity level for output messages (default: 0)");
+    print_message("  -c, --config <file>    Set an alternative configuration file (default: /etc/cpk/cpk.conf)");
+    print_message("  -r, --root <path>      Set an alternative installation root (default: /)");
+    print_message("  -C, --color            Show colorized output messages");
+    print_message("  -v, --verbose          Show verbose output messages");
+    print_message("  -h, --help             Print this help information");
+    print_message("  -V, --version          Print version information");
+
+
 }
 
 // Function to extract tarball
@@ -239,16 +250,29 @@ bool load_cpk_config(const std::string& config_file) {
         std::istringstream iss(line);
         std::string key;
         iss >> key;
-         
-        if (key == "cpk_home_dir") {
+
+        if (key == "cpk_repo_url") {
+        } else if (key == "cpk_home_dir") {
             iss >> CPK_HOME_DIR;
-        } else if (key == "cpk_repo_url") {
-            iss >> CPK_REPO_URL;
+        } else if (key == "cpk_install_root") {
+            iss >> CPK_INSTALL_ROOT;
+        } else if (key == "cpk_pkgmk_cmd") {
+            iss >> CPK_PKGMK_CMD;
+        } else if (key == "cpk_pkgadd_cmd") {
+            iss >> CPK_PKGADD_CMD;
+        } else if (key == "cpk_pkgrm_cmd") {
+            iss >> CPK_PKGRM_CMD;
+        } else if (key == "cpk_pkginfo_cmd") {
+            iss >> CPK_PKGINFO_CMD;
         } else if (key == "cpk_color_mode") {
             std::string colors;
             iss >> colors;
             CPK_COLOR_MODE = (colors == "true");
-        }
+        } else if (key == "cpk_verbose") {
+            std::string verbose;
+            iss >> verbose;
+            CPK_VERBOSE = ( verbose == "true");
+        } 
     }
 
     file.close();
@@ -415,33 +439,42 @@ bool change_directory(const std::string& path) {
     return chdir(path.c_str()) == 0;
 }
 
-void print_packages_as_table(const std::vector<std::string>& packages) {
-    // Print the table header
-    std::cout << std::left << std::setw(30) << "Package Name" << std::setw(10) << "Version" << std::setw(10) << "Arch" << std::endl;
-    std::cout << std::left << std::setw(30) << "------------" << std::setw(10) << "-------" << std::setw(10) << "----" << std::endl;
+// Function to print formatted header with columns
+void print_fmt_header(const std::string& header_text) {
+    std::istringstream iss(header_text);
+    std::string col1, col2, col3;
 
-    // Print the package details
-    for (const std::string& package : packages) {
-        std::string pkgname, pkgver, pkgarch;
-        size_t hash_pos = package.find('#');
-        size_t dot_pos = package.find('.');
-        size_t cpk_pos = package.find(".cpk");
+    iss >> col1 >> col2 >> col3;
 
-        if (hash_pos != std::string::npos && dot_pos != std::string::npos && cpk_pos != std::string::npos) {
-            pkgname = package.substr(0, hash_pos);
-            pkgver = package.substr(hash_pos + 1, dot_pos - hash_pos - 1);
-            pkgarch = package.substr(dot_pos + 1, cpk_pos - dot_pos - 1);
-            std::cout << std::left << std::setw(30) << pkgname << std::setw(10) << pkgver << std::setw(10) << pkgarch << std::endl;
-        }
-    }
+    std::cout << BOLD
+              << std::left << std::setw(40) << col1
+              << std::setw(20) << (col2.empty() ? "" : col2)
+              << std::setw(20) << (col3.empty() ? "" : col3)
+              << NONE << std::endl;
+
+    std::cout << std::left
+              << std::setw(40) << std::string(col1.size(), '-')
+              << std::setw(20) << (col2.empty() ? "" : std::string(col2.size(), '-'))
+              << std::setw(20) << (col3.empty() ? "" : std::string(col3.size(), '-'))
+              << std::endl;
 }
 
+// Function to print lines in formatted columns
+void print_fmt_lines(const std::string& text) {
+    std::string line;
+    std::istringstream line_stream(text);
 
-void print_diff_line_as_table(const std::string& line) {
-    std::string installed_pkgname, installed_pkgver, pkgver;
-    std::istringstream line_stream(line);
-    line_stream >> installed_pkgname >> installed_pkgver >> pkgver;
-    std::cout << std::left << std::setw(30) << installed_pkgname << std::setw(10) << installed_pkgver << std::setw(10) << pkgver << std::endl;
+    while (std::getline(line_stream, line)) {
+        std::istringstream columns(line);
+        std::string col1, col2, col3;
+
+        columns >> col1 >> col2 >> col3;
+        std::cout << std::left
+                  << std::setw(40) << col1
+                  << std::setw(20) << col2
+                  << std::setw(20) << col3
+                  << std::endl;
+    }
 }
 
 // Function to find all `.pub` files in `/etc/ports/`

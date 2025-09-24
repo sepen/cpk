@@ -11,6 +11,10 @@ extern std::string CPK_CONF_FILE;
 extern std::string CPK_REPO_URL;
 extern std::string CPK_HOME_DIR;
 extern std::string CPK_INSTALL_ROOT;
+extern std::string CPK_PKGMK_CMD;
+extern std::string CPK_PKGADD_CMD;
+extern std::string CPK_PKGRM_CMD;
+extern std::string CPK_PKGINFO_CMD;
 
 extern bool CPK_COLOR_MODE;
 extern bool CPK_VERBOSE;
@@ -27,6 +31,5 @@ void cmd_diff(const std::vector<std::string>& args);
 void cmd_build(const std::vector<std::string>& args);
 void cmd_verify(const std::vector<std::string>& args);
 void cmd_clean(const std::vector<std::string>& args);
-void cmd_version(const std::vector<std::string>& args);
 
 #endif // CPK_H

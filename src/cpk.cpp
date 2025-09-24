@@ -13,6 +13,10 @@ std::string CPK_CONF_FILE = "/etc/cpk.conf";
 std::string CPK_REPO_URL = "https://cpk.user.ninja";
 std::string CPK_HOME_DIR = "/var/lib/cpk";
 std::string CPK_INSTALL_ROOT = "/";
+std::string CPK_PKGMK_CMD = "pkgmk";
+std::string CPK_PKGADD_CMD = "pkgadd";
+std::string CPK_PKGRM_CMD = "pkgrm";
+std::string CPK_PKGINFO_CMD = "pkginfo";
 
 bool CPK_COLOR_MODE = false;
 bool CPK_VERBOSE = false;
@@ -24,12 +28,20 @@ int main(int argc, char* argv[]) {
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
 
-        if ((arg == "--config-file" || arg == "-c") && i + 1 < argc) {
+        if ((arg == "--config" || arg == "-c") && i + 1 < argc) {
             CPK_CONF_FILE = argv[++i];  // Increment i after consuming argument
         } else if ((arg == "--root" || arg == "-r") && i + 1 < argc) {
             CPK_INSTALL_ROOT = argv[++i];
+        } else if ((arg == "--color" || arg == "-C")) {
+            CPK_COLOR_MODE = true;
         } else if ((arg == "--verbose" || arg == "-v")) {
             CPK_VERBOSE = true;
+        } else if (arg == "--help" || arg == "-h") {
+            print_help();
+            return 0;
+        } else if (arg == "--version" || arg == "-V") {
+            print_version();
+            return 0;
         } else {
             command_args.push_back(arg);  // Collect remaining command arguments
         }
@@ -77,7 +89,7 @@ int main(int argc, char* argv[]) {
     } else if (command == "clean") {
         cmd_clean(args);
     } else if (command == "version") {
-        cmd_version(args);
+        print_version();
     } else {
         print_help();
     }
@@ -93,11 +105,13 @@ void cmd_update(const std::vector<std::string>& args) {
     }
 
     const std::string index_file = CPK_HOME_DIR + "/CPKINDEX";
-    if (!fs::exists(index_file)) {
-        print_header("Initializing index of available packages", BLUE);
-    }
-    else {
-        print_header("Updating index of available packages", BLUE);
+    if (CPK_VERBOSE) {
+        if (!fs::exists(index_file)) {
+            print_header("Initializing index of available packages", BLUE);
+        }
+        else {
+            print_header("Updating index of available packages", BLUE);
+        }
     }
 
     const std::string index_url = CPK_REPO_URL + "/CPKINDEX";
@@ -144,12 +158,12 @@ void cmd_info(const std::vector<std::string>& args) {
         return;
     }
 
-    print_message("Name         | " + pkgname);
-    print_message("Version      | " + pkgver);
-    print_message("Arch         | " + pkgarch);
-    print_message("Description  | " + ltrim(pkgdesc));
-    print_message("URL          | " + ltrim(pkgurl));
-    print_message("Dependencies | " + ltrim(pkgdeps));
+    print_message(BOLD + "Name         " + NONE + "| " + pkgname);
+    print_message(BOLD + "Version      " + NONE + "| " + pkgver);
+    print_message(BOLD + "Arch         " + NONE + "| " + pkgarch);
+    print_message(BOLD + "Description  " + NONE + "| " + ltrim(pkgdesc));
+    print_message(BOLD + "URL          " + NONE + "| " + ltrim(pkgurl));
+    print_message(BOLD + "Dependencies " + NONE + "| " + ltrim(pkgdeps));
 }
 
 // Function to search for a package or description
@@ -170,38 +184,49 @@ void cmd_search(const std::vector<std::string>& args) {
     std::string index_line;
     bool found = false;
 
+    std::ostringstream search_results;
     while (std::getline(file, index_line)) {
         if (index_line.find(search_term) != std::string::npos) {
             found = true;
-            print_message(index_line);
+            search_results << index_line << '\n';
         }
     }
+    file.close();
 
     if (!found) {
         print_message("No matching packages found", YELLOW);
+    } else {
+        print_fmt_lines(search_results.str());
     }
 
-    file.close();
     return;
 }
 
 // Function to list installed packages
 void cmd_list(const std::vector<std::string>& args) {
-    std::string pkginfo_cmd = "pkginfo";
     std::vector<std::string> pkginfo_args = { "-i" };
     std::string pkginfo_output;
 
-    shellcmd(pkginfo_cmd, pkginfo_args, &pkginfo_output);
+    if (shellcmd(CPK_PKGINFO_CMD, pkginfo_args, &pkginfo_output, false) != 0) {
+        print_message("Failed to get list of installed packages", RED);
+    }
+    else {
+        if (CPK_VERBOSE) {
+            print_header("Printing list of installed packages", BLUE);
+        }
+        print_fmt_header("Package Version");
+        print_fmt_lines(pkginfo_output);
+    }
+
     return;
 }
 
 // Function to compare installed and available packages
 void cmd_diff(const std::vector<std::string>& args) {
     // Get installed packages
-    std::string pkginfo_cmd = "pkginfo";
     std::vector<std::string> pkginfo_args = { "-i" };
     std::string installed_packages;
-    shellcmd(pkginfo_cmd, pkginfo_args, &installed_packages, false);
+    shellcmd(CPK_PKGINFO_CMD, pkginfo_args, &installed_packages, false);
 
     // Compare and display differences
     std::istringstream installed_stream(installed_packages);
@@ -224,18 +249,11 @@ void cmd_diff(const std::vector<std::string>& args) {
         print_message("No differences found", GREEN);
     }
     else {
-        print_message("Differences between installed and available packages");
-        print_message("");
-        print_diff_line_as_table("Package Installed Available");
-        print_message("");
-
-        // TODO: get the diff_packages as separate lines
-        std::istringstream diff_stream(diff_packages);
-        std::string diff_line;
-        while (std::getline(diff_stream, diff_line)) {
-            // Print each line as a table
-            print_diff_line_as_table(diff_line);
+        if (CPK_VERBOSE) {
+            print_header("Differences between installed and available packages", BLUE);
         }
+        print_fmt_header("Package Installed Available");
+        print_fmt_lines(diff_packages);
     }
 
     return;
@@ -282,11 +300,10 @@ void cmd_verify(const std::vector<std::string>& args) {
     }
 
     // Download missing source files
-    std::string pkgmk_cmd = "pkgmk";
     std::vector<std::string> pkgmk_args = { "-do" };
     std::string pkgmk_output;
 
-    int ret = shellcmd(pkgmk_cmd, pkgmk_args, &pkgmk_output, false);
+    int ret = shellcmd(CPK_PKGMK_CMD, pkgmk_args, &pkgmk_output, false);
 
     if (ret != 0) {
         print_message("Failed to download missing source files", RED);
@@ -343,12 +360,11 @@ void cmd_build(const std::vector<std::string>& args) {
         return;
     }
 
-    // Build the package using pkgmk
-    std::string pkgmk_cmd = "pkgmk";
+    // Build the package
     std::vector<std::string> pkgmk_args = { "-d" };
     std::string pkgmk_output;
 
-    int ret = shellcmd(pkgmk_cmd, pkgmk_args, &pkgmk_output, true);
+    int ret = shellcmd(CPK_PKGMK_CMD, pkgmk_args, &pkgmk_output, true);
 
     if (ret != 0) {
         print_message("Failed to build package", RED);
@@ -374,12 +390,17 @@ void cmd_install(const std::vector<std::string>& args) {
     std::string package, pkgname, pkgver, pkgarch;
     if (!find_package(args[0], package, pkgname, pkgver, pkgarch)) return;
 
-    print_header("Installing package " + pkgname, BLUE);
-
     if (is_package_installed(pkgname)) {
-        print_message("Package is already installed", YELLOW);
-        return;
+        if (args[1] != "--force") {
+            print_message("Package is already installed", YELLOW);
+            return;
+        }
+        else {
+            print_header("Upgrading package " + pkgname, BLUE);
+        }
     }
+
+    print_header("Installing package " + pkgname, BLUE);
 
     std::string package_url = CPK_REPO_URL + "/" + url_encode(package);
     std::string package_source = CPK_HOME_DIR + "/" + pkgname + "/" + pkgver;
@@ -398,20 +419,26 @@ void cmd_install(const std::vector<std::string>& args) {
         return;
     }
 
-    // run pre-install script if exists
+    // Run pre-install script if exists
     run_script(package_source + "/pre-install", "Running pre-install script");
 
-    // install the package with pkgadd
-    print_header("Running pkgadd " + package, BLUE);
-    if (shellcmd("pkgadd", {package_file, "-r", CPK_INSTALL_ROOT}, nullptr) != 0) {
+    // Install the package
+    std::vector<std::string> pkgadd_args = { "-r", CPK_INSTALL_ROOT, package_file };
+    std::string pkgadd_output;
+
+    if (CPK_VERBOSE) {
+        print_message("Running " + CPK_PKGADD_CMD + " -r " + CPK_INSTALL_ROOT + " " + pkgname);
+    }
+
+    if (shellcmd(CPK_PKGADD_CMD, pkgadd_args, &pkgadd_output) != 0) {
         print_message("Failed to install package", RED);
         return;
     }
 
-    // run post-install script if exists
+    // Run post-install script if exists
     run_script(package_source + "/post-install", "Running post-install script");
 
-    // print contents of README if exists
+    // Print contents of README if exists
     std::string readme_path = package_source + "/README";
     if (fs::exists(readme_path)) {
         print_header("Printing package's README file", BLUE);
@@ -428,23 +455,38 @@ void cmd_install(const std::vector<std::string>& args) {
 // Function to uninstall a package
 void cmd_uninstall(const std::vector<std::string>& args) {
 
+    if (args.empty()) {
+        print_message("Package name is required", RED);
+        return;
+    }
+
     std::string index_file = CPK_HOME_DIR + "/CPKINDEX";
     if (!fs::exists(index_file)) {
         print_message("Package index not found. Run `cpk update` first", RED);
         return;
     }
 
-    std::string pkgrm_cmd = "pkgrm";
-    std::vector<std::string> pkgrm_args = args;
-    std::string pkgrm_output;
-    std::string package_name = args[0];
+    std::string package, pkgname, pkgver, pkgarch;
+    if (!find_package(args[0], package, pkgname, pkgver, pkgarch)) return;
 
-    if (!is_package_installed(package_name)) {
-        print_message("Package " + package_name + " not installed", RED);
+    if (!is_package_installed(pkgname)) {
+        print_message("Package " + pkgname + " not installed", RED);
         return;
     }
 
-    shellcmd(pkgrm_cmd, pkgrm_args, &pkgrm_output, false);
+    print_header("Uninstalling package " + pkgname, BLUE);
+
+    std::vector<std::string> pkgrm_args = { "-r", CPK_INSTALL_ROOT, pkgname };
+    std::string pkgrm_output;
+
+    if (CPK_VERBOSE) {
+        print_message("Running " + CPK_PKGRM_CMD + " -r " + CPK_INSTALL_ROOT + " " + pkgname);
+    }
+
+    if (shellcmd(CPK_PKGRM_CMD, pkgrm_args, &pkgrm_output) != 0) {
+        print_message("Failed to uninstall package", RED);
+        return;
+    }
     return;
 }
 
@@ -473,9 +515,4 @@ void cmd_clean(const std::vector<std::string>& args) {
     }
 
     return;
-}
-
-// Function to show version information
-void cmd_version(const std::vector<std::string>& args) {
-    print_message("cpk " + CPK_VERSION);
 }
