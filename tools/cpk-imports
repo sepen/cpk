@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Script to import packages from ports tree
+# It will create .cpk files with sources included
+# Usage: cpk-imports <ports_dir> <output_dir>
+
 [ $# -eq 2 ] || exit 0 
 PORTS_DIR=$1
 OUTPUT_DIR=$2
@@ -14,11 +18,11 @@ find ${PORTS_DIR} -type f -name '*.pkg.*' \
     package=$(basename ${package_line})
     package_prefix=${package/.pkg.*/}
     
-    # get vars from Pkgfile: name, version, release and source
+    # Get vars from Pkgfile: name, version, release and source
     path=$(dirname ${package_line})
     . ${path}/Pkgfile
 
-    # Filter local files (exclude http, https, and ftp URLs)
+    # Get local files from source array (exclude http, https, and ftp URLs)
     local_files=()
     for item in "${source[@]}"; do
         if [[ ! "$item" =~ ^(https?|ftp):// ]]; then
@@ -26,13 +30,13 @@ find ${PORTS_DIR} -type f -name '*.pkg.*' \
         fi
     done
 
-    # compare and return packages that match the same prefix in Pkgfile
+    # Compare and return packages that match the same prefix in Pkgfile
     # so a package will be distributed with his source
     if [[ "${package_prefix}" == "${name}#${version}-${release}" ]]; then
 
         echo "${package_prefix}.${arch}.cpk ==> ${path}/${package}"
 
-        # Get local files to be copied (exclude http, https, and ftp URLs)
+        # Get local files and standard files from source array (exclude http, https, and ftp URLs)
         local_files=(Pkgfile .footprint .signature pre-install post-install README)
         for item in "${source[@]}"; do
             if [[ ! "$item" =~ ^(https?|ftp):// ]]; then
@@ -57,7 +61,7 @@ find ${PORTS_DIR} -type f -name '*.pkg.*' \
         rsync -av "${include_opts[@]}" "${path}"/ "${basedir}"/
 
         # Copy .pkg file
-        rsync -a ${path}/${package} ${basedir}/${package}
+        rsync -av ${path}/${package} ${basedir}/${package}
 
         # Create .cpk file
         cd ${OUTPUT_DIR} && \

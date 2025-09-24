@@ -1,0 +1,93 @@
+.\" Manpage for cpk
+.TH CPK 1 "September 2025" "cpk 0.1" "CRUX Package Keeper Manual"
+.SH NAME
+cpk \- CRUX Package Keeper - Package management tool for CRUX Linux
+.SH SYNOPSIS
+.B cpk
+<command> [options]
+.SH DESCRIPTION
+CRUX Package Keeper is a toolset designed to efficiently manage packages and their sources in CRUX environments.
+
+.SH COMMANDS
+.TP
+.B update
+Update the index of available packages.
+.TP
+.B info <package>
+Show information about installed or available packages.
+.TP
+.B search <keyword>
+Search for packages by name or keyword.
+.TP
+.B list
+List all installed packages.
+.TP
+.B diff
+Show differences between installed and available packages.
+.TP
+.B verify <package>
+Verify integrity of package source files.
+.TP
+.B build <package>
+Build a package from source files.
+.TP
+.B install <package>
+Install or upgrade packages on the system.
+.TP
+.B uninstall <package>
+Remove packages from the system.
+.TP
+.B upgrade
+Upgrade all installed packages to the latest versions.
+.TP
+.B clean
+Clean up package source files and temporary directories.
+.TP
+.B help
+Show this help message.
+.TP
+.B version
+Show version information.
+
+.SH OPTIONS
+.TP
+.B \-c, \-\-config <file>
+Set an alternative configuration file (default: /etc/cpk/cpk.conf).
+.TP
+.B \-r, \-\-root <path>
+Set an alternative installation root (default: /).
+.TP
+.B \-C, \-\-color
+Show colorized output messages.
+.TP
+.B \-v, \-\-verbose
+Show verbose output messages.
+.TP
+.B \-h, \-\-help
+Print this help information.
+.TP
+.B \-V, \-\-version
+Print version information.
+
+.SH EXAMPLES
+.TP
+Update package index:
+.B cpk update
+.TP
+Search for a package:
+.B cpk search curl
+.TP
+Install a package:
+.B cpk install htop
+.TP
+List installed packages:
+.B cpk list
+
+.SH AUTHOR
+Written by Jose Beneyto (https://github.com/sepen/cpk)
+
+.SH SEE ALSO
+.BR pkgmk (8),
+.BR pkgadd (8),
+.BR pkgrm (8),
+.BR prt-get (8)
