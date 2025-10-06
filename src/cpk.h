@@ -31,5 +31,7 @@ void cmd_diff(const std::vector<std::string>& args);
 void cmd_build(const std::vector<std::string>& args);
 void cmd_verify(const std::vector<std::string>& args);
 void cmd_clean(const std::vector<std::string>& args);
+void cmd_index(const std::vector<std::string>& args);
+void cmd_archive(const std::vector<std::string>& args);
 
 #endif // CPK_H
