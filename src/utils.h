@@ -3,14 +3,18 @@
 
 #include <string>
 #include <vector>
+#include <filesystem>
+#include <algorithm>
 
-const std::string RED     = "\033[31m"; // error
-const std::string GREEN   = "\033[32m"; // success
-const std::string BLUE    = "\033[34m"; // header
-const std::string YELLOW  = "\033[33m"; // not success
-const std::string BOLD    = "\033[1m";
-const std::string NONE    = "\033[0m";
-const std::string NEWLINE = "\n";
+namespace fs = std::filesystem;
+
+extern const std::string RED;
+extern const std::string GREEN;
+extern const std::string BLUE;
+extern const std::string YELLOW;
+extern const std::string BOLD;
+extern const std::string NONE;
+extern const std::string NEWLINE;
 
 std::string url_encode(const std::string& value);
 std::string url_decode(const std::string& value);
@@ -37,6 +41,12 @@ bool change_directory(const std::string& path);
 void print_fmt_header(const std::string& header_text);
 void print_fmt_lines(const std::string& text);
 std::vector<std::string> find_public_keys(const std::string& directory);
+void ensure_directory(const fs::path &dir);
+std::vector<std::string> get_local_files(const std::vector<std::string> &sources);
+void copy_files(const fs::path &source_dir, const fs::path &dest_dir, const std::vector<std::string> &files);
+void package_files(const std::string &name, const std::string &version, const std::string &release, const std::string &arch, const fs::path &output_dir);
+void generate_cpk_index(const fs::path &repo_dir);
+std::string get_system_architecture();
 
 #endif  // UTILS_H
 

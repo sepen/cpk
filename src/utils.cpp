@@ -1,20 +1,31 @@
 #include "cpk.h"
 #include "utils.h"
+#include <string>
+#include <vector>
+#include <filesystem>
+#include <algorithm>
 #include <archive.h>
 #include <archive_entry.h>
 #include <curl/curl.h>
 #include <sys/stat.h>
-#include <fstream>
-#include <sstream>
-#include <iostream>
 #include <iomanip>
 #include <cstdlib>
 #include <stdexcept>
-#include <algorithm>
-#include <filesystem>
-#include <string>
+#include <regex>
+#include <fstream>
+#include <sstream>
+#include <iostream>
+#include <system_error>
 
 namespace fs = std::filesystem;
+
+const std::string RED     = "\033[31m";
+const std::string GREEN   = "\033[32m";
+const std::string BLUE    = "\033[34m"; // header
+const std::string YELLOW  = "\033[33m"; // not success
+const std::string BOLD    = "\033[1m";
+const std::string NONE    = "\033[0m";
+const std::string NEWLINE = "\n";
 
 // Helper function to remove left leading spaces from a string
 std::string ltrim(const std::string& str) {
@@ -143,27 +154,29 @@ void print_help() {
     print_message("  cpk <command> [options]");
 
     print_message("\nCommands:");
-    print_message("  update                 Update the index of available packages");
-    print_message("  info <package>         Show information about installed or available packages");
-    print_message("  search <keyword>       Search for packages by name or keyword");
-    print_message("  list                   List all installed packages");
-    print_message("  diff                   Show differences between installed and available packages");
-    print_message("  verify <package>       Verify integrity of package source files");
-    print_message("  build <package>        Build a package from source files");
-    print_message("  install <package>      Install or upgrade packages on the system");
-    print_message("  uninstall <package>    Remove packages from the system");
-    print_message("  upgrade                Upgrade all installed packages to the latest versions");
-    print_message("  clean                  Clean up package source files and temporary directories");
-    print_message("  help                   Show this help message");
-    print_message("  version                Show version information");
+    print_message("  update                   Update the index of available packages");
+    print_message("  info <package>           Show information about installed or available packages");
+    print_message("  search <keyword>         Search for packages by name or keyword");
+    print_message("  list                     List all installed packages");
+    print_message("  diff                     Show differences between installed and available packages");
+    print_message("  verify <package>         Verify integrity of package source files");
+    print_message("  build <package>          Build a package from source files");
+    print_message("  install <package>        Install or upgrade packages on the system");
+    print_message("  uninstall <package>      Remove packages from the system");
+    print_message("  upgrade                  Upgrade all installed packages to the latest versions");
+    print_message("  clean                    Clean up package source files and temporary directories");
+    print_message("  index <repo>             Create a CPKINDEX file for a local repository");
+    print_message("  archive <prtdir> <repo>  Create .cpk archive(s) from a directory containing ports");
+    print_message("  help                     Show this help message");
+    print_message("  version                  Show version information");
 
     print_message("\nOptions:");
-    print_message("  -c, --config <file>    Set an alternative configuration file (default: /etc/cpk/cpk.conf)");
-    print_message("  -r, --root <path>      Set an alternative installation root (default: /)");
-    print_message("  -C, --color            Show colorized output messages");
-    print_message("  -v, --verbose          Show verbose output messages");
-    print_message("  -h, --help             Print this help information");
-    print_message("  -V, --version          Print version information");
+    print_message("  -c, --config <file>      Set an alternative configuration file (default: /etc/cpk.conf)");
+    print_message("  -r, --root <path>        Set an alternative installation root (default: /)");
+    print_message("  -C, --color              Show colorized output messages");
+    print_message("  -v, --verbose            Show verbose output messages");
+    print_message("  -h, --help               Print this help information");
+    print_message("  -V, --version            Print version information");
 
 
 }
@@ -252,6 +265,7 @@ bool load_cpk_config(const std::string& config_file) {
         iss >> key;
 
         if (key == "cpk_repo_url") {
+            iss >> CPK_REPO_URL;
         } else if (key == "cpk_home_dir") {
             iss >> CPK_HOME_DIR;
         } else if (key == "cpk_install_root") {
@@ -488,4 +502,131 @@ std::vector<std::string> find_public_keys(const std::string& directory) {
     }
 
     return pub_keys;
+}
+
+// Helper function to create a directory if it doesn't exist
+void ensure_directory(const fs::path &dir) {
+    if (!fs::exists(dir)) {
+        fs::create_directories(dir);
+    }
+}
+
+// Function to get local files from sources list
+std::vector<std::string> get_local_files(const std::vector<std::string> &sources) {
+    std::vector<std::string> local_files = {"Pkgfile", ".footprint", ".signature", "pre-install", "post-install", "README"};
+    std::regex url_regex("^(https?|ftp)://");
+    for (const auto &item : sources) {
+        if (!std::regex_match(item, url_regex)) {
+            local_files.push_back(item);
+        }
+    }
+    return local_files;
+}
+
+// Function to copy files from source to destination directory
+void copy_files(const fs::path &source_dir, const fs::path &dest_dir, const std::vector<std::string> &files) {
+    create_directory(dest_dir);
+    for (const auto &file : files) {
+        fs::path src = source_dir / file;
+        fs::path dest = dest_dir / file;
+        if (fs::exists(src)) {
+            fs::copy(src, dest, fs::copy_options::overwrite_existing);
+        }
+    }
+}
+
+// Function to package files into a .cpk archive
+void package_files(const std::string &name, const std::string &version, const std::string &release, const std::string &arch, const fs::path &output_dir) {
+    fs::path package_path = output_dir / (name + "#" + version + "-" + release + "." + arch + ".cpk");
+
+    struct archive *a = archive_write_new();
+    archive_write_set_format_pax_restricted(a);
+    archive_write_open_filename(a, package_path.c_str());
+
+    fs::path basedir = output_dir / name;
+    for (const auto &entry : fs::recursive_directory_iterator(basedir)) {
+        if (!entry.is_regular_file()) {
+            // Ommit non-regular files (directories, symlinks, etc.)
+            continue;
+        }
+
+        struct archive_entry *entry_struct = archive_entry_new();
+
+        // Relative path to .cpk file
+        fs::path rel_path = fs::relative(entry.path(), output_dir);
+        archive_entry_set_pathname(entry_struct, rel_path.c_str());
+
+        // Setup basic file properties
+        auto filesize = fs::file_size(entry.path());
+        archive_entry_set_size(entry_struct, filesize);
+        archive_entry_set_filetype(entry_struct, AE_IFREG);
+        archive_entry_set_perm(entry_struct, 0644);
+
+        // Write file header
+        archive_write_header(a, entry_struct);
+
+        // Write contents of the file
+        std::ifstream file(entry.path(), std::ios::binary);
+        std::vector<char> buffer(filesize);
+        file.read(buffer.data(), buffer.size());
+        archive_write_data(a, buffer.data(), buffer.size());
+
+        archive_entry_free(entry_struct);
+    }
+
+    archive_write_close(a);
+    archive_write_free(a);
+
+    // Clean up temporary directory
+    fs::remove_all(basedir);
+}
+
+
+// Function to update the index of a local repositor
+void generate_cpk_index(const fs::path &repo_dir) {
+    std::vector<std::string> cpk_files;
+    for (const auto &entry : fs::directory_iterator(repo_dir)) {
+        if (entry.is_regular_file() && entry.path().extension() == ".cpk") {
+            cpk_files.push_back(entry.path().filename().string());
+        }
+    }
+
+    std::sort(cpk_files.rbegin(), cpk_files.rend());
+
+    fs::path index_tmp = repo_dir / "CPKINDEX.tmp";
+    std::ofstream index_file(index_tmp);
+    for (const auto &file : cpk_files) {
+        index_file << file << "\n";
+    }
+    index_file.close();
+
+    fs::rename(index_tmp, repo_dir / "CPKINDEX");
+}
+
+// Function to get system architecture
+std::string get_system_architecture() {
+    std::string uname_cmd = "uname";
+    std::vector<std::string> uname_args = { "-m" };
+    std::string uname_output;
+
+    // Run the command
+    if (shellcmd(uname_cmd, uname_args, &uname_output, false) != 0 || uname_output.empty()) {
+        print_message("Failed to get system architecture, defaulting to x86_64", YELLOW);
+        uname_output = "x86_64";
+    }
+
+    // Remove newline characters
+    uname_output.erase(std::remove(uname_output.begin(), uname_output.end(), '\n'), uname_output.end());
+
+    // Normalize architecture names
+    if (uname_output == "aarch64" || uname_output == "arm64") {
+        return "arm64";
+    } else if (uname_output == "armv7l" || uname_output == "armv6l") {
+        return "armhf";
+    } else if (uname_output == "x86_64" || uname_output == "amd64") {
+        return "x86_64";
+    } else {
+        print_message("Warning: Unrecognized architecture '" + uname_output + "'", YELLOW);
+        return uname_output;
+    }
 }

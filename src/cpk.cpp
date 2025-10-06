@@ -88,6 +88,10 @@ int main(int argc, char* argv[]) {
         cmd_upgrade(args);
     } else if (command == "clean") {
         cmd_clean(args);
+    } else if (command == "index") {
+        cmd_index(args);
+    } else if (command == "archive") {
+        cmd_archive(args);
     } else if (command == "version") {
         print_version();
     } else {
@@ -363,7 +367,9 @@ void cmd_build(const std::vector<std::string>& args) {
     // Build the package
     std::vector<std::string> pkgmk_args = { "-d" };
     std::string pkgmk_output;
-
+    if (CPK_VERBOSE) {
+        print_header("Running '" + CPK_PKGMK_CMD + "' in " + package_source);
+    }
     int ret = shellcmd(CPK_PKGMK_CMD, pkgmk_args, &pkgmk_output, true);
 
     if (ret != 0) {
@@ -501,6 +507,10 @@ void cmd_clean(const std::vector<std::string>& args) {
 
     std::string excluded_file = "CPKINDEX";
 
+    if (CPK_VERBOSE) {
+        print_header("Cleaning cache contents", BLUE);
+    }
+
     if (fs::exists(CPK_HOME_DIR) && fs::is_directory(CPK_HOME_DIR)) {
         // Iterate over directory contents and remove them
         for (const auto& entry : fs::directory_iterator(CPK_HOME_DIR)) {
@@ -514,5 +524,90 @@ void cmd_clean(const std::vector<std::string>& args) {
         print_message("Path does not exists or is not a directory " + CPK_HOME_DIR, RED);
     }
 
+    return;
+}
+
+// Function to parse a Pkgfile and extract package details
+void cmd_index(const std::vector<std::string>& args) {
+    if (args.size() != 1) {
+        return;
+    }
+    fs::path repo_dir = args[0];
+    if (!fs::is_directory(repo_dir)) {
+        print_message("Directory does not exist: " + repo_dir.string(), RED);
+        return;
+    }
+    if (CPK_VERBOSE) {
+        print_header("Updating index of local repository", BLUE);
+    }
+    generate_cpk_index(repo_dir);
+    return;
+}
+
+// Function to archive packages from a ports directory
+void cmd_archive(const std::vector<std::string>& args) {
+    if (args.size() != 2) {
+        print_message("Usage: cpk archive <prtdir> <repo>", YELLOW);
+        return;
+    }
+    fs::path ports_dir = args[0];
+    fs::path output_dir = args[1];
+    ensure_directory(output_dir);
+
+    std::string arch = get_system_architecture();
+
+    if (CPK_VERBOSE) {
+        print_header("Creating .cpk archive(s) from ports in " + ports_dir.string(), BLUE);
+    }
+
+    if (!fs::is_directory(ports_dir)) {
+        print_message("Directory does not exist: " + ports_dir.string(), RED);
+        return;
+    }
+
+    // Iterate over port directories
+    for (const auto &entry : fs::recursive_directory_iterator(ports_dir)) {
+        //if (entry.path().extension().string().find(".pkg.") != std::string::npos) {
+
+        if (!entry.is_regular_file()) continue;
+
+        fs::path package_path = entry.path();
+        std::string package = package_path.filename().string();
+
+        // Detect known compressed pkg formats
+        if ((package.ends_with(".pkg.tar.gz") || package.ends_with(".pkg.tar.bz2") || package.ends_with(".pkg.tar.xz"))) {
+            if (CPK_VERBOSE) {
+                print_message("Processing package file: " + entry.path().string());
+            }
+
+            std::string package_prefix = package.substr(0, package.find(".pkg."));
+            fs::path package_dir = package_path.parent_path();
+            std::ifstream pkgfile(package_dir / "Pkgfile");
+            if (!pkgfile) continue;
+
+            std::string name, version, release;
+            std::vector<std::string> sources;
+            std::string line;
+            while (std::getline(pkgfile, line)) {
+                if (line.find("name=") == 0) name = line.substr(5);
+                else if (line.find("version=") == 0) version = line.substr(8);
+                else if (line.find("release=") == 0) release = line.substr(8);
+                else if (line.find("source=(") == 0) {
+                    line = line.substr(7, line.length() - 8); // Remove 'source=(' and ')'
+                    sources.push_back(line);
+                }
+            }
+
+            if (package_prefix == name + "#" + version + "-" + release) {
+                print_message("Packaging " + output_dir.string() + "/" + package_prefix + "." + arch + ".cpk");
+                fs::path basedir = output_dir / name / (version + "-" + release);
+                ensure_directory(basedir);
+                auto local_files = get_local_files(sources);
+                copy_files(package_dir, basedir, local_files);
+                fs::copy(package_path, basedir / package, fs::copy_options::overwrite_existing);
+                package_files(name, version, release, arch, output_dir);
+            }
+        }
+    }
     return;
 }
