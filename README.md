@@ -4,26 +4,43 @@ CRUX Package Keeper is a toolset designed to efficiently manage packages and the
 
 ## Motivation
 
-While maintaining several CRUX installations, I ran into some recurring issues:
+In CRUX, binary packages (`.pkg.tar.gz`, `.pkg.tar.bz2`, `.pkg.tar.xz`) are intentionally minimal. While this design keeps packages lightweight, it also comes with some drawbacks:
 
-- **Multiple installations** - I often had to rebuild packages from scratch on each machine instead of reusing already compiled ones.
+- No record of the build-time dependencies used during compilation.
+- No inclusion of the local sources provided by the port, which are sometimes required to build or properly configure the package.
+- No pre-install or post-install scripts that may be required for proper setup.
+- No inclusion of the README file that often provides important usage or configuration notes.
+- No explicit reference to the target architecture, which makes it harder to manage multi-architecture environments (e.g., `x86_64`, `arm64`, `armhf`).
 
-- **Lack of source traceability** - After generating many `.pkg.tar.*` files across systems, it became difficult to know which source and/or version was used to build each package.
+Because of these limitations, binary packages alone are not fully self-descriptive. Installing them without access to the corresponding port source may reduce portability and reliability, as important contextual information is missing.
 
-- **Multi-architecture support** - Working with different architectures (x86_64, arm64, armhf, etc.), I noticed that the `.pkg.tar.*` format does not provide a clear way to distinguish between them, making package management more complex.
-
-To solve these challenges in a practical way, I created **CRUX Package Keeper (cpk)**. The `.cpk` format addresses the problem of not knowing which source was used to build a package by combining the `.pkg.tar.xz` file with the source tree used at the time of compilation. Additionally, it includes a signature to verify the integrity of the source. This way, I can store and reuse the same packages across different machines without losing track of their origins or integrity.
+`cpk` addresses these issues by embedding the complete port source within the package and extending the package format to include the target architecture in its name. This makes packages:
+- **Self-contained** — all relevant metadata and sources are included.
+- **Reproducible** — rebuilds can be performed reliably using the embedded port.
+- **Auditable** — users can inspect the exact sources and instructions used to build the package.
+- **Multi-architecture aware** — different builds of the same package (e.g., `pkgname#1.0-1.x86_64.cpk`, `pkgname#1.0-1.arm64.cpk`).
 
 
 ## Features
 
-- Centralize and standardize package and source management.
+- Centralized and standardized package + source management.
+- Safe reuse of pre-built packages across different machines.
+- Clear metadata about the source and build process of each package.
+- Native multi-architecture support with explicit architecture identifiers.
 
-- Enable safe reuse of pre-built packages across different machines.
 
-- Maintain clear metadata about the source of each package.
+## Relation to pkgutils
 
-- Provide native multi-architecture support.
+`cpk` is not a replacement for `pkgutils` but an extension built on top of it.
+All low-level package management tasks (installation, removal, querying, etc.) are still handled by `pkgadd`, `pkgrm`, `pkginfo`, `pkgmk` and related tools from `pkgutils`.
+
+What `cpk` adds on top is:
+
+- A richer package format (`.cpk`) that embeds port sources, metadata, and architecture information.
+- Higher-level commands (`cpk search`, `cpk verify`, `cpk diff`, etc.) that extend the functionality of `pkgutils`.
+- Improved portability and reproducibility while maintaining full compatibility with the existing CRUX ecosystem.
+
+In short, `pkgutils` does the heavy lifting, while `cpk` provides the missing context and metadata.
 
 
 ## How it works
@@ -39,6 +56,35 @@ It consists of three main parts:
 
 
 ## Basic Usage
+
+```
+cpk <command> [options]
+
+Commands:
+  update                   Update the index of available packages
+  info <package>           Show information about installed or available packages
+  search <keyword>         Search for packages by name or keyword
+  list                     List all installed packages
+  diff                     Show differences between installed and available packages
+  verify <package>         Verify integrity of package source files
+  build <package>          Build a package from source files
+  install <package>        Install or upgrade packages on the system
+  uninstall <package>      Remove packages from the system
+  upgrade                  Upgrade all installed packages to the latest versions
+  clean                    Clean up package source files and temporary directories
+  index <repo>             Create a CPKINDEX file for a local repository
+  archive <prtdir> <repo>  Create .cpk archive(s) from a directory containing ports
+  help                     Show this help message
+  version                  Show version information
+
+Options:
+  -c, --config <file>      Set an alternative configuration file (default: /etc/cpk.conf)
+  -r, --root <path>        Set an alternative installation root (default: /)
+  -C, --color              Show colorized output messages
+  -v, --verbose            Show verbose output messages
+  -h, --help               Print this help information
+  -V, --version            Print version information
+```
 
 ### **Install and remove packages**  
 
