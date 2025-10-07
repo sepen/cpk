@@ -47,6 +47,7 @@ void copy_files(const fs::path &source_dir, const fs::path &dest_dir, const std:
 void package_files(const std::string &name, const std::string &version, const std::string &release, const std::string &arch, const fs::path &output_dir);
 void generate_cpk_index(const fs::path &repo_dir);
 std::string get_system_architecture();
+std::vector<std::string> get_installed_packages();
 
 #endif  // UTILS_H
 
