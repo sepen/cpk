@@ -64,3 +64,29 @@ The repository files created inside the container are automatically available on
 ```shell
 $(pwd)/crux-volume/cpk-repo
 ```
+
+### IMPORTANT: Note on containers and overlayfs
+
+When running `cpk` inside containers (e.g. with Podman or Docker), you may encounter issues with overlayfs restrictions when writing to bind-mounted volumes. In particular, the command:
+```shell
+cpk archive /usr/ports /cpk-repo
+```
+might fail with a "Permission denied" error when writing into `/cpk-repo`, if that path is a mounted volume. This is a known limitation of overlayfs and fuse-overlayfs, especially on ARM64.
+
+**Workaround**: run the archive process into a temporary directory inside the container and then move the results into the mounted volume:
+```shell
+cpk archive /usr/ports /cpk-repo.tmp
+mv /cpk-repo.tmp/* /cpk-repo/
+```
+
+When running `prt-get sysup` it may fail with errors when **pkgadd** tries to create device nodes such as `/dev/console`:
+```shell
+mknod: /dev/console: Operation not permitted
+```
+
+This happens because containers often lack the necessary privileges to create special device files.
+
+**Workaround**: run `prt-get sysup` under **fakeroot** to avoid permission errors:
+```shell
+fakeroot prt-get sysup
+```
