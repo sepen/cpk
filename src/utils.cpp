@@ -630,3 +630,29 @@ std::string get_system_architecture() {
         return uname_output;
     }
 }
+
+// Function to get installed packages
+std::vector<std::string> get_installed_packages() {
+    std::vector<std::string> installed_packages;
+    std::vector<std::string> pkginfo_args = { "-i" };
+    std::string pkginfo_output;
+
+    if (shellcmd(CPK_PKGINFO_CMD, pkginfo_args, &pkginfo_output, false) != 0) {
+        print_message("Failed to get list of installed packages", RED);
+    }
+    else {
+        std::istringstream stream(pkginfo_output);
+        std::string line;
+
+        while (std::getline(stream, line)) {
+            std::istringstream line_stream(line);
+            std::string pkgname;
+            line_stream >> pkgname; // Extract the package name (first column)
+            if (!pkgname.empty()) {
+                installed_packages.push_back(pkgname);
+            }
+        }
+    }
+
+    return installed_packages;
+}

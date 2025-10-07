@@ -39,12 +39,14 @@ $CONTAINER_ENGINE run -it \
 
 Common workflow inside the container:
 ```shell
-# Install cpk from ports
+# Build and install cpk from ports
 cd /etc/ports && \
     curl -sS -L -O https://raw.githubusercontent.com/sepen/crux-ports-sepen/main/sepen.httpup && \
     cd -
 ports -u sepen
-prt-get install cpk
+cd /usr/ports/sepen/cpk && \
+    pkgmk -d -im -is && pkgadd cpk*.pkg.tar.* && \
+    cd -
 # Upgrade system with packages from upstream repository
 cpk update
 cpk diff
