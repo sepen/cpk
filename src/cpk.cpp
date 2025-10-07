@@ -521,7 +521,6 @@ void cmd_upgrade(const std::vector<std::string>& args) {
         std::string package, pkgname, pkgver, pkgarch;
         if (find_package(pkg, package, pkgname, pkgver, pkgarch)) {
             if (is_package_installed(pkgname)) {
-                print_message("Upgrading package " + pkgname);
                 cmd_install({pkgname, "--upgrade"});
             }
             else {
