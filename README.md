@@ -2,6 +2,15 @@
 
 CRUX Package Keeper is a toolset designed to efficiently manage packages and their sources in CRUX environments.
 
+
+## Features
+
+- Centralized and standardized package + source management.
+- Safe reuse of pre-built packages across different machines.
+- Clear metadata about the source and build process of each package.
+- Native multi-architecture support with explicit architecture identifiers.
+
+
 ## Motivation
 
 In CRUX, binary packages (`.pkg.tar.gz`, `.pkg.tar.bz2`, `.pkg.tar.xz`) are intentionally minimal. While this design keeps packages lightweight, it also comes with some drawbacks:
@@ -21,14 +30,6 @@ Because of these limitations, binary packages alone are not fully self-descripti
 - **Multi-architecture aware** — different builds of the same package (e.g., `pkgname#1.0-1.x86_64.cpk`, `pkgname#1.0-1.arm64.cpk`).
 
 
-## Features
-
-- Centralized and standardized package + source management.
-- Safe reuse of pre-built packages across different machines.
-- Clear metadata about the source and build process of each package.
-- Native multi-architecture support with explicit architecture identifiers.
-
-
 ## Relation to pkgutils
 
 `cpk` is not a replacement for `pkgutils` but an extension built on top of it.
@@ -41,16 +42,6 @@ What `cpk` adds on top is:
 - Improved portability and reproducibility while maintaining full compatibility with the existing CRUX ecosystem.
 
 In short, `pkgutils` does the heavy lifting, while `cpk` provides the missing context and metadata.
-
-
-## How it works
-
-`cpk` extends the standard CRUX toolchain to provide a structured way of handling packages and their sources.
-It consists of three main parts:
-
-- **Binaries** – command-line tools to create, verify, and manage .cpk packages.
-- **Configuration** – integrates with existing CRUX tools like ports, prt-get, and pkgutils.
-- **Storage** – a dedicated directory `/var/lib/cpk/` where packages and their corresponding sources are stored.
 
 
 ## Basic Usage
