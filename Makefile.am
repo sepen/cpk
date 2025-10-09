@@ -6,7 +6,7 @@ cpk_SOURCES = src/cpk.cpp src/utils.cpp
 noinst_HEADERS = src/cpk.h src/utils.h
 
 AM_CPPFLAGS = -O2 -pipe -Isrc
-AM_CXXFLAGS = -std=c++20
+AM_CXXFLAGS = 
 
 cpk_CPPFLAGS = $(LIBARCHIVE_CFLAGS) $(LIBCURL_CFLAGS)
 cpk_LDADD = $(LIBARCHIVE_LIBS) $(LIBCURL_LIBS)
