@@ -45,13 +45,11 @@ In short, `pkgutils` does the heavy lifting, while `cpk` provides the missing co
 
 ## How it works
 
-CPK extends the standard CRUX toolchain to provide a structured way of handling packages and their sources.
+`cpk` extends the standard CRUX toolchain to provide a structured way of handling packages and their sources.
 It consists of three main parts:
 
 - **Binaries** – command-line tools to create, verify, and manage .cpk packages.
-
 - **Configuration** – integrates with existing CRUX tools like ports, prt-get, and pkgutils.
-
 - **Storage** – a dedicated directory `/var/lib/cpk/` where packages and their corresponding sources are stored.
 
 
