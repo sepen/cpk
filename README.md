@@ -86,52 +86,116 @@ Options:
   -V, --version            Print version information
 ```
 
-### **Install and remove packages**  
+## Command Reference
 
-Install a package directly from internet repositories:  
-```sh
-cpk install htop
-```
+### `cpk update`
 
-Alternatively you can pass the whole version string:
-```sh
-cpk install htop#3.4.1-1.x86_64.cpk
-```
+**Usage**: (no arguments)
 
-Install local stored package:
-```sh
-cpk install ~/packages/htop#3.4.1-1.x86_64.cpk
-```
+- Ensures `CPK_HOME_DIR` exists; otherwise prints an error.
+- Downloads `CPKINDEX` from `${CPK_REPO_URL}/CPKINDEX` into `CPK_HOME_DIR`.
+- Counts available packages and prints the total.
 
-Cleanly uninstall a package:
-```sh
-cpk remove htop
-```
+### `cpk info <package>`
 
-### **Build from source**
+**Usage**: one argument (package name or key)
 
-Build a package from its port:
-```sh
-cpk build htop
-```
+- Finds the package in `CPKINDEX`.
+- If not yet downloaded, fetches and extracts the `.cpk` archive.
+- Parses the `Pkgfile` and displays fields like Name, Version, Arch, Description, URL, and Dependencies.
 
-The port source tree used to build each version of the package is stored in separate directories under the same `/var/lib/cpk/` directory. For example, sources for `htop` version `3.4.1-1` would be located at: 
-```sh
-/var/lib/cpk/htop/3.4.1-1/
-```
+### `cpk search <term>`
 
-Similarly, if you have another version, such as `htop` version `3.4.0-1`, the source would be stored in:
-```sh
-/var/lib/cpk/htop/3.4.0-1/
-```
+**Usage**: one argument (substring to match)
 
+- Opens `CPKINDEX` and searches all lines containing the given term.
+- Displays all matches in a formatted list, or shows a “no matches found” message.
 
-### **List or query packages**
+### `cpk list`
 
-```sh
-cpk list
-cpk info htop
-```
+**Usage**: (no arguments)
+
+- Runs `pkginfo -i` to list installed packages on the system.
+- Prints a formatted table of package names and versions.
+
+### `cpk diff`
+
+**Usage**: (no arguments)
+
+- Loads installed packages using `pkginfo -i`.
+- For each one, looks up the version in the remote index (`CPKINDEX`).
+- Shows all entries where the local version differs from the repository version.
+
+### `cpk verify <package>`
+
+**Usage**: one argument (package name or key)
+
+- Locates the package in the index and downloads it if missing.
+- Runs `pkgmk -do` to ensure all source files are fetched.
+- Attempts to verify the `.signature` using public keys found under `/etc/ports/`.
+- Reports success if any key verifies, otherwise shows an error.
+
+### `cpk build <package>`
+
+**Usage**: one argument (package name or key)
+
+- Finds the package and downloads/extracts it if needed.
+- Runs `pkgmk -d` inside the source directory to build the package.
+- Prints a success message or an error if the build fails.
+
+### `cpk install <package> [--upgrade]`
+
+**Usage**: one required argument (package name or key), optional `--upgrade`
+
+- Finds the package in the repository index.
+- If already installed:
+- Continues only if `--upgrade` is specified; otherwise prints a warning.
+- Ensures the package archive exists locally.
+- Executes pre-install and post-install scripts when present.
+- Runs `pkgadd -r <CPK_INSTALL_ROOT> [ -u ] <package_file>` to install or upgrade.
+- Displays the README (if available) after installation.
+
+### `cpk uninstall <package>`
+
+**Usage**: one argument (package name or key)
+
+- Checks if the package is installed; exits if not.
+- Executes `pkgrm -r <CPK_INSTALL_ROOT> <pkgname>` to remove it.
+- Reports errors or success accordingly.
+
+### `cpk upgrade [pkg ...]`
+
+**Usage**: zero or more package names
+
+- If no arguments: loads all installed packages (bulk upgrade not fully implemented).
+- For each package:
+  - Checks if an update exists in the repo and calls `cpk install --upgrade` when needed.
+  - Skips missing or uninstalled packages and logs them in verbose mode.
+
+### `cpk clean`
+
+**Usage**: (no arguments)
+
+- Scans `CPK_HOME_DIR` and removes all files and directories except `CPKINDEX`.
+- Prints status messages for each deletion and confirms cleanup completion.
+
+### `cpk index <repo>`
+
+**Usage**: one argument (local repository path)
+
+- Validates that the argument is a directory.
+- Rebuild or update the local `CPKINDEX`.
+
+### `cpk archive <portsdir> <repo>`
+
+**Usage**: two arguments (<portsdir> <repo>)
+
+- Recursively scans `<portsdir>` for built packages (*.pkg.tar.gz, .bz2, .xz).
+- Reads Pkgfile in each directory to extract name, version, release, and source fields.
+- Validates package filename format (`name#version-release.pkg.tar.*`).
+- Copies files and metadata into `<repo>/<name>/<version-release>` and creates `.cpk` archives.
+- Prints progress and summary messages (verbose mode supported).
+
 
 ## Contributing
 
