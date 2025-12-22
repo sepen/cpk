@@ -48,6 +48,7 @@ void package_files(const std::string &name, const std::string &version, const st
 void generate_cpk_index(const fs::path &repo_dir);
 std::string get_system_architecture();
 std::vector<std::string> get_installed_packages();
+std::string calculate_sha256(const std::string &file_path);
 
 #endif  // UTILS_H
 

@@ -656,3 +656,34 @@ std::vector<std::string> get_installed_packages() {
 
     return installed_packages;
 }
+
+// Function to calculate SHA256 checksum of a file
+std::string calculate_sha256(const std::string &file_path) {
+    std::string checksum;
+    std::vector<std::string> sha256sum_args;
+
+    // Try sha256sum first (Linux), then shasum -a 256 (macOS/BSD)
+    std::string sha256sum_cmd = "sha256sum";
+    sha256sum_args.push_back(file_path);
+    std::string sha256sum_output;
+
+    int ret = shellcmd(sha256sum_cmd, sha256sum_args, &sha256sum_output, false);
+
+    if (ret != 0) {
+        // Try shasum -a 256 as fallback
+        sha256sum_cmd = "shasum";
+        sha256sum_args.clear();
+        sha256sum_args.push_back("-a");
+        sha256sum_args.push_back("256");
+        sha256sum_args.push_back(file_path);
+        ret = shellcmd(sha256sum_cmd, sha256sum_args, &sha256sum_output, false);
+    }
+
+    if (ret == 0 && !sha256sum_output.empty()) {
+        // Extract checksum (first 64 characters before space)
+        std::istringstream iss(sha256sum_output);
+        iss >> checksum;
+    }
+
+    return checksum;
+}
