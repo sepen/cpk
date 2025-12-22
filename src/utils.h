@@ -49,6 +49,7 @@ void generate_cpk_index(const fs::path &repo_dir);
 std::string get_system_architecture();
 std::vector<std::string> get_installed_packages();
 std::string calculate_sha256(const std::string &file_path);
+bool parse_cpk_info(const std::string &info_file_path, std::string &name, std::string &version, std::string &arch, std::string &description, std::string &url, std::string &dependencies);
 
 #endif  // UTILS_H
 

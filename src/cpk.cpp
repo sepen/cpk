@@ -145,30 +145,31 @@ void cmd_info(const std::vector<std::string>& args) {
     std::string package, pkgname, pkgver, pkgarch;
     if (!find_package(args[0], package, pkgname, pkgver, pkgarch)) return;
 
-    std::string package_url = CPK_REPO_URL + "/" + url_encode(package);
-    std::string package_source = CPK_HOME_DIR + "/" + pkgname + "/" + pkgver;
-    std::string package_path = CPK_HOME_DIR + "/" + package;
+    // Download .cpk.info file instead of .cpk
+    std::string info_filename = package + ".info";
+    std::string info_url = CPK_REPO_URL + "/" + url_encode(info_filename);
+    std::string info_path = CPK_HOME_DIR + "/" + info_filename;
 
-    if (!fs::is_directory(package_source)) {
-        if (!download_file(package_url, package_path) || !extract_package(package_path, CPK_HOME_DIR)) {
+    if (!fs::exists(info_path)) {
+        if (!download_file(info_url, info_path, false)) {
             print_message("Failed to retrieve package info", RED);
             return;
         }
     }
 
-    std::string pkgfile_path = package_source + "/Pkgfile";
-    std::string pkgdesc, pkgurl, pkgdeps;
-    if (!fs::exists(pkgfile_path) || !parse_pkgfile(pkgfile_path, pkgname, pkgdesc, pkgurl, pkgdeps)) {
-        print_message("Failed to parse Pkgfile", RED);
+    // Parse .cpk.info file
+    std::string name, version, arch, description, url, dependencies;
+    if (!parse_cpk_info(info_path, name, version, arch, description, url, dependencies)) {
+        print_message("Failed to parse .cpk.info file", RED);
         return;
     }
 
-    print_message(BOLD + "Name         " + NONE + "| " + pkgname);
-    print_message(BOLD + "Version      " + NONE + "| " + pkgver);
-    print_message(BOLD + "Arch         " + NONE + "| " + pkgarch);
-    print_message(BOLD + "Description  " + NONE + "| " + ltrim(pkgdesc));
-    print_message(BOLD + "URL          " + NONE + "| " + ltrim(pkgurl));
-    print_message(BOLD + "Dependencies " + NONE + "| " + ltrim(pkgdeps));
+    print_message(BOLD + "Name         " + NONE + "| " + name);
+    print_message(BOLD + "Version      " + NONE + "| " + version);
+    print_message(BOLD + "Arch         " + NONE + "| " + arch);
+    print_message(BOLD + "Description  " + NONE + "| " + description);
+    print_message(BOLD + "URL          " + NONE + "| " + url);
+    print_message(BOLD + "Dependencies " + NONE + "| " + dependencies);
 }
 
 // Function to search for a package or description

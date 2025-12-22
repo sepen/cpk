@@ -687,3 +687,51 @@ std::string calculate_sha256(const std::string &file_path) {
 
     return checksum;
 }
+
+// Function to parse a .cpk.info file
+bool parse_cpk_info(const std::string &info_file_path, std::string &name, std::string &version, std::string &arch, std::string &description, std::string &url, std::string &dependencies) {
+    std::ifstream infile(info_file_path);
+    if (!infile.is_open()) {
+        return false;
+    }
+
+    std::string line;
+    while (std::getline(infile, line)) {
+        // Skip empty lines and comments
+        if (line.empty() || line[0] == '#') {
+            continue;
+        }
+
+        // Find the colon separator
+        size_t colon_pos = line.find(':');
+        if (colon_pos == std::string::npos) {
+            continue;
+        }
+
+        std::string key = line.substr(0, colon_pos);
+        std::string value = line.substr(colon_pos + 1);
+
+        // Trim whitespace from key and value
+        key.erase(0, key.find_first_not_of(" \t"));
+        key.erase(key.find_last_not_of(" \t") + 1);
+        value.erase(0, value.find_first_not_of(" \t"));
+        value.erase(value.find_last_not_of(" \t") + 1);
+
+        if (key == "name") {
+            name = value;
+        } else if (key == "version") {
+            version = value;
+        } else if (key == "arch") {
+            arch = value;
+        } else if (key == "description") {
+            description = value;
+        } else if (key == "url") {
+            url = value;
+        } else if (key == "dependencies") {
+            dependencies = value;
+        }
+    }
+
+    infile.close();
+    return true;
+}
