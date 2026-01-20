@@ -211,40 +211,256 @@ void print_version() {
     print_message("cpk " + CPK_VERSION);
 }
 
-// Display the help message
-void print_help() {
-    print_message("CRUX Package Keeper - package management tool for CRUX Linux");
-
-    print_message("\nUsage:");
-    print_message("  cpk <command> [options]");
-
-    print_message("\nCommands:");
-    print_message("  update                   Update the index of available packages");
-    print_message("  info <package>           Show information about installed or available packages");
-    print_message("  deps <package>           Show package dependencies");
-    print_message("  search <keyword>         Search for packages by name or keyword");
-    print_message("  list                     List all installed packages");
-    print_message("  diff                     Show differences between installed and available packages");
-    print_message("  verify <package>         Verify integrity of package source files");
-    print_message("  build <package>          Build a package from source files");
-    print_message("  install <package>        Install or upgrade packages on the system");
-    print_message("  uninstall <package>      Remove packages from the system");
-    print_message("  upgrade                  Upgrade all installed packages to the latest versions");
-    print_message("  clean                    Clean up package source files and temporary directories");
-    print_message("  index <repo>             Create a CPKINDEX file for a local repository");
-    print_message("  archive <prtdir> <repo>  Create .cpk archive(s) from a directory containing ports");
-    print_message("  help                     Show this help message");
-    print_message("  version                  Show version information");
-
-    print_message("\nOptions:");
+// Display general options
+void print_general_options() {
+    print_message("\nGeneral Options:");
     print_message("  -c, --config <file>      Set an alternative configuration file (default: /etc/cpk.conf)");
     print_message("  -r, --root <path>        Set an alternative installation root (default: /)");
     print_message("  -C, --color              Show colorized output messages");
     print_message("  -v, --verbose            Show verbose output messages");
     print_message("  -h, --help               Print this help information");
     print_message("  -V, --version            Print version information");
+}
 
+// Display help for specific commands
+void print_help_info() {
+    print_message("Usage: cpk info <package> [--field]");
+    print_message("\nDescription:");
+    print_message("  Show information about installed or available packages");
+    print_message("\nArguments:");
+    print_message("  <package>                Package name");
+    print_message("\nFields:");
+    print_message("  --name                   Show package name only");
+    print_message("  --version                 Show package version only");
+    print_message("  --arch                   Show package architecture only");
+    print_message("  --description             Show package description only");
+    print_message("  --url                     Show package URL only");
+    print_message("  --dependencies            Show package dependencies only");
+    print_message("\nExamples:");
+    print_message("  cpk info vim");
+    print_message("  cpk info vim --version");
+    print_message("  cpk info vim --dependencies");
+    print_general_options();
+}
 
+void print_help_install() {
+    print_message("Usage: cpk install <package> [--upgrade]");
+    print_message("       cpk add <package> [--upgrade]");
+    print_message("\nDescription:");
+    print_message("  Install or upgrade packages on the system");
+    print_message("\nArguments:");
+    print_message("  <package>                Package name");
+    print_message("  --upgrade                Upgrade package if already installed");
+    print_message("\nAliases:");
+    print_message("  add                     Alias for install");
+    print_message("\nExamples:");
+    print_message("  cpk install vim");
+    print_message("  cpk add vim --upgrade");
+    print_general_options();
+}
+
+void print_help_uninstall() {
+    print_message("Usage: cpk uninstall <package>");
+    print_message("       cpk del <package>");
+    print_message("       cpk rm <package>");
+    print_message("\nDescription:");
+    print_message("  Remove packages from the system");
+    print_message("\nArguments:");
+    print_message("  <package>                Package name");
+    print_message("\nAliases:");
+    print_message("  del, rm                  Aliases for uninstall");
+    print_message("\nExamples:");
+    print_message("  cpk uninstall vim");
+    print_message("  cpk rm vim");
+    print_general_options();
+}
+
+void print_help_update() {
+    print_message("Usage: cpk update");
+    print_message("\nDescription:");
+    print_message("  Update the index of available packages from the repository");
+    print_message("\nExamples:");
+    print_message("  cpk update");
+    print_general_options();
+}
+
+void print_help_deps() {
+    print_message("Usage: cpk deps <package>");
+    print_message("\nDescription:");
+    print_message("  Show package dependencies (alias for 'cpk info --dependencies')");
+    print_message("\nArguments:");
+    print_message("  <package>                Package name");
+    print_message("\nExamples:");
+    print_message("  cpk deps vim");
+    print_general_options();
+}
+
+void print_help_search() {
+    print_message("Usage: cpk search <keyword>");
+    print_message("\nDescription:");
+    print_message("  Search for packages by name or keyword in the package index");
+    print_message("\nArguments:");
+    print_message("  <keyword>               Search term");
+    print_message("\nExamples:");
+    print_message("  cpk search vim");
+    print_message("  cpk search editor");
+    print_general_options();
+}
+
+void print_help_list() {
+    print_message("Usage: cpk list");
+    print_message("\nDescription:");
+    print_message("  List all installed packages");
+    print_message("\nExamples:");
+    print_message("  cpk list");
+    print_general_options();
+}
+
+void print_help_diff() {
+    print_message("Usage: cpk diff");
+    print_message("\nDescription:");
+    print_message("  Show differences between installed and available packages");
+    print_message("\nExamples:");
+    print_message("  cpk diff");
+    print_general_options();
+}
+
+void print_help_verify() {
+    print_message("Usage: cpk verify <package>");
+    print_message("\nDescription:");
+    print_message("  Verify integrity of package source files using signatures");
+    print_message("\nArguments:");
+    print_message("  <package>                Package name");
+    print_message("\nExamples:");
+    print_message("  cpk verify vim");
+    print_general_options();
+}
+
+void print_help_build() {
+    print_message("Usage: cpk build <package>");
+    print_message("\nDescription:");
+    print_message("  Build a package from source files using pkgmk");
+    print_message("\nArguments:");
+    print_message("  <package>                Package name");
+    print_message("\nExamples:");
+    print_message("  cpk build vim");
+    print_general_options();
+}
+
+void print_help_upgrade() {
+    print_message("Usage: cpk upgrade [<package>...]");
+    print_message("\nDescription:");
+    print_message("  Upgrade all installed packages to the latest versions");
+    print_message("  If package names are provided, only upgrade those packages");
+    print_message("\nArguments:");
+    print_message("  <package>                Optional: specific package(s) to upgrade");
+    print_message("\nExamples:");
+    print_message("  cpk upgrade");
+    print_message("  cpk upgrade vim busybox");
+    print_general_options();
+}
+
+void print_help_clean() {
+    print_message("Usage: cpk clean");
+    print_message("\nDescription:");
+    print_message("  Clean up package source files and temporary directories");
+    print_message("  Removes all cached packages except CPKINDEX");
+    print_message("\nExamples:");
+    print_message("  cpk clean");
+    print_general_options();
+}
+
+void print_help_index() {
+    print_message("Usage: cpk index <repo>");
+    print_message("\nDescription:");
+    print_message("  Create a CPKINDEX file for a local repository");
+    print_message("\nArguments:");
+    print_message("  <repo>                   Path to repository directory");
+    print_message("\nExamples:");
+    print_message("  cpk index /path/to/repo");
+    print_general_options();
+}
+
+void print_help_archive() {
+    print_message("Usage: cpk archive <prtdir> <repo>");
+    print_message("\nDescription:");
+    print_message("  Create .cpk archive(s) from a directory containing ports");
+    print_message("\nArguments:");
+    print_message("  <prtdir>                 Path to ports directory");
+    print_message("  <repo>                   Path to output repository directory");
+    print_message("\nExamples:");
+    print_message("  cpk archive /usr/ports /var/cpk/repo");
+    print_general_options();
+}
+
+// Display the help message
+void print_help(const std::string& command) {
+    if (command.empty()) {
+        // Basic help view
+        print_message("CRUX Package Keeper - package management tool for CRUX Linux");
+
+        print_message("\nUsage:");
+        print_message("  cpk <command> [options]");
+        print_message("  cpk help <command>    Show detailed help for a specific command");
+
+        print_message("\nCommands:");
+        print_message("  update                   Update the index of available packages");
+        print_message("  info <package> [--field] Show information about installed or available packages");
+        print_message("  deps <package>           Show package dependencies");
+        print_message("  search <keyword>         Search for packages by name or keyword");
+        print_message("  list                     List all installed packages");
+        print_message("  diff                     Show differences between installed and available packages");
+        print_message("  verify <package>         Verify integrity of package source files");
+        print_message("  build <package>          Build a package from source files");
+        print_message("  install <package> [--upgrade] Install or upgrade packages on the system");
+        print_message("  add <package> [--upgrade]    Alias for install");
+        print_message("  uninstall <package>      Remove packages from the system");
+        print_message("  del <package>            Alias for uninstall");
+        print_message("  rm <package>            Alias for uninstall");
+        print_message("  upgrade                  Upgrade all installed packages to the latest versions");
+        print_message("  clean                    Clean up package source files and temporary directories");
+        print_message("  index <repo>             Create a CPKINDEX file for a local repository");
+        print_message("  archive <prtdir> <repo>  Create .cpk archive(s) from a directory containing ports");
+        print_message("  help [<command>]         Show this help message or detailed help for a command");
+        print_message("  version                  Show version information");
+
+        print_general_options();
+    } else {
+        // Command-specific help
+        if (command == "info") {
+            print_help_info();
+        } else if (command == "install" || command == "add") {
+            print_help_install();
+        } else if (command == "uninstall" || command == "del" || command == "rm") {
+            print_help_uninstall();
+        } else if (command == "update") {
+            print_help_update();
+        } else if (command == "deps") {
+            print_help_deps();
+        } else if (command == "search") {
+            print_help_search();
+        } else if (command == "list") {
+            print_help_list();
+        } else if (command == "diff") {
+            print_help_diff();
+        } else if (command == "verify") {
+            print_help_verify();
+        } else if (command == "build") {
+            print_help_build();
+        } else if (command == "upgrade") {
+            print_help_upgrade();
+        } else if (command == "clean") {
+            print_help_clean();
+        } else if (command == "index") {
+            print_help_index();
+        } else if (command == "archive") {
+            print_help_archive();
+        } else {
+            print_message("Unknown command: " + command);
+            print_message("Run 'cpk help' to see available commands");
+            print_general_options();
+        }
+    }
 }
 
 // Function to extract tarball

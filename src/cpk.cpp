@@ -39,7 +39,7 @@ int main(int argc, char* argv[]) {
         } else if ((arg == "--verbose" || arg == "-v")) {
             CPK_VERBOSE = true;
         } else if (arg == "--help" || arg == "-h") {
-            print_help();
+            print_help("");
             return 0;
         } else if (arg == "--version" || arg == "-V") {
             print_version();
@@ -51,7 +51,7 @@ int main(int argc, char* argv[]) {
 
     // If no command is provided, print help
     if (command_args.empty()) {
-        print_help();
+        print_help("");
         return 1;
     }
 
@@ -86,7 +86,7 @@ int main(int argc, char* argv[]) {
         cmd_build(args);
     } else if (command == "install" || command == "add") {
         cmd_install(args);
-    } else if (command == "uninstall" || command == "del") {
+    } else if (command == "uninstall" || command == "del" || command == "rm") {
         cmd_uninstall(args);
     } else if (command == "upgrade") {
         cmd_upgrade(args);
@@ -96,10 +96,16 @@ int main(int argc, char* argv[]) {
         cmd_index(args);
     } else if (command == "archive") {
         cmd_archive(args);
+    } else if (command == "help") {
+        if (args.empty()) {
+            print_help();
+        } else {
+            print_help(args[0]);
+        }
     } else if (command == "version") {
         print_version();
     } else {
-        print_help();
+        print_help("");
     }
 
     return 0;
@@ -165,22 +171,15 @@ void cmd_info(const std::vector<std::string>& args) {
         return;
     }
 
-    // Download and extract package if not already done
-    std::string package_url = CPK_REPO_URL + "/" + url_encode(package);
-    std::string package_source = CPK_HOME_DIR + "/" + pkgname + "/" + pkgver;
-    std::string package_path = CPK_HOME_DIR + "/" + package;
-
-    if (!fs::is_directory(package_source)) {
-        if (!download_file(package_url, package_path) || !extract_package(package_path, CPK_HOME_DIR)) {
-            print_message("Failed to retrieve package info", RED);
+    // Download .cpk.info file directly from repository (faster than downloading the whole .cpk)
+    std::string info_url = CPK_REPO_URL + "/" + url_encode(package + ".info");
+    std::string info_path = CPK_HOME_DIR + "/" + package + ".info";
+    
+    if (!fs::exists(info_path)) {
+        if (!download_file(info_url, info_path)) {
+            print_message("Package info file not found", RED);
             return;
         }
-    }
-
-    std::string info_path = package_source + "/" + pkgname + ".cpk.info";
-    if (!fs::exists(info_path)) {
-        print_message("Package info file not found", RED);
-        return;
     }
 
     // Parse .cpk.info file
