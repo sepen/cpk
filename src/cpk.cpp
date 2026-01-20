@@ -237,15 +237,46 @@ void cmd_deps(const std::vector<std::string>& args) {
         return;
     }
 
-    // Download and extract package if not already done
-    std::string package_url = CPK_REPO_URL + "/" + url_encode(package);
-    std::string package_source = CPK_HOME_DIR + "/" + pkgname + "/" + pkgver;
-    std::string package_path = CPK_HOME_DIR + "/" + package;
+    // Build the info file URL (same as cmd_info)
+    std::string info_filename = pkgname + ".cpk.info";
+    std::string info_url = CPK_REPO_URL + "/" + url_encode(pkgname) + "/" + url_encode(pkgver) + "/" + url_encode(info_filename);
 
-    // Check if we need to download
-    std::string info_path = package_source + "/" + pkgname + ".cpk.info";
+    // Check if CPK_HOME_DIR is writable
+    fs::path home_dir_path(CPK_HOME_DIR);
+    bool home_writable = false;
+    if (fs::exists(home_dir_path)) {
+        // Check if directory is writable
+        std::error_code ec;
+        fs::path test_file = home_dir_path / ".cpk_write_test";
+        std::ofstream test_stream(test_file);
+        if (test_stream.is_open()) {
+            test_stream.close();
+            fs::remove(test_file, ec);
+            home_writable = true;
+        }
+    }
+
+    bool use_temp = false;
+    fs::path temp_dir;
+    fs::path temp_file;
+    std::string info_path;
+
+    if (home_writable) {
+        info_path = CPK_HOME_DIR + "/" + info_filename;
+    } else {
+        // Use temporary directory
+        use_temp = true;
+        temp_dir = fs::temp_directory_path();
+        temp_file = temp_dir / ("cpk_" + info_filename);
+        info_path = temp_file.string();
+
+        if (CPK_VERBOSE) {
+            print_message("Using temporary directory: " + temp_dir.string());
+        }
+    }
+
     if (!fs::exists(info_path)) {
-        if (!download_file(package_url, package_path) || !extract_package(package_path, CPK_HOME_DIR)) {
+        if (!download_file(info_url, info_path, false)) {
             print_message("Failed to retrieve package info", RED);
             return;
         }
@@ -255,6 +286,10 @@ void cmd_deps(const std::vector<std::string>& args) {
     std::string name, version, arch, description, url, dependencies;
     if (!parse_cpk_info(info_path, name, version, arch, description, url, dependencies)) {
         print_message("Failed to parse .cpk.info file", RED);
+        // Clean up temp file if used
+        if (use_temp && fs::exists(temp_file)) {
+            fs::remove(temp_file);
+        }
         return;
     }
 
@@ -263,6 +298,12 @@ void cmd_deps(const std::vector<std::string>& args) {
         print_message("No dependencies", GREEN);
     } else {
         print_message(dependencies);
+    }
+
+    // Clean up temp file if used
+    if (use_temp && fs::exists(temp_file)) {
+        std::error_code ec;
+        fs::remove(temp_file, ec);
     }
 
     return;
