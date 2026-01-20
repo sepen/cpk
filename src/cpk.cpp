@@ -41,9 +41,6 @@ int main(int argc, char* argv[]) {
         } else if (arg == "--help" || arg == "-h") {
             print_help("");
             return 0;
-        } else if (arg == "--version" || arg == "-V") {
-            print_version();
-            return 0;
         } else {
             command_args.push_back(arg);  // Collect remaining command arguments
         }
@@ -171,22 +168,71 @@ void cmd_info(const std::vector<std::string>& args) {
         return;
     }
 
-    // Download .cpk.info file directly from repository (faster than downloading the whole .cpk)
+    // Try to download .cpk.info file directly from repository (faster than downloading the whole .cpk)
     std::string info_url = CPK_REPO_URL + "/" + url_encode(package + ".info");
     std::string info_path = CPK_HOME_DIR + "/" + package + ".info";
+    bool info_from_file = false;
     
-    if (!fs::exists(info_path)) {
-        if (!download_file(info_url, info_path)) {
-            print_message("Package info file not found", RED);
-            return;
+    std::string name, version, arch, description, url, dependencies;
+    
+    // Try to get info from .cpk.info file
+    if (fs::exists(info_path) || download_file(info_url, info_path)) {
+        if (parse_cpk_info(info_path, name, version, arch, description, url, dependencies)) {
+            info_from_file = true;
         }
     }
-
-    // Parse .cpk.info file
-    std::string name, version, arch, description, url, dependencies;
-    if (!parse_cpk_info(info_path, name, version, arch, description, url, dependencies)) {
-        print_message("Failed to parse .cpk.info file", RED);
-        return;
+    
+    // Fallback: if .cpk.info doesn't exist or failed to parse, download .cpk and extract info from Pkgfile
+    if (!info_from_file) {
+        std::string package_url = CPK_REPO_URL + "/" + url_encode(package);
+        std::string package_source = CPK_HOME_DIR + "/" + pkgname + "/" + pkgver;
+        std::string package_path = CPK_HOME_DIR + "/" + package;
+        
+        // Download and extract package if not already done
+        if (!fs::is_directory(package_source)) {
+            if (!download_file(package_url, package_path) || !extract_package(package_path, CPK_HOME_DIR)) {
+                print_message("Failed to retrieve package info", RED);
+                return;
+            }
+        }
+        
+        // Parse Pkgfile to get package information
+        std::string pkgfile_path = package_source + "/Pkgfile";
+        if (!fs::exists(pkgfile_path)) {
+            print_message("Package info file not found and Pkgfile not available", RED);
+            return;
+        }
+        
+        std::string pkgname_from_file, pkgdesc, pkgurl, pkgdeps;
+        if (!parse_pkgfile(pkgfile_path, pkgname_from_file, pkgdesc, pkgurl, pkgdeps)) {
+            print_message("Failed to parse Pkgfile", RED);
+            return;
+        }
+        
+        // Read version and release from Pkgfile
+        std::ifstream pkgfile(pkgfile_path);
+        std::string pkgversion, pkgrelease;
+        std::string line;
+        while (std::getline(pkgfile, line)) {
+            std::string trimmed_line = line;
+            trimmed_line.erase(0, trimmed_line.find_first_not_of(" \t"));
+            trimmed_line.erase(trimmed_line.find_last_not_of(" \t") + 1);
+            
+            if (trimmed_line.find("version=") == 0) {
+                pkgversion = trimmed_line.substr(8);
+            } else if (trimmed_line.find("release=") == 0) {
+                pkgrelease = trimmed_line.substr(8);
+            }
+        }
+        pkgfile.close();
+        
+        // Set values from Pkgfile
+        name = pkgname_from_file;
+        version = pkgversion + "-" + pkgrelease;
+        arch = pkgarch;
+        description = pkgdesc;
+        url = pkgurl;
+        dependencies = pkgdeps;
     }
 
     // Show information based on filter

@@ -219,7 +219,6 @@ void print_general_options() {
     print_message("  -C, --color              Show colorized output messages");
     print_message("  -v, --verbose            Show verbose output messages");
     print_message("  -h, --help               Print this help information");
-    print_message("  -V, --version            Print version information");
 }
 
 // Display help for specific commands
@@ -401,28 +400,28 @@ void print_help(const std::string& command) {
 
         print_message("\nUsage:");
         print_message("  cpk <command> [options]");
-        print_message("  cpk help <command>    Show detailed help for a specific command");
+        print_message("  cpk help <command>  Show detailed help for a specific command");
 
         print_message("\nCommands:");
-        print_message("  update                   Update the index of available packages");
-        print_message("  info <package> [--field] Show information about installed or available packages");
-        print_message("  deps <package>           Show package dependencies");
-        print_message("  search <keyword>         Search for packages by name or keyword");
-        print_message("  list                     List all installed packages");
-        print_message("  diff                     Show differences between installed and available packages");
-        print_message("  verify <package>         Verify integrity of package source files");
-        print_message("  build <package>          Build a package from source files");
-        print_message("  install <package> [--upgrade] Install or upgrade packages on the system");
-        print_message("  add <package> [--upgrade]    Alias for install");
-        print_message("  uninstall <package>      Remove packages from the system");
-        print_message("  del <package>            Alias for uninstall");
-        print_message("  rm <package>            Alias for uninstall");
-        print_message("  upgrade                  Upgrade all installed packages to the latest versions");
-        print_message("  clean                    Clean up package source files and temporary directories");
-        print_message("  index <repo>             Create a CPKINDEX file for a local repository");
-        print_message("  archive <prtdir> <repo>  Create .cpk archive(s) from a directory containing ports");
-        print_message("  help [<command>]         Show this help message or detailed help for a command");
-        print_message("  version                  Show version information");
+        print_message("  update      Update the index of available packages");
+        print_message("  info        Show information about installed or available packages");
+        print_message("  deps        Show package dependencies");
+        print_message("  search      Search for packages by name or keyword");
+        print_message("  list        List all installed packages");
+        print_message("  diff        Show differences between installed and available packages");
+        print_message("  verify      Verify integrity of package source files");
+        print_message("  build       Build a package from source files");
+        print_message("  install     Install or upgrade packages on the system");
+        print_message("  add         Alias for install");
+        print_message("  uninstall   Remove packages from the system");
+        print_message("  del         Alias for uninstall");
+        print_message("  rm          Alias for uninstall");
+        print_message("  upgrade     Upgrade all installed packages to the latest versions");
+        print_message("  clean       Clean up package source files and temporary directories");
+        print_message("  index       Create a CPKINDEX file for a local repository");
+        print_message("  archive     Create .cpk archive(s) from a directory containing ports");
+        print_message("  help        Show this help message or detailed help for a command");
+        print_message("  version     Show version information");
 
         print_general_options();
     } else {
