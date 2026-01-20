@@ -40,7 +40,7 @@ void cmd_info(const std::vector<std::string>& args) {
 
     // Try to download .cpk.info file directly from repository (faster than downloading the whole .cpk)
     std::string info_url = CPK_REPO_URL + "/" + url_encode(package + ".info");
-    std::string info_path = CPK_HOME_DIR + "/" + package + ".info";
+    std::string info_path = get_cache_path(package + ".info");
     bool info_from_file = false;
     
     std::string name, version, arch, description, url, dependencies;

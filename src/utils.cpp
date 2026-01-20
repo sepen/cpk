@@ -1074,3 +1074,65 @@ bool parse_cpk_info(const std::string &info_file_path, std::string &name, std::s
     // Return true only if we found at least one valid field (name and version are required)
     return found_valid_field && !name.empty() && !version.empty();
 }
+
+// Function to get user cache directory (~/.cpk)
+std::string get_user_cache_dir() {
+    const char* home = std::getenv("HOME");
+    if (home == nullptr) {
+        return "";
+    }
+    std::string user_cache = std::string(home) + "/.cpk";
+    return user_cache;
+}
+
+// Function to get cache path, trying CPK_HOME_DIR first, then falling back to ~/.cpk
+std::string get_cache_path(const std::string &filename) {
+    // First try CPK_HOME_DIR
+    std::string primary_path = CPK_HOME_DIR + "/" + filename;
+
+    // Check if we can write to CPK_HOME_DIR
+    if (fs::exists(CPK_HOME_DIR) && fs::is_directory(CPK_HOME_DIR)) {
+        // Try to create a test file to check write permissions
+        std::string test_file = CPK_HOME_DIR + "/.write_test";
+        FILE *test_fp = fopen(test_file.c_str(), "w");
+        if (test_fp != nullptr) {
+            fclose(test_fp);
+            fs::remove(test_file);
+            return primary_path;
+        }
+    } else {
+        // Try to create CPK_HOME_DIR if it doesn't exist
+        try {
+            fs::create_directories(CPK_HOME_DIR);
+            // Test if we can write
+            std::string test_file = CPK_HOME_DIR + "/.write_test";
+            FILE *test_fp = fopen(test_file.c_str(), "w");
+            if (test_fp != nullptr) {
+                fclose(test_fp);
+                fs::remove(test_file);
+                return primary_path;
+            }
+        } catch (const std::exception& e) {
+            // Can't create or write to CPK_HOME_DIR, fall through to user cache
+        }
+    }
+
+    // Fallback to user cache directory
+    std::string user_cache = get_user_cache_dir();
+    if (!user_cache.empty()) {
+        // Ensure the directory exists
+        try {
+            fs::create_directories(user_cache);
+            if (CPK_VERBOSE) {
+                print_message("Using user cache directory: " + user_cache, YELLOW);
+            }
+        } catch (const std::exception& e) {
+            // If we can't create user cache dir, return primary path anyway
+            return primary_path;
+        }
+        return user_cache + "/" + filename;
+    }
+
+    // If all else fails, return primary path
+    return primary_path;
+}
