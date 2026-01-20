@@ -201,6 +201,7 @@ void print_help() {
     print_message("\nCommands:");
     print_message("  update                   Update the index of available packages");
     print_message("  info <package>           Show information about installed or available packages");
+    print_message("  deps <package>           Show package dependencies");
     print_message("  search <keyword>         Search for packages by name or keyword");
     print_message("  list                     List all installed packages");
     print_message("  diff                     Show differences between installed and available packages");

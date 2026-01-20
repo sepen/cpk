@@ -23,6 +23,7 @@ extern bool CPK_VERBOSE;
 void cmd_update(const std::vector<std::string>& args);
 void cmd_search(const std::vector<std::string>& args);
 void cmd_info(const std::vector<std::string>& args);
+void cmd_deps(const std::vector<std::string>& args);
 void cmd_install(const std::vector<std::string>& args);
 void cmd_uninstall(const std::vector<std::string>& args);
 void cmd_upgrade(const std::vector<std::string>& args);
