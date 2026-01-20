@@ -391,6 +391,7 @@ bool find_package(const std::string& package_name, std::string& package, std::st
                         package = index_line;
                         if (package_name == pkgname) {
                             result = true;
+                            break;
                         }
                     }
                 }
