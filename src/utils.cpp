@@ -15,7 +15,6 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
-#include <system_error>
 
 namespace fs = std::filesystem;
 
@@ -224,7 +223,7 @@ bool extract_package(const std::string& tar_file, const std::string& dest_dir) {
 }
 
 // Function to parse the Pkgfile
-bool parse_pkgfile(const std::string& pkgfile_path, std::string& pkgname, std::string& pkgdesc, std::string& pkgurl, std::string& pkgdeps) {
+bool parse_pkgfile(const std::string& pkgfile_path, std::string& name, std::string& desc, std::string& url, std::string& deps) {
     std::ifstream infile(pkgfile_path);
     if (!infile.is_open()) {
         return false;
@@ -237,13 +236,13 @@ bool parse_pkgfile(const std::string& pkgfile_path, std::string& pkgname, std::s
         line.erase(line.find_last_not_of(" \t") + 1);
 
         if (line.rfind("name=", 0) == 0) {
-            pkgname = line.substr(5); // Extract after 'name='
+            name = line.substr(5); // Extract after 'name='
         } else if (line.rfind("# Description:", 0) == 0) {
-            pkgdesc = line.substr(14); // Extract after '# Description:'
+            desc = line.substr(14); // Extract after '# Description:'
         } else if (line.rfind("# URL:", 0) == 0) {
-            pkgurl = line.substr(6); // Extract after '# URL:'
+            url = line.substr(6); // Extract after '# URL:'
         } else if (line.rfind("# Depends on:", 0) == 0) {
-            pkgdeps = line.substr(13); // Extract after '# Depends on:'
+            deps = line.substr(13); // Extract after '# Depends on:'
         }
     }
 

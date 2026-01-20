@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <set>
 #include <sstream>
+#include <system_error>
 
 namespace fs = std::filesystem;
 
@@ -148,7 +149,41 @@ void cmd_info(const std::vector<std::string>& args) {
     // Download .cpk.info file instead of .cpk
     std::string info_filename = package + ".info";
     std::string info_url = CPK_REPO_URL + "/" + url_encode(info_filename);
-    std::string info_path = CPK_HOME_DIR + "/" + info_filename;
+
+    // Determine where to store the info file
+    std::string info_path;
+    bool use_temp = false;
+    fs::path temp_dir;
+    fs::path temp_file;
+
+    // Check if CPK_HOME_DIR is writable
+    fs::path home_dir_path(CPK_HOME_DIR);
+    bool home_writable = false;
+    if (fs::exists(home_dir_path)) {
+        // Check if directory is writable
+        std::error_code ec;
+        fs::path test_file = home_dir_path / ".cpk_write_test";
+        std::ofstream test_stream(test_file);
+        if (test_stream.is_open()) {
+            test_stream.close();
+            fs::remove(test_file, ec);
+            home_writable = true;
+        }
+    }
+
+    if (home_writable) {
+        info_path = CPK_HOME_DIR + "/" + info_filename;
+    } else {
+        // Use temporary directory
+        use_temp = true;
+        temp_dir = fs::temp_directory_path();
+        temp_file = temp_dir / ("cpk_" + info_filename);
+        info_path = temp_file.string();
+        
+        if (CPK_VERBOSE) {
+            print_message("Using temporary directory: " + temp_dir.string());
+        }
+    }
 
     if (!fs::exists(info_path)) {
         if (!download_file(info_url, info_path, false)) {
@@ -161,6 +196,10 @@ void cmd_info(const std::vector<std::string>& args) {
     std::string name, version, arch, description, url, dependencies;
     if (!parse_cpk_info(info_path, name, version, arch, description, url, dependencies)) {
         print_message("Failed to parse .cpk.info file", RED);
+        // Clean up temp file if used
+        if (use_temp && fs::exists(temp_file)) {
+            fs::remove(temp_file);
+        }
         return;
     }
 
@@ -170,6 +209,12 @@ void cmd_info(const std::vector<std::string>& args) {
     print_message(BOLD + "Description  " + NONE + "| " + description);
     print_message(BOLD + "URL          " + NONE + "| " + url);
     print_message(BOLD + "Dependencies " + NONE + "| " + dependencies);
+
+    // Clean up temp file if used (optional - OS will clean it up eventually)
+    if (use_temp && fs::exists(temp_file)) {
+        std::error_code ec;
+        fs::remove(temp_file, ec);
+    }
 }
 
 // Function to search for a package or description
@@ -619,6 +664,7 @@ void cmd_archive(const std::vector<std::string>& args) {
                 print_message("Processing package file: " + entry.path().string());
             }
 
+            // Get port source directory and read Pkgfile
             std::string package_prefix = package.substr(0, package.find(".pkg."));
             fs::path package_dir = package_path.parent_path();
             fs::path pkgfile_path = package_dir / "Pkgfile";
