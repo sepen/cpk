@@ -139,12 +139,19 @@ void cmd_info(const std::vector<std::string>& args) {
         return;
     }
 
-    // Check if --dependencies flag is present
-    bool show_only_deps = false;
     std::string pkg_name = args[0];
+    std::string field_filter;  // Empty = show all, or specific field like "name", "url", etc.
     
-    if (args.size() > 1 && args[1] == "--dependencies") {
-        show_only_deps = true;
+    // Parse optional field filter
+    if (args.size() > 1) {
+        field_filter = args[1];
+        // Remove leading dashes
+        if (field_filter[0] == '-') {
+            field_filter = field_filter.substr(1);
+        }
+        if (field_filter[0] == '-') {
+            field_filter = field_filter.substr(1);
+        }
     }
 
     std::string index_file = CPK_HOME_DIR + "/CPKINDEX";
@@ -158,72 +165,34 @@ void cmd_info(const std::vector<std::string>& args) {
         return;
     }
 
-    // Build the info file URL
-    std::string info_filename = pkgname + ".cpk.info";
-    std::string info_url = CPK_REPO_URL + "/" + url_encode(pkgname) + "/" + url_encode(pkgver) + "/" + url_encode(info_filename);
+    // Download and extract package if not already done
+    std::string package_url = CPK_REPO_URL + "/" + url_encode(package);
+    std::string package_source = CPK_HOME_DIR + "/" + pkgname + "/" + pkgver;
+    std::string package_path = CPK_HOME_DIR + "/" + package;
 
-    // Check if CPK_HOME_DIR is writable
-    fs::path home_dir_path(CPK_HOME_DIR);
-    bool home_writable = false;
-    if (fs::exists(home_dir_path)) {
-        // Check if directory is writable
-        std::error_code ec;
-        fs::path test_file = home_dir_path / ".cpk_write_test";
-        std::ofstream test_stream(test_file);
-        if (test_stream.is_open()) {
-            test_stream.close();
-            fs::remove(test_file, ec);
-            home_writable = true;
-        }
-    }
-
-    bool use_temp = false;
-    fs::path temp_dir;
-    fs::path temp_file;
-    std::string info_path;
-
-    if (home_writable) {
-        info_path = CPK_HOME_DIR + "/" + info_filename;
-    } else {
-        // Use temporary directory
-        use_temp = true;
-        temp_dir = fs::temp_directory_path();
-        temp_file = temp_dir / ("cpk_" + info_filename);
-        info_path = temp_file.string();
-        
-        if (CPK_VERBOSE) {
-            print_message("Using temporary directory: " + temp_dir.string());
-        }
-    }
-
-    if (!fs::exists(info_path)) {
-        if (!download_file(info_url, info_path, false)) {
+    if (!fs::is_directory(package_source)) {
+        if (!download_file(package_url, package_path) || !extract_package(package_path, CPK_HOME_DIR)) {
             print_message("Failed to retrieve package info", RED);
             return;
         }
+    }
+
+    std::string info_path = package_source + "/" + pkgname + ".cpk.info";
+    if (!fs::exists(info_path)) {
+        print_message("Package info file not found", RED);
+        return;
     }
 
     // Parse .cpk.info file
     std::string name, version, arch, description, url, dependencies;
     if (!parse_cpk_info(info_path, name, version, arch, description, url, dependencies)) {
         print_message("Failed to parse .cpk.info file", RED);
-        // Clean up temp file if used
-        if (use_temp && fs::exists(temp_file)) {
-            fs::remove(temp_file);
-        }
         return;
     }
 
-    // If --dependencies flag is set, only show dependencies
-    if (show_only_deps) {
-        print_header("Dependencies for " + name, BLUE);
-        if (dependencies.empty() || dependencies == "none") {
-            print_message("No dependencies", GREEN);
-        } else {
-            print_message(dependencies);
-        }
-    } else {
-        // Show all information
+    // Show information based on filter
+    if (field_filter.empty()) {
+        // Show all fields
         print_message(BOLD + "Name         " + NONE + "| " + name);
         print_message(BOLD + "Version      " + NONE + "| " + version);
         print_message(BOLD + "Arch         " + NONE + "| " + arch);
@@ -231,11 +200,30 @@ void cmd_info(const std::vector<std::string>& args) {
         print_message(BOLD + "URL          " + NONE + "| " + url);
         print_message(BOLD + "Dependencies " + NONE + "| " + dependencies);
     }
-
-    // Clean up temp file if used (optional - OS will clean it up eventually)
-    if (use_temp && fs::exists(temp_file)) {
-        std::error_code ec;
-        fs::remove(temp_file, ec);
+    else if (field_filter == "name") {
+        print_message(name);
+    }
+    else if (field_filter == "version") {
+        print_message(version);
+    }
+    else if (field_filter == "arch") {
+        print_message(arch);
+    }
+    else if (field_filter == "description") {
+        print_message(description);
+    }
+    else if (field_filter == "url") {
+        print_message(url);
+    }
+    else if (field_filter == "dependencies") {
+        if (dependencies.empty()) {
+            print_message("No dependencies", GREEN);
+        } else {
+            print_message(dependencies);
+        }
+    }
+    else {
+        print_message("Unknown field: " + field_filter, RED);
     }
 }
 
