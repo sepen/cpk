@@ -550,7 +550,6 @@ void cmd_uninstall(const std::vector<std::string>& args) {
 }
 
 // Function to upgrade installed packages
-// Function to upgrade installed packages
 void cmd_upgrade(const std::vector<std::string>& args) {
 
     std::vector<std::string> packages;
@@ -590,34 +589,7 @@ void cmd_upgrade(const std::vector<std::string>& args) {
         std::string package, pkgname, pkgver, pkgarch;
         if (find_package(pkg, package, pkgname, pkgver, pkgarch)) {
             if (is_package_installed(pkgname)) {
-                // Get installed version to compare
-                std::vector<std::string> pkginfo_args = { "-i" };
-                std::string installed_packages;
-                shellcmd(CPK_PKGINFO_CMD, pkginfo_args, &installed_packages, false);
-
-                std::istringstream stream(installed_packages);
-                std::string line;
-                std::string installed_version;
-
-                while (std::getline(stream, line)) {
-                    if (line.find(pkgname) != std::string::npos) {
-                        std::istringstream line_stream(line);
-                        std::string temp_name, temp_version;
-                        line_stream >> temp_name >> temp_version;
-                        if (temp_name == pkgname) {
-                            installed_version = temp_version;
-                            break;
-                        }
-                    }
-                }
-
-                // Only upgrade if there's a newer version
-                if (!installed_version.empty() && compare_versions(installed_version, pkgver) < 0) {
-                    cmd_install({pkgname, "--upgrade"});
-                }
-                else if (!installed_version.empty()) {
-                    print_message("Package " + pkgname + " is already up to date", YELLOW);
-                }
+                cmd_install({pkgname, "--upgrade"});
             }
             else {
                 print_message("Package " + pkgname + " is not installed", YELLOW);
