@@ -51,11 +51,21 @@ int compare_versions(const std::string& v1, const std::string& v2) {
         // Handle the "-" (e.g.: "10-1" -> ["10", "1"])
         size_t dash_pos = token.find('-');
         if (dash_pos != std::string::npos) {
-            ver1.push_back(std::stoi(token.substr(0, dash_pos)));
-            ver1.push_back(std::stoi(token.substr(dash_pos + 1)));
+            try {
+                ver1.push_back(std::stoi(token.substr(0, dash_pos)));
+                ver1.push_back(std::stoi(token.substr(dash_pos + 1)));
+            } catch (const std::exception& e) {
+                // Invalid version format, treat as 0
+                ver1.push_back(0);
+            }
             break; // No more numbers after "-"
         } else {
-            ver1.push_back(std::stoi(token));
+            try {
+                ver1.push_back(std::stoi(token));
+            } catch (const std::exception& e) {
+                // Invalid version format, treat as 0
+                ver1.push_back(0);
+            }
         }
     }
     
@@ -64,11 +74,21 @@ int compare_versions(const std::string& v1, const std::string& v2) {
     while (std::getline(iss2, token, '.')) {
         size_t dash_pos = token.find('-');
         if (dash_pos != std::string::npos) {
-            ver2.push_back(std::stoi(token.substr(0, dash_pos)));
-            ver2.push_back(std::stoi(token.substr(dash_pos + 1)));
+            try {
+                ver2.push_back(std::stoi(token.substr(0, dash_pos)));
+                ver2.push_back(std::stoi(token.substr(dash_pos + 1)));
+            } catch (const std::exception& e) {
+                // Invalid version format, treat as 0
+                ver2.push_back(0);
+            }
             break;
         } else {
-            ver2.push_back(std::stoi(token));
+            try {
+                ver2.push_back(std::stoi(token));
+            } catch (const std::exception& e) {
+                // Invalid version format, treat as 0
+                ver2.push_back(0);
+            }
         }
     }
     

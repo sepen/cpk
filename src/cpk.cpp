@@ -242,17 +242,13 @@ void cmd_deps(const std::vector<std::string>& args) {
     std::string package_source = CPK_HOME_DIR + "/" + pkgname + "/" + pkgver;
     std::string package_path = CPK_HOME_DIR + "/" + package;
 
-    if (!fs::is_directory(package_source)) {
+    // Check if we need to download
+    std::string info_path = package_source + "/" + pkgname + ".cpk.info";
+    if (!fs::exists(info_path)) {
         if (!download_file(package_url, package_path) || !extract_package(package_path, CPK_HOME_DIR)) {
             print_message("Failed to retrieve package info", RED);
             return;
         }
-    }
-
-    std::string info_path = package_source + "/" + pkgname + ".cpk.info";
-    if (!fs::exists(info_path)) {
-        print_message("Package info file not found", RED);
-        return;
     }
 
     // Parse .cpk.info file
@@ -263,7 +259,7 @@ void cmd_deps(const std::vector<std::string>& args) {
     }
 
     print_header("Dependencies for " + name, BLUE);
-    if (dependencies.empty()) {
+    if (dependencies.empty() || dependencies == "none") {
         print_message("No dependencies", GREEN);
     } else {
         print_message(dependencies);
