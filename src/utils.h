@@ -16,9 +16,14 @@ extern const std::string BOLD;
 extern const std::string NONE;
 extern const std::string NEWLINE;
 
+// 
 std::string url_encode(const std::string& value);
 std::string url_decode(const std::string& value);
 std::string ltrim(const std::string& str);
+
+// Compare versions semantically
+int compare_versions(const std::string& v1, const std::string& v2);
+
 static size_t write_data(void *ptr, size_t size, size_t nmemb, FILE *stream);
 bool download_file(const std::string& url, const std::string &file_path, bool overwrite = false);
 bool prompt_user(const std::string &file_path);

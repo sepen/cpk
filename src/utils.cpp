@@ -39,6 +39,52 @@ static size_t write_data(void *ptr, size_t size, size_t nmemb, FILE *stream) {
     return written;
 }
 
+// Function to compare versions semantically
+// Returns: -1 if v1 < v2, 0 if v1 == v2, 1 if v1 > v2
+int compare_versions(const std::string& v1, const std::string& v2) {
+    std::vector<int> ver1, ver2;
+    
+    // Parse v1 (e.g.: "3.31.10-1" -> [3, 31, 10, 1])
+    std::istringstream iss1(v1);
+    std::string token;
+    while (std::getline(iss1, token, '.')) {
+        // Handle the "-" (e.g.: "10-1" -> ["10", "1"])
+        size_t dash_pos = token.find('-');
+        if (dash_pos != std::string::npos) {
+            ver1.push_back(std::stoi(token.substr(0, dash_pos)));
+            ver1.push_back(std::stoi(token.substr(dash_pos + 1)));
+            break; // No more numbers after "-"
+        } else {
+            ver1.push_back(std::stoi(token));
+        }
+    }
+    
+    // Parse v2 the same way
+    std::istringstream iss2(v2);
+    while (std::getline(iss2, token, '.')) {
+        size_t dash_pos = token.find('-');
+        if (dash_pos != std::string::npos) {
+            ver2.push_back(std::stoi(token.substr(0, dash_pos)));
+            ver2.push_back(std::stoi(token.substr(dash_pos + 1)));
+            break;
+        } else {
+            ver2.push_back(std::stoi(token));
+        }
+    }
+    
+    // Compare element by element
+    size_t max_len = std::max(ver1.size(), ver2.size());
+    for (size_t i = 0; i < max_len; i++) {
+        int v1_part = (i < ver1.size()) ? ver1[i] : 0;
+        int v2_part = (i < ver2.size()) ? ver2[i] : 0;
+        
+        if (v1_part < v2_part) return -1;
+        if (v1_part > v2_part) return 1;
+    }
+    
+    return 0; // They are equal
+}
+
 // URL-encodes special characters in the given string
 std::string url_encode(const std::string &value) {
     std::ostringstream encoded;
@@ -366,15 +412,16 @@ std::string find_pkg_file(const std::string& directory, const std::string& pkgna
 bool find_package(const std::string& package_name, std::string& package, std::string& pkgname, std::string& pkgver, std::string& pkgarch) {
     std::string index_file = CPK_HOME_DIR + "/CPKINDEX";
     bool result = false;
+    std::string best_version;  // Store the newest version
 
     if (!fs::exists(index_file)) {
         print_message("Package index not found. Run `cpk update` first", RED);
         result = false;
     } else {
-        std::ifstream file(index_file);  // Open the CPKINDEX file for reading
+        std::ifstream file(index_file);
         if (!file.is_open()) {
             print_message("Error opening file: " + index_file, RED);
-            result = false;  // Return an error code if the file cannot be opened
+            result = false;
         }
         else {
             std::string index_line;
@@ -385,19 +432,26 @@ bool find_package(const std::string& package_name, std::string& package, std::st
                     size_t hash_pos = index_line.find('#');
 
                     if (cpk_pos != std::string::npos && last_dot != std::string::npos && hash_pos != std::string::npos) {
-                        pkgname = index_line.substr(0, hash_pos);
-                        pkgver = index_line.substr(hash_pos + 1, last_dot - hash_pos - 1);
-                        pkgarch = index_line.substr(last_dot + 1, cpk_pos - last_dot - 1);
-                        package = index_line;
-                        if (package_name == pkgname) {
-                            result = true;
-                            break;
+                        std::string temp_pkgname = index_line.substr(0, hash_pos);
+                        std::string temp_pkgver = index_line.substr(hash_pos + 1, last_dot - hash_pos - 1);
+                        std::string temp_pkgarch = index_line.substr(last_dot + 1, cpk_pos - last_dot - 1);
+                        
+                        if (package_name == temp_pkgname) {
+                            // If it's the first version or newer than the previous one
+                            if (!result || compare_versions(temp_pkgver, best_version) > 0) {
+                                pkgname = temp_pkgname;
+                                pkgver = temp_pkgver;
+                                pkgarch = temp_pkgarch;
+                                package = index_line;
+                                best_version = temp_pkgver;
+                                result = true;
+                            }
                         }
                     }
                 }
             }
         }
-        file.close();  // Close the file
+        file.close();
     }
 
     return result;
