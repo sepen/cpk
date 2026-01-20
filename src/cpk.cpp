@@ -135,28 +135,32 @@ void cmd_update(const std::vector<std::string>& args) {
 // Function to display package information
 void cmd_info(const std::vector<std::string>& args) {
     if (args.empty()) {
-        print_message("Package name is required", YELLOW);
+        print_message("Package name is required", RED);
         return;
     }
 
-    const std::string index_file = CPK_HOME_DIR + "/CPKINDEX";
+    // Check if --dependencies flag is present
+    bool show_only_deps = false;
+    std::string pkg_name = args[0];
+    
+    if (args.size() > 1 && args[1] == "--dependencies") {
+        show_only_deps = true;
+    }
+
+    std::string index_file = CPK_HOME_DIR + "/CPKINDEX";
     if (!fs::exists(index_file)) {
-        print_message("Package index not found. Run `cpk update` first", YELLOW);
+        print_message("Package index not found. Run `cpk update` first", RED);
         return;
     }
 
     std::string package, pkgname, pkgver, pkgarch;
-    if (!find_package(args[0], package, pkgname, pkgver, pkgarch)) return;
+    if (!find_package(pkg_name, package, pkgname, pkgver, pkgarch)) {
+        return;
+    }
 
-    // Download .cpk.info file instead of .cpk
-    std::string info_filename = package + ".info";
-    std::string info_url = CPK_REPO_URL + "/" + url_encode(info_filename);
-
-    // Determine where to store the info file
-    std::string info_path;
-    bool use_temp = false;
-    fs::path temp_dir;
-    fs::path temp_file;
+    // Build the info file URL
+    std::string info_filename = pkgname + ".cpk.info";
+    std::string info_url = CPK_REPO_URL + "/" + url_encode(pkgname) + "/" + url_encode(pkgver) + "/" + url_encode(info_filename);
 
     // Check if CPK_HOME_DIR is writable
     fs::path home_dir_path(CPK_HOME_DIR);
@@ -172,6 +176,11 @@ void cmd_info(const std::vector<std::string>& args) {
             home_writable = true;
         }
     }
+
+    bool use_temp = false;
+    fs::path temp_dir;
+    fs::path temp_file;
+    std::string info_path;
 
     if (home_writable) {
         info_path = CPK_HOME_DIR + "/" + info_filename;
@@ -205,12 +214,23 @@ void cmd_info(const std::vector<std::string>& args) {
         return;
     }
 
-    print_message(BOLD + "Name         " + NONE + "| " + name);
-    print_message(BOLD + "Version      " + NONE + "| " + version);
-    print_message(BOLD + "Arch         " + NONE + "| " + arch);
-    print_message(BOLD + "Description  " + NONE + "| " + description);
-    print_message(BOLD + "URL          " + NONE + "| " + url);
-    print_message(BOLD + "Dependencies " + NONE + "| " + dependencies);
+    // If --dependencies flag is set, only show dependencies
+    if (show_only_deps) {
+        print_header("Dependencies for " + name, BLUE);
+        if (dependencies.empty() || dependencies == "none") {
+            print_message("No dependencies", GREEN);
+        } else {
+            print_message(dependencies);
+        }
+    } else {
+        // Show all information
+        print_message(BOLD + "Name         " + NONE + "| " + name);
+        print_message(BOLD + "Version      " + NONE + "| " + version);
+        print_message(BOLD + "Arch         " + NONE + "| " + arch);
+        print_message(BOLD + "Description  " + NONE + "| " + description);
+        print_message(BOLD + "URL          " + NONE + "| " + url);
+        print_message(BOLD + "Dependencies " + NONE + "| " + dependencies);
+    }
 
     // Clean up temp file if used (optional - OS will clean it up eventually)
     if (use_temp && fs::exists(temp_file)) {
@@ -219,94 +239,16 @@ void cmd_info(const std::vector<std::string>& args) {
     }
 }
 
-// Function to display package dependencies
+// Function to display package dependencies (alias for cmd_info --dependencies)
 void cmd_deps(const std::vector<std::string>& args) {
     if (args.empty()) {
         print_message("Package name is required", RED);
         return;
     }
-
-    std::string index_file = CPK_HOME_DIR + "/CPKINDEX";
-    if (!fs::exists(index_file)) {
-        print_message("Package index not found. Run `cpk update` first", RED);
-        return;
-    }
-
-    std::string package, pkgname, pkgver, pkgarch;
-    if (!find_package(args[0], package, pkgname, pkgver, pkgarch)) {
-        return;
-    }
-
-    // Build the info file URL (same as cmd_info)
-    std::string info_filename = pkgname + ".cpk.info";
-    std::string info_url = CPK_REPO_URL + "/" + url_encode(pkgname) + "/" + url_encode(pkgver) + "/" + url_encode(info_filename);
-
-    // Check if CPK_HOME_DIR is writable
-    fs::path home_dir_path(CPK_HOME_DIR);
-    bool home_writable = false;
-    if (fs::exists(home_dir_path)) {
-        // Check if directory is writable
-        std::error_code ec;
-        fs::path test_file = home_dir_path / ".cpk_write_test";
-        std::ofstream test_stream(test_file);
-        if (test_stream.is_open()) {
-            test_stream.close();
-            fs::remove(test_file, ec);
-            home_writable = true;
-        }
-    }
-
-    bool use_temp = false;
-    fs::path temp_dir;
-    fs::path temp_file;
-    std::string info_path;
-
-    if (home_writable) {
-        info_path = CPK_HOME_DIR + "/" + info_filename;
-    } else {
-        // Use temporary directory
-        use_temp = true;
-        temp_dir = fs::temp_directory_path();
-        temp_file = temp_dir / ("cpk_" + info_filename);
-        info_path = temp_file.string();
-
-        if (CPK_VERBOSE) {
-            print_message("Using temporary directory: " + temp_dir.string());
-        }
-    }
-
-    if (!fs::exists(info_path)) {
-        if (!download_file(info_url, info_path, false)) {
-            print_message("Failed to retrieve package info", RED);
-            return;
-        }
-    }
-
-    // Parse .cpk.info file
-    std::string name, version, arch, description, url, dependencies;
-    if (!parse_cpk_info(info_path, name, version, arch, description, url, dependencies)) {
-        print_message("Failed to parse .cpk.info file", RED);
-        // Clean up temp file if used
-        if (use_temp && fs::exists(temp_file)) {
-            fs::remove(temp_file);
-        }
-        return;
-    }
-
-    print_header("Dependencies for " + name, BLUE);
-    if (dependencies.empty() || dependencies == "none") {
-        print_message("No dependencies", GREEN);
-    } else {
-        print_message(dependencies);
-    }
-
-    // Clean up temp file if used
-    if (use_temp && fs::exists(temp_file)) {
-        std::error_code ec;
-        fs::remove(temp_file, ec);
-    }
-
-    return;
+    
+    // Call cmd_info with --dependencies flag
+    std::vector<std::string> info_args = {args[0], "--dependencies"};
+    cmd_info(info_args);
 }
 
 // Function to search for a package or description
