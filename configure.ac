@@ -8,6 +8,9 @@ AC_PROG_INSTALL
 # Check for required headers
 AC_CHECK_HEADERS([algorithm archive.h archive_entry.h cstdlib curl/curl.h filesystem fstream iostream sstream string sys/stat.h vector stdexcept iomanip])
 
+# Check for pkg-config
+PKG_PROG_PKG_CONFIG
+
 # Check for libarchive
 PKG_CHECK_MODULES([LIBARCHIVE], [libarchive], [], [
     AC_MSG_ERROR([libarchive not found. Install it with 'sudo apt install libarchive-dev' or 'pkg install libarchive'])

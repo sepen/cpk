@@ -26,10 +26,15 @@ const std::string BOLD    = "\033[1m";
 const std::string NONE    = "\033[0m";
 const std::string NEWLINE = "\n";
 
-// Helper function to remove left leading spaces from a string
+// Helper function to remove left leading spaces and tabs from a string
 std::string ltrim(const std::string& str) {
     std::string s = str;
-    s.erase(0, s.find_first_not_of(' '));  // Removes leading spaces
+    size_t first = s.find_first_not_of(" \t");
+    if (first != std::string::npos) {
+        s.erase(0, first);
+    } else {
+        s.clear(); // String is all whitespace
+    }
     return s;
 }
 
@@ -175,15 +180,32 @@ bool download_file(const std::string &url, const std::string &file_path, bool ov
     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L); // Follow redirects if any
 
     CURLcode res = curl_easy_perform(curl);
-    if (res != CURLE_OK) {
-        print_message("Download error: " + std::string(curl_easy_strerror(res)), RED);
+    
+    long http_code = 0;
+    if (res == CURLE_OK) {
+        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
     }
-
+    
     // Clean up
     curl_easy_cleanup(curl);
     fclose(fp);
 
-    return res == CURLE_OK;
+    if (res != CURLE_OK) {
+        print_message("Download error: " + std::string(curl_easy_strerror(res)), RED);
+        fs::remove(file_path); // Remove partial file
+        return false;
+    }
+    
+    // Check HTTP response code
+    if (http_code >= 400) {
+        if (CPK_VERBOSE) {
+            print_message("HTTP error " + std::to_string(http_code) + " for " + url_decode(url), RED);
+        }
+        fs::remove(file_path); // Remove error response file
+        return false;
+    }
+
+    return true;
 }
 
 // Function to print colored header (if enabled in config)
@@ -230,11 +252,11 @@ void print_help_info() {
     print_message("  <package>                Package name");
     print_message("\nFields:");
     print_message("  --name                   Show package name only");
-    print_message("  --version                 Show package version only");
+    print_message("  --version                Show package version only");
     print_message("  --arch                   Show package architecture only");
-    print_message("  --description             Show package description only");
-    print_message("  --url                     Show package URL only");
-    print_message("  --dependencies            Show package dependencies only");
+    print_message("  --description            Show package description only");
+    print_message("  --url                    Show package URL only");
+    print_message("  --dependencies           Show package dependencies only");
     print_message("\nExamples:");
     print_message("  cpk info vim");
     print_message("  cpk info vim --version");
@@ -251,7 +273,7 @@ void print_help_install() {
     print_message("  <package>                Package name");
     print_message("  --upgrade                Upgrade package if already installed");
     print_message("\nAliases:");
-    print_message("  add                     Alias for install");
+    print_message("  add                      Alias for install");
     print_message("\nExamples:");
     print_message("  cpk install vim");
     print_message("  cpk add vim --upgrade");
@@ -299,7 +321,7 @@ void print_help_search() {
     print_message("\nDescription:");
     print_message("  Search for packages by name or keyword in the package index");
     print_message("\nArguments:");
-    print_message("  <keyword>               Search term");
+    print_message("  <keyword>                Search term");
     print_message("\nExamples:");
     print_message("  cpk search vim");
     print_message("  cpk search editor");
@@ -400,7 +422,7 @@ void print_help(const std::string& command) {
 
         print_message("\nUsage:");
         print_message("  cpk <command> [options]");
-        print_message("  cpk help <command>  Show detailed help for a specific command");
+        print_message("  cpk help <command>   Show detailed help for a specific command");
 
         print_message("\nCommands:");
         print_message("  update      Update the index of available packages");
@@ -518,13 +540,13 @@ bool parse_pkgfile(const std::string& pkgfile_path, std::string& name, std::stri
         line.erase(line.find_last_not_of(" \t") + 1);
 
         if (line.rfind("name=", 0) == 0) {
-            name = line.substr(5); // Extract after 'name='
+            name = ltrim(line.substr(5)); // Extract after 'name=' and trim
         } else if (line.rfind("# Description:", 0) == 0) {
-            desc = line.substr(14); // Extract after '# Description:'
+            desc = ltrim(line.substr(14)); // Extract after '# Description:' and trim
         } else if (line.rfind("# URL:", 0) == 0) {
-            url = line.substr(6); // Extract after '# URL:'
+            url = ltrim(line.substr(6)); // Extract after '# URL:' and trim
         } else if (line.rfind("# Depends on:", 0) == 0) {
-            deps = line.substr(13); // Extract after '# Depends on:'
+            deps = ltrim(line.substr(13)); // Extract after '# Depends on:' and trim
         }
     }
 
@@ -988,10 +1010,17 @@ bool parse_cpk_info(const std::string &info_file_path, std::string &name, std::s
     }
 
     std::string line;
+    bool found_valid_field = false;
     while (std::getline(infile, line)) {
         // Skip empty lines and comments
         if (line.empty() || line[0] == '#') {
             continue;
+        }
+
+        // Check if this looks like HTML (common in 404 pages)
+        if (line.find("<html") != std::string::npos || line.find("<!DOCTYPE") != std::string::npos) {
+            infile.close();
+            return false;
         }
 
         // Find the colon separator
@@ -1004,26 +1033,44 @@ bool parse_cpk_info(const std::string &info_file_path, std::string &name, std::s
         std::string value = line.substr(colon_pos + 1);
 
         // Trim whitespace from key and value
-        key.erase(0, key.find_first_not_of(" \t"));
-        key.erase(key.find_last_not_of(" \t") + 1);
-        value.erase(0, value.find_first_not_of(" \t"));
-        value.erase(value.find_last_not_of(" \t") + 1);
+        key = ltrim(key);
+        size_t key_end = key.find_last_not_of(" \t\r\n");
+        if (key_end != std::string::npos) {
+            key = key.substr(0, key_end + 1);
+        } else {
+            key.clear();
+        }
+        value = ltrim(value);
+        size_t value_end = value.find_last_not_of(" \t\r\n");
+        if (value_end != std::string::npos) {
+            value = value.substr(0, value_end + 1);
+        } else {
+            value.clear();
+        }
 
         if (key == "name") {
             name = value;
+            found_valid_field = true;
         } else if (key == "version") {
             version = value;
+            found_valid_field = true;
         } else if (key == "arch") {
             arch = value;
+            found_valid_field = true;
         } else if (key == "description") {
             description = value;
+            found_valid_field = true;
         } else if (key == "url") {
             url = value;
+            found_valid_field = true;
         } else if (key == "dependencies") {
             dependencies = value;
+            found_valid_field = true;
         }
     }
 
     infile.close();
-    return true;
+    
+    // Return true only if we found at least one valid field (name and version are required)
+    return found_valid_field && !name.empty() && !version.empty();
 }
