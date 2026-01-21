@@ -47,33 +47,44 @@ In short, `pkgutils` does the heavy lifting, while `cpk` provides the missing co
 ## Basic Usage
 
 ```
-cpk <command> [options]
+CRUX Package Keeper - package management tool for CRUX Linux
+
+Usage:
+  cpk <command> [options]
+  cpk help <command>   Show detailed help for a specific command
 
 Commands:
-  update                   Update the index of available packages
-  info <package>           Show information about installed or available packages
-  search <keyword>         Search for packages by name or keyword
-  list                     List all installed packages
-  diff                     Show differences between installed and available packages
-  verify <package>         Verify integrity of package source files
-  build <package>          Build a package from source files
-  install <package>        Install or upgrade packages on the system
-  uninstall <package>      Remove packages from the system
-  upgrade                  Upgrade all installed packages to the latest versions
-  clean                    Clean up package source files and temporary directories
-  index <repo>             Create a CPKINDEX file for a local repository
-  archive <prtdir> <repo>  Create .cpk archive(s) from a directory containing ports
-  help                     Show this help message
-  version                  Show version information
+  update      Update the index of available packages
+  info        Show information about installed or available packages
+  deps        Show package dependencies
+  search      Search for packages by name or keyword
+  list        List all installed packages
+  diff        Show differences between installed and available packages
+  verify      Verify integrity of package source files
+  build       Build a package from source files
+  install     Install or upgrade packages on the system
+  add         Alias for install
+  uninstall   Remove packages from the system
+  del         Alias for uninstall
+  rm          Alias for uninstall
+  upgrade     Upgrade all installed packages to the latest versions
+  clean       Clean up package source files and temporary directories
+  index       Create a CPKINDEX file for a local repository
+  archive     Create .cpk archive(s) from a directory containing ports
+  help        Show this help message or detailed help for a command
+  version     Show version information
 
-Options:
+General Options:
   -c, --config <file>      Set an alternative configuration file (default: /etc/cpk.conf)
   -r, --root <path>        Set an alternative installation root (default: /)
   -C, --color              Show colorized output messages
   -v, --verbose            Show verbose output messages
   -h, --help               Print this help information
-  -V, --version            Print version information
 ```
+
+For detailed help on a specific command, use `cpk help <command>`. For example:
+- `cpk help info` - Shows detailed information about the `info` command and its field options
+- `cpk help install` - Shows detailed information about the `install` command and `--upgrade` option
 
 ## Command Reference
 
@@ -85,20 +96,33 @@ Options:
 - Downloads `CPKINDEX` from `${CPK_REPO_URL}/CPKINDEX` into `CPK_HOME_DIR`.
 - Counts available packages and prints the total.
 
-### `cpk info <package>`
+### `cpk info <package> [--field]`
 
-**Usage**: one argument (package name or key)
+**Usage**: one required argument (package name), optional field filter
 
 - Finds the package in `CPKINDEX`.
-- If not yet downloaded, fetches and extracts the `.cpk` archive.
-- Parses the `Pkgfile` and displays fields like Name, Version, Arch, Description, URL, and Dependencies.
+- Attempts to download the `.cpk.info` file directly from the repository (faster).
+- If `.cpk.info` is not available, falls back to downloading and extracting the `.cpk` archive and parsing the `Pkgfile`.
+- Displays all fields by default: Name, Version, Arch, Description, URL, and Dependencies.
+- Field filters: `--name`, `--version`, `--arch`, `--description`, `--url`, `--dependencies`
+- Examples:
+  - `cpk info vim` - Shows all package information
+  - `cpk info vim --version` - Shows only the version
+  - `cpk info vim --dependencies` - Shows only dependencies
+
+### `cpk deps <package>`
+
+**Usage**: one argument (package name)
+
+- Shows package dependencies (alias for `cpk info <package> --dependencies`).
+- Finds the package in `CPKINDEX` and displays its dependencies.
 
 ### `cpk search <term>`
 
 **Usage**: one argument (substring to match)
 
 - Opens `CPKINDEX` and searches all lines containing the given term.
-- Displays all matches in a formatted list, or shows a “no matches found” message.
+- Displays all matches in a formatted list, or shows a "no matches found" message.
 
 ### `cpk list`
 
@@ -133,30 +157,36 @@ Options:
 - Prints a success message or an error if the build fails.
 
 ### `cpk install <package> [--upgrade]`
+### `cpk add <package> [--upgrade]`
 
-**Usage**: one required argument (package name or key), optional `--upgrade`
+**Usage**: one required argument (package name), optional `--upgrade` flag
 
 - Finds the package in the repository index.
 - If already installed:
-- Continues only if `--upgrade` is specified; otherwise prints a warning.
+  - Continues only if `--upgrade` is specified; otherwise prints a warning.
 - Ensures the package archive exists locally.
 - Executes pre-install and post-install scripts when present.
 - Runs `pkgadd -r <CPK_INSTALL_ROOT> [ -u ] <package_file>` to install or upgrade.
 - Displays the README (if available) after installation.
+- `add` is an alias for `install`.
 
 ### `cpk uninstall <package>`
+### `cpk del <package>`
+### `cpk rm <package>`
 
-**Usage**: one argument (package name or key)
+**Usage**: one argument (package name)
 
 - Checks if the package is installed; exits if not.
 - Executes `pkgrm -r <CPK_INSTALL_ROOT> <pkgname>` to remove it.
 - Reports errors or success accordingly.
+- `del` and `rm` are aliases for `uninstall`.
 
-### `cpk upgrade [pkg ...]`
+### `cpk upgrade [<package>...]`
 
 **Usage**: zero or more package names
 
-- If no arguments: loads all installed packages (bulk upgrade not fully implemented).
+- If no arguments: upgrades all installed packages that have newer versions available.
+- If package names are provided: upgrades only those specific packages.
 - For each package:
   - Checks if an update exists in the repo and calls `cpk install --upgrade` when needed.
   - Skips missing or uninstalled packages and logs them in verbose mode.

@@ -1,10 +1,13 @@
 .\" Manpage for cpk
-.TH CPK 1 "September 2025" "cpk 0.1" "CRUX Package Keeper Manual"
+.TH CPK 1 "January 2026" "cpk 0.2" "CRUX Package Keeper Manual"
 .SH NAME
 cpk \- CRUX Package Keeper - Package management tool for CRUX Linux
 .SH SYNOPSIS
 .B cpk
 <command> [options]
+.br
+.B cpk help
+[<command>]
 .SH DESCRIPTION
 CRUX Package Keeper is a toolset designed to efficiently manage packages and their sources in CRUX environments.
 
@@ -13,10 +16,16 @@ CRUX Package Keeper is a toolset designed to efficiently manage packages and the
 .B update
 Update the index of available packages.
 .TP
-.B info <package>
-Show information about installed or available packages.
+.B info
+<package> [\fI\-\-name\fR | \fI\-\-version\fR | \fI\-\-arch\fR | \fI\-\-description\fR | \fI\-\-url\fR | \fI\-\-dependencies\fR]
+Show information about installed or available packages. Attempts to download the .cpk.info file first (faster), falling back to downloading the full .cpk archive if needed. Use field filters to show only specific information.
 .TP
-.B search <keyword>
+.B deps
+<package>
+Show package dependencies (alias for \fBinfo\fR \fI\-\-dependencies\fR).
+.TP
+.B search
+<keyword>
 Search for packages by name or keyword.
 .TP
 .B list
@@ -31,14 +40,29 @@ Verify integrity of package source files.
 .B build <package>
 Build a package from source files.
 .TP
-.B install <package>
-Install or upgrade packages on the system.
+.B install
+[\fI\-\-upgrade\fR] <package>
+Install or upgrade packages on the system. Use \fI\-\-upgrade\fR to upgrade an already installed package.
 .TP
-.B uninstall <package>
+.B add
+[\fI\-\-upgrade\fR] <package>
+Alias for \fBinstall\fR.
+.TP
+.B uninstall
+<package>
 Remove packages from the system.
 .TP
+.B del
+<package>
+Alias for \fBuninstall\fR.
+.TP
+.B rm
+<package>
+Alias for \fBuninstall\fR.
+.TP
 .B upgrade
-Upgrade all installed packages to the latest versions.
+[<package>...]
+Upgrade all or specific installed packages to the latest versions. If no package names are provided, upgrades all installed packages.
 .TP
 .B clean
 Clean up package source files and temporary directories.
@@ -50,7 +74,8 @@ Create a CPKINDEX file for a local repository.
 Create .cpk archive(s) from a directory containing ports.
 .TP
 .B help
-Show this help message.
+[<command>]
+Show help message or detailed help for a specific command. Use \fBcpk help <command>\fR to see detailed information about a specific command.
 .TP
 .B version
 Show version information.
@@ -58,7 +83,7 @@ Show version information.
 .SH OPTIONS
 .TP
 .B \-c, \-\-config <file>
-Set an alternative configuration file (default: /etc/cpk/cpk.conf).
+Set an alternative configuration file (default: /etc/cpk.conf).
 .TP
 .B \-r, \-\-root <path>
 Set an alternative installation root (default: /).
@@ -71,14 +96,20 @@ Show verbose output messages.
 .TP
 .B \-h, \-\-help
 Print this help information.
-.TP
-.B \-V, \-\-version
-Print version information.
 
 .SH EXAMPLES
 .TP
 Update package index:
 .B cpk update
+.TP
+Show all information about a package:
+.B cpk info vim
+.TP
+Show only the version of a package:
+.B cpk info vim --version
+.TP
+Show package dependencies:
+.B cpk deps vim
 .TP
 Search for a package:
 .B cpk search curl
@@ -86,8 +117,29 @@ Search for a package:
 Install a package:
 .B cpk install htop
 .TP
+Upgrade an installed package:
+.B cpk install --upgrade htop
+.br
+.B cpk add --upgrade htop
+.TP
+Uninstall a package:
+.B cpk uninstall htop
+.br
+.B cpk rm htop
+.TP
+Upgrade all packages:
+.B cpk upgrade
+.TP
+Upgrade specific packages:
+.B cpk upgrade vim htop
+.TP
 List installed packages:
 .B cpk list
+.TP
+Get detailed help for a command:
+.B cpk help info
+.br
+.B cpk help install
 
 .SH AUTHOR
 Written by Jose Beneyto (https://github.com/sepen/cpk)
