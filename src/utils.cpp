@@ -639,14 +639,14 @@ bool run_script(const std::string& script_path, const std::string& msg) {
         return false;
     }
     // pre-install and post-install scripts do not support alternative installation root
-    if (CPK_INSTALL_ROOT == "/") {
-        print_message("Skipping script " + script_path, YELLOW);
-    } else {
-        print_header(msg, GREEN);
-        if (shellcmd("sh -x", {script_path}, nullptr) != 0) {
-            print_message("Failed to execute script " + script_path, RED);
-            return false;
-        }
+    if (CPK_INSTALL_ROOT != "/") {
+        print_message("Skipping script " + script_path + " (not supported with alternative root)", YELLOW);
+        return true;
+    }
+    print_header(msg, GREEN);
+    if (shellcmd("sh", {"-x", script_path}, nullptr) != 0) {
+        print_message("Failed to execute script " + script_path, RED);
+        return false;
     }
     return true;
 }
