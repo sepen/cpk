@@ -40,7 +40,7 @@ void cmd_info(const std::vector<std::string>& args) {
 
     // Try to download .cpk.info file directly from repository (faster than downloading the whole .cpk)
     std::string info_url = CPK_REPO_URL + "/" + url_encode(package + ".info");
-    std::string info_path = get_cache_path(package + ".info");
+    std::string info_path = get_cache_file(package + ".info");
     bool info_from_file = false;
     
     std::string name, version, arch, description, url, dependencies;
@@ -59,13 +59,14 @@ void cmd_info(const std::vector<std::string>& args) {
     
     // Fallback: if .cpk.info doesn't exist or failed to parse, download .cpk and extract info from Pkgfile
     if (!info_from_file) {
+        std::string cache_dir = get_cache_dir();
         std::string package_url = CPK_REPO_URL + "/" + url_encode(package);
-        std::string package_source = CPK_HOME_DIR + "/" + pkgname + "/" + pkgver;
-        std::string package_path = CPK_HOME_DIR + "/" + package;
+        std::string package_source = cache_dir + "/" + pkgname + "/" + pkgver;
+        std::string package_path = get_cache_file(package);
         
         // Download and extract package if not already done
         if (!fs::is_directory(package_source)) {
-            if (!download_file(package_url, package_path) || !extract_package(package_path, CPK_HOME_DIR)) {
+            if (!download_file(package_url, package_path) || !extract_package(package_path, cache_dir)) {
                 print_message("Failed to retrieve package info", RED);
                 return;
             }

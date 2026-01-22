@@ -12,21 +12,26 @@ void cmd_verify(const std::vector<std::string>& args) {
         return;
     }
 
-    std::string index_file = CPK_HOME_DIR + "/CPKINDEX";
+    std::string cache_dir = get_cache_dir();
+    std::string index_file = get_cache_file("CPKINDEX");
     if (!fs::exists(index_file)) {
-        print_message("Package index not found. Run `cpk update` first", RED);
-        return;
+        // Fallback to CPK_HOME_DIR for reading index if cache_dir is user home
+        index_file = CPK_HOME_DIR + "/CPKINDEX";
+        if (!fs::exists(index_file)) {
+            print_message("Package index not found. Run `cpk update` first", RED);
+            return;
+        }
     }
 
     std::string package, pkgname, pkgver, pkgarch;
     if (!find_package(args[0], package, pkgname, pkgver, pkgarch)) return;
 
     std::string package_url = CPK_REPO_URL + "/" + url_encode(package);
-    std::string package_source = CPK_HOME_DIR + "/" + pkgname + "/" + pkgver;
-    std::string package_path = CPK_HOME_DIR + "/" + package;
+    std::string package_source = cache_dir + "/" + pkgname + "/" + pkgver;
+    std::string package_path = get_cache_file(package);
 
     if (!fs::is_directory(package_source)) {
-        if (!download_file(package_url, package_path) || !extract_package(package_path, CPK_HOME_DIR)) {
+        if (!download_file(package_url, package_path) || !extract_package(package_path, cache_dir)) {
             print_message("Failed to retrieve package info", RED);
             return;
         }

@@ -646,7 +646,12 @@ std::string find_pkg_file(const std::string& directory, const std::string& pkgna
 
 // Helper function to find package details
 bool find_package(const std::string& package_name, std::string& package, std::string& pkgname, std::string& pkgver, std::string& pkgarch) {
-    std::string index_file = CPK_HOME_DIR + "/CPKINDEX";
+    // Try cache directory first, then fallback to CPK_HOME_DIR
+    std::string index_file = get_cache_file("CPKINDEX");
+    if (!fs::exists(index_file)) {
+        index_file = CPK_HOME_DIR + "/CPKINDEX";
+    }
+    
     bool result = false;
     std::string best_version;  // Store the newest version
 
@@ -713,7 +718,11 @@ bool is_package_installed(const std::string& package_name) {
 }
 
 int get_number_of_packages() {
-    std::string index_file = CPK_HOME_DIR + "/CPKINDEX";
+    // Try cache directory first, then fallback to CPK_HOME_DIR
+    std::string index_file = get_cache_file("CPKINDEX");
+    if (!fs::exists(index_file)) {
+        index_file = CPK_HOME_DIR + "/CPKINDEX";
+    }
     if (!fs::exists(index_file)) {
         print_message("Package index not found. Run `cpk update` first", RED);
         return false;
@@ -1053,21 +1062,8 @@ bool parse_cpk_info(const std::string &info_file_path, std::string &name, std::s
     return found_valid_field && !name.empty() && !version.empty();
 }
 
-// Function to get user cache directory (~/.cpk)
-std::string get_user_cache_dir() {
-    const char* home = std::getenv("HOME");
-    if (home == nullptr) {
-        return "";
-    }
-    std::string user_cache = std::string(home) + "/.cpk";
-    return user_cache;
-}
-
-// Function to get cache path, trying CPK_HOME_DIR first, then falling back to ~/.cpk
-std::string get_cache_path(const std::string &filename) {
-    // First try CPK_HOME_DIR
-    std::string primary_path = CPK_HOME_DIR + "/" + filename;
-
+// Function to get cache directory, trying CPK_HOME_DIR first, then falling back to ~/.cpk
+std::string get_cache_dir() {
     // Check if we can write to CPK_HOME_DIR
     if (fs::exists(CPK_HOME_DIR) && fs::is_directory(CPK_HOME_DIR)) {
         // Try to create a test file to check write permissions
@@ -1076,7 +1072,7 @@ std::string get_cache_path(const std::string &filename) {
         if (test_fp != nullptr) {
             fclose(test_fp);
             fs::remove(test_file);
-            return primary_path;
+            return CPK_HOME_DIR;
         }
     } else {
         // Try to create CPK_HOME_DIR if it doesn't exist
@@ -1088,29 +1084,36 @@ std::string get_cache_path(const std::string &filename) {
             if (test_fp != nullptr) {
                 fclose(test_fp);
                 fs::remove(test_file);
-                return primary_path;
+                return CPK_HOME_DIR;
             }
         } catch (const std::exception& e) {
             // Can't create or write to CPK_HOME_DIR, fall through to user cache
         }
     }
 
-    // Fallback to user cache directory
-    std::string user_cache = get_user_cache_dir();
-    if (!user_cache.empty()) {
+    // If we couldn't use CPK_HOME_DIR, fallback to user cache directory (~/.cpk)
+    const char* home = std::getenv("HOME");
+    if (home != nullptr) {
+        std::string user_cache = std::string(home) + "/.cpk";
         // Ensure the directory exists
         try {
             fs::create_directories(user_cache);
             if (CPK_VERBOSE) {
                 print_message("Using user cache directory: " + user_cache, YELLOW);
             }
+            return user_cache;
         } catch (const std::exception& e) {
-            // If we can't create user cache dir, return primary path anyway
-            return primary_path;
+            // If we can't create user cache dir, use CPK_HOME_DIR anyway
+            return CPK_HOME_DIR;
         }
-        return user_cache + "/" + filename;
     }
 
-    // If all else fails, return primary path
-    return primary_path;
+    // If all else fails, return CPK_HOME_DIR
+    return CPK_HOME_DIR;
+}
+
+// Function to get cache file path, trying CPK_HOME_DIR first, then falling back to ~/.cpk
+std::string get_cache_file(const std::string &filename) {
+    std::string cache_dir = get_cache_dir();
+    return cache_dir + "/" + filename;
 }
