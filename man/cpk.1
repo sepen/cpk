@@ -42,10 +42,16 @@ Build a package from source files.
 .TP
 .B install
 [\fI\-\-upgrade\fR] <package>
-Install or upgrade packages on the system. Use \fI\-\-upgrade\fR to upgrade an already installed package.
+.br
+.B install
+[\fI\-\-upgrade\fR] <path/to/package.cpk>
+Install or upgrade packages on the system. Can install from repository or from a local .cpk file. Use \fI\-\-upgrade\fR to upgrade an already installed package.
 .TP
 .B add
 [\fI\-\-upgrade\fR] <package>
+.br
+.B add
+[\fI\-\-upgrade\fR] <path/to/package.cpk>
 Alias for \fBinstall\fR.
 .TP
 .B uninstall
@@ -116,6 +122,11 @@ Search for a package:
 .TP
 Install a package:
 .B cpk install htop
+.TP
+Install a package from a local .cpk file:
+.B cpk install /tmp/mypackage#4.1.0-1.i686.cpk
+.br
+.B sudo cpk add /tmp/mypackage#4.1.0-1.i686.cpk
 .TP
 Upgrade an installed package:
 .B cpk install --upgrade htop

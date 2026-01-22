@@ -41,6 +41,7 @@ bool load_cpk_config(const std::string &config_file);
 bool directory_exists(const std::string &path);
 std::string find_pkg_file(const std::string& directory, const std::string& pkgname, const std::string& pkgver);
 bool find_package(const std::string& package_name, std::string& package, std::string& pkgname, std::string& pkgver, std::string& pkgarch);
+bool parse_cpk_filename(const std::string& filepath, std::string& pkgname, std::string& pkgver, std::string& pkgarch);
 bool is_package_installed(const std::string& package_name);
 int get_number_of_packages();
 bool change_directory(const std::string& path);

@@ -157,11 +157,18 @@ For detailed help on a specific command, use `cpk help <command>`. For example:
 - Prints a success message or an error if the build fails.
 
 ### `cpk install <package> [--upgrade]`
+### `cpk install <path/to/package.cpk> [--upgrade]`
 ### `cpk add <package> [--upgrade]`
+### `cpk add <path/to/package.cpk> [--upgrade]`
 
-**Usage**: one required argument (package name), optional `--upgrade` flag
+**Usage**: one required argument (package name or path to .cpk file), optional `--upgrade` flag
 
-- Finds the package in the repository index.
+- Can install from repository or from a local .cpk file.
+- If installing from repository:
+  - Finds the package in the repository index.
+- If installing from local file:
+  - Parses the .cpk filename to extract package name, version, and architecture.
+  - Extracts the package to access pre/post install scripts and README.
 - If already installed:
   - Continues only if `--upgrade` is specified; otherwise prints a warning.
 - Ensures the package archive exists locally.
@@ -169,6 +176,10 @@ For detailed help on a specific command, use `cpk help <command>`. For example:
 - Runs `pkgadd -r <CPK_INSTALL_ROOT> [ -u ] <package_file>` to install or upgrade.
 - Displays the README (if available) after installation.
 - `add` is an alias for `install`.
+- Examples:
+  - `cpk install vim` - Install from repository
+  - `cpk install /tmp/mypackage#4.1.0-1.i686.cpk` - Install from local file
+  - `sudo cpk add /tmp/mypackage#4.1.0-1.i686.cpk` - Install from local file with sudo
 
 ### `cpk uninstall <package>`
 ### `cpk del <package>`

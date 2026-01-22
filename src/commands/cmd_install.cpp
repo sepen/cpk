@@ -8,22 +8,39 @@ namespace fs = std::filesystem;
 
 void cmd_install(const std::vector<std::string>& args) {
     if (args.empty()) {
-        print_message("Package name is required", RED);
-        return;
-    }
-
-    std::string index_file = CPK_HOME_DIR + "/CPKINDEX";
-    if (!fs::exists(index_file)) {
-        print_message("Package index not found. Run `cpk update` first", RED);
+        print_message("Package name or path to .cpk file is required", RED);
         return;
     }
 
     std::string package, pkgname, pkgver, pkgarch;
-    if (!find_package(args[0], package, pkgname, pkgver, pkgarch)) return;
+    std::string package_file;
+    bool is_local_file = false;
+    
+    // Check if argument is a path to a local .cpk file
+    if (fs::exists(args[0]) && fs::is_regular_file(args[0])) {
+        // Try to parse the filename
+        if (parse_cpk_filename(args[0], pkgname, pkgver, pkgarch)) {
+            is_local_file = true;
+            package_file = args[0];
+            package = fs::path(args[0]).filename().string();
+        } else {
+            print_message("Invalid .cpk file format: " + args[0], RED);
+            return;
+        }
+    } else {
+        // Normal package installation from repository
+        std::string index_file = CPK_HOME_DIR + "/CPKINDEX";
+        if (!fs::exists(index_file)) {
+            print_message("Package index not found. Run `cpk update` first", RED);
+            return;
+        }
+
+        if (!find_package(args[0], package, pkgname, pkgver, pkgarch)) return;
+    }
 
     std::string upgrade_flag;
     if (is_package_installed(pkgname)) {
-        if (args[1] == "--upgrade") {
+        if (args.size() > 1 && args[1] == "--upgrade") {
             print_header("Upgrading package " + pkgname, BLUE);
             upgrade_flag = "-u";
         }
@@ -37,23 +54,35 @@ void cmd_install(const std::vector<std::string>& args) {
         upgrade_flag = "";
     }
 
-    // We need to download and extract the package if not already done
-    // That way we can run pre/post install scripts and show README
-    std::string package_url = CPK_REPO_URL + "/" + url_encode(package);
-    std::string package_source = CPK_HOME_DIR + "/" + pkgname + "/" + pkgver;
-    std::string package_path = CPK_HOME_DIR + "/" + package;
+    std::string cache_dir = get_cache_dir();
+    std::string package_source = cache_dir + "/" + pkgname + "/" + pkgver;
+    
+    if (is_local_file) {
+        // For local files, extract to cache directory to get pre/post install scripts and README
+        if (!fs::is_directory(package_source)) {
+            if (!extract_package(package_file, cache_dir)) {
+                print_message("Failed to extract package sources", RED);
+                return;
+            }
+        }
+    } else {
+        // We need to download and extract the package if not already done
+        // That way we can run pre/post install scripts and show README
+        std::string package_url = CPK_REPO_URL + "/" + url_encode(package);
+        std::string package_path = get_cache_file(package);
 
-    if (!fs::is_directory(package_source)) {
-        if (!download_file(package_url, package_path) || !extract_package(package_path, CPK_HOME_DIR)) {
-            print_message("Failed to retrieve package sources", RED);
+        if (!fs::is_directory(package_source)) {
+            if (!download_file(package_url, package_path) || !extract_package(package_path, cache_dir)) {
+                print_message("Failed to retrieve package sources", RED);
+                return;
+            }
+        }
+
+        package_file = find_pkg_file(package_source, pkgname, pkgver);
+        if (!fs::exists(package_file)) {
+            print_message("Package file not found", YELLOW);
             return;
         }
-    }
-
-    std::string package_file = find_pkg_file(package_source, pkgname, pkgver);
-    if (!fs::exists(package_file)) {
-        print_message("Package file not found", YELLOW);
-        return;
     }
 
     // Run pre-install script if exists

@@ -244,17 +244,23 @@ void print_help_info() {
 
 void print_help_install() {
     print_message("Usage: cpk install <package> [--upgrade]");
+    print_message("       cpk install <path/to/package.cpk> [--upgrade]");
     print_message("       cpk add <package> [--upgrade]");
+    print_message("       cpk add <path/to/package.cpk> [--upgrade]");
     print_message("\nDescription:");
     print_message("  Install or upgrade packages on the system");
+    print_message("  Can install from repository or from a local .cpk file");
     print_message("\nArguments:");
-    print_message("  <package>                Package name");
+    print_message("  <package>                Package name (from repository)");
+    print_message("  <path/to/package.cpk>    Path to local .cpk file");
     print_message("  --upgrade                Upgrade package if already installed");
     print_message("\nAliases:");
     print_message("  add                      Alias for install");
     print_message("\nExamples:");
     print_message("  cpk install vim");
     print_message("  cpk add vim --upgrade");
+    print_message("  cpk install /tmp/mypackage#4.1.0-1.i686.cpk");
+    print_message("  sudo cpk add /tmp/mypackage#4.1.0-1.i686.cpk");
     print_general_options();
 }
 
@@ -642,6 +648,46 @@ std::string find_pkg_file(const std::string& directory, const std::string& pkgna
     }
 
     return matched_file;
+}
+
+// Function to parse .cpk filename and extract package name, version, and architecture
+// Format: pkgname#version-release.arch.cpk
+// Example: bash#5.3.9-1.armhf.cpk
+bool parse_cpk_filename(const std::string& filepath, std::string& pkgname, std::string& pkgver, std::string& pkgarch) {
+    fs::path path(filepath);
+    std::string filename = path.filename().string();
+    
+    // Check if it's a .cpk file
+    if (filename.length() < 4 || filename.substr(filename.length() - 4) != ".cpk") {
+        return false;
+    }
+    
+    // Remove .cpk extension
+    std::string base = filename.substr(0, filename.length() - 4);
+    
+    // Find the last dot (separates arch from version-release)
+    size_t last_dot = base.rfind('.');
+    if (last_dot == std::string::npos) {
+        return false;
+    }
+    
+    // Extract architecture
+    pkgarch = base.substr(last_dot + 1);
+    
+    // Extract the part before the last dot
+    std::string name_version = base.substr(0, last_dot);
+    
+    // Find the hash separator
+    size_t hash_pos = name_version.find('#');
+    if (hash_pos == std::string::npos) {
+        return false;
+    }
+    
+    // Extract package name and version
+    pkgname = name_version.substr(0, hash_pos);
+    pkgver = name_version.substr(hash_pos + 1);
+    
+    return !pkgname.empty() && !pkgver.empty() && !pkgarch.empty();
 }
 
 // Helper function to find package details
