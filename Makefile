@@ -253,12 +253,12 @@ am__distuninstallcheck_listfiles = $(distuninstallcheck_listfiles) \
 distcleancheck_listfiles = \
   find . \( -type f -a \! \
             \( -name .nfs* -o -name .smb* -o -name .__afs* \) \) -print
-ACLOCAL = ${SHELL} '/media/sdcard/devel/cpk/missing' aclocal-1.18
+ACLOCAL = ${SHELL} '/home/sepen/devel/cpk/missing' aclocal-1.18
 AMTAR = $${TAR-tar}
 AM_DEFAULT_VERBOSITY = 1
-AUTOCONF = ${SHELL} '/media/sdcard/devel/cpk/missing' autoconf
-AUTOHEADER = ${SHELL} '/media/sdcard/devel/cpk/missing' autoheader
-AUTOMAKE = ${SHELL} '/media/sdcard/devel/cpk/missing' automake-1.18
+AUTOCONF = ${SHELL} '/home/sepen/devel/cpk/missing' autoconf
+AUTOHEADER = ${SHELL} '/home/sepen/devel/cpk/missing' autoheader
+AUTOMAKE = ${SHELL} '/home/sepen/devel/cpk/missing' automake-1.18
 AWK = gawk
 CC = gcc
 CCDEPMODE = depmode=gcc3
@@ -270,7 +270,7 @@ CXX = g++
 CXXDEPMODE = depmode=gcc3
 CXXFLAGS = -g -O2 -std=c++20
 CYGPATH_W = echo
-DEFS = -DPACKAGE_NAME=\"cpk\" -DPACKAGE_TARNAME=\"cpk\" -DPACKAGE_VERSION=\"0.1\" -DPACKAGE_STRING=\"cpk\ 0.1\" -DPACKAGE_BUGREPORT=\"sepen@crux.nu\" -DPACKAGE_URL=\"\" -DPACKAGE=\"cpk\" -DVERSION=\"0.1\" -DHAVE_STDIO_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_STRINGS_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_UNISTD_H=1 -DSTDC_HEADERS=1 -DHAVE_ARCHIVE_H=1 -DHAVE_ARCHIVE_ENTRY_H=1 -DHAVE_CURL_CURL_H=1 -DHAVE_SYS_STAT_H=1
+DEFS = -DPACKAGE_NAME=\"cpk\" -DPACKAGE_TARNAME=\"cpk\" -DPACKAGE_VERSION=\"0.2\" -DPACKAGE_STRING=\"cpk\ 0.2\" -DPACKAGE_BUGREPORT=\"sepen@crux-arm.nu\" -DPACKAGE_URL=\"\" -DPACKAGE=\"cpk\" -DVERSION=\"0.2\" -DHAVE_STDIO_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_STRINGS_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_UNISTD_H=1 -DSTDC_HEADERS=1 -DHAVE_ARCHIVE_H=1 -DHAVE_ARCHIVE_ENTRY_H=1 -DHAVE_CURL_CURL_H=1 -DHAVE_SYS_STAT_H=1
 DEPDIR = .deps
 ECHO_C = 
 ECHO_N = -n
@@ -290,16 +290,16 @@ LIBCURL_LIBS = -lcurl
 LIBOBJS = 
 LIBS = 
 LTLIBOBJS = 
-MAKEINFO = ${SHELL} '/media/sdcard/devel/cpk/missing' makeinfo
+MAKEINFO = ${SHELL} '/home/sepen/devel/cpk/missing' makeinfo
 MKDIR_P = /bin/mkdir -p
 OBJEXT = o
 PACKAGE = cpk
-PACKAGE_BUGREPORT = sepen@crux.nu
+PACKAGE_BUGREPORT = sepen@crux-arm.nu
 PACKAGE_NAME = cpk
-PACKAGE_STRING = cpk 0.1
+PACKAGE_STRING = cpk 0.2
 PACKAGE_TARNAME = cpk
 PACKAGE_URL = 
-PACKAGE_VERSION = 0.1
+PACKAGE_VERSION = 0.2
 PATH_SEPARATOR = :
 PKG_CONFIG = /usr/bin/pkg-config
 PKG_CONFIG_LIBDIR = 
@@ -307,11 +307,11 @@ PKG_CONFIG_PATH =
 SET_MAKE = 
 SHELL = /bin/sh
 STRIP = 
-VERSION = 0.1
-abs_builddir = /media/sdcard/devel/cpk
-abs_srcdir = /media/sdcard/devel/cpk
-abs_top_builddir = /media/sdcard/devel/cpk
-abs_top_srcdir = /media/sdcard/devel/cpk
+VERSION = 0.2
+abs_builddir = /home/sepen/devel/cpk
+abs_srcdir = /home/sepen/devel/cpk
+abs_top_builddir = /home/sepen/devel/cpk
+abs_top_srcdir = /home/sepen/devel/cpk
 ac_ct_CC = gcc
 ac_ct_CXX = g++
 am__include = include
@@ -333,7 +333,7 @@ host_alias =
 htmldir = ${docdir}
 includedir = ${prefix}/include
 infodir = ${datarootdir}/info
-install_sh = ${SHELL} /media/sdcard/devel/cpk/install-sh
+install_sh = ${SHELL} /home/sepen/devel/cpk/install-sh
 libdir = ${exec_prefix}/lib
 libexecdir = ${exec_prefix}/libexec
 localedir = ${datarootdir}/locale

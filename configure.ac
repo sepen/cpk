@@ -1,6 +1,6 @@
 # configure.ac
 
-AC_INIT([cpk], [0.1], [sepen@crux.nu])
+AC_INIT([cpk], [0.2], [sepen@crux-arm.nu])
 AM_INIT_AUTOMAKE([foreign -Wall -Werror])
 AC_PROG_CXX
 AC_PROG_INSTALL
@@ -13,12 +13,12 @@ PKG_PROG_PKG_CONFIG
 
 # Check for libarchive
 PKG_CHECK_MODULES([LIBARCHIVE], [libarchive], [], [
-    AC_MSG_ERROR([libarchive not found. Install it with 'sudo apt install libarchive-dev' or 'pkg install libarchive'])
+    AC_MSG_ERROR([Required library 'libarchive' was not found. Please install it and try again])
 ])
 
 # Check for libcurl
 PKG_CHECK_MODULES([LIBCURL], [libcurl], [], [
-    AC_MSG_ERROR([libcurl not found. Install it with 'sudo apt install libcurl4-openssl-dev' or 'pkg install curl'])
+    AC_MSG_ERROR([Required library 'libcurl' was not found. Please install it and try again])
 ])
 
 # ------------------------------------------------------------------
