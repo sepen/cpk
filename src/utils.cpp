@@ -46,54 +46,32 @@ static size_t write_data(void *ptr, size_t size, size_t nmemb, FILE *stream) {
 
 // Function to compare versions semantically
 // Returns: -1 if v1 < v2, 0 if v1 == v2, 1 if v1 > v2
+// Only compares the VERSION part (before the first '-'), ignoring RELEASE
 int compare_versions(const std::string& v1, const std::string& v2) {
     std::vector<int> ver1, ver2;
     
-    // Parse v1 (e.g.: "3.31.10-1" -> [3, 31, 10, 1])
-    std::istringstream iss1(v1);
+    // Extract version part (before '-') if present and parse v1
+    size_t dash1 = v1.find('-');
+    std::string ver1_str = (dash1 != std::string::npos) ? v1.substr(0, dash1) : v1;
+    std::istringstream iss1(ver1_str);
     std::string token;
     while (std::getline(iss1, token, '.')) {
-        // Handle the "-" (e.g.: "10-1" -> ["10", "1"])
-        size_t dash_pos = token.find('-');
-        if (dash_pos != std::string::npos) {
-            try {
-                ver1.push_back(std::stoi(token.substr(0, dash_pos)));
-                ver1.push_back(std::stoi(token.substr(dash_pos + 1)));
-            } catch (const std::exception& e) {
-                // Invalid version format, treat as 0
-                ver1.push_back(0);
-            }
-            break; // No more numbers after "-"
-        } else {
-            try {
-                ver1.push_back(std::stoi(token));
-            } catch (const std::exception& e) {
-                // Invalid version format, treat as 0
-                ver1.push_back(0);
-            }
+        try {
+            ver1.push_back(std::stoi(token));
+        } catch (const std::exception& e) {
+            ver1.push_back(0);
         }
     }
     
-    // Parse v2 the same way
-    std::istringstream iss2(v2);
+    // Extract version part (before '-') if present and parse v2
+    size_t dash2 = v2.find('-');
+    std::string ver2_str = (dash2 != std::string::npos) ? v2.substr(0, dash2) : v2;
+    std::istringstream iss2(ver2_str);
     while (std::getline(iss2, token, '.')) {
-        size_t dash_pos = token.find('-');
-        if (dash_pos != std::string::npos) {
-            try {
-                ver2.push_back(std::stoi(token.substr(0, dash_pos)));
-                ver2.push_back(std::stoi(token.substr(dash_pos + 1)));
-            } catch (const std::exception& e) {
-                // Invalid version format, treat as 0
-                ver2.push_back(0);
-            }
-            break;
-        } else {
-            try {
-                ver2.push_back(std::stoi(token));
-            } catch (const std::exception& e) {
-                // Invalid version format, treat as 0
-                ver2.push_back(0);
-            }
+        try {
+            ver2.push_back(std::stoi(token));
+        } catch (const std::exception& e) {
+            ver2.push_back(0);
         }
     }
     
