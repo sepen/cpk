@@ -1023,6 +1023,8 @@ std::string get_system_architecture() {
         return "x86_64";
     } else if (uname_output == "i686") {
         return "i686";
+    } else if (uname_output == "ppc64") {
+        return "ppc64";
     } else {
         print_message("Warning: Unrecognized architecture '" + uname_output + "'", YELLOW);
         return uname_output;
