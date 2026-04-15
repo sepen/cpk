@@ -243,24 +243,24 @@ void print_help_info() {
 }
 
 void print_help_install() {
-    print_message("Usage: cpk install <package> [--upgrade]");
-    print_message("       cpk install <path/to/package.cpk> [--upgrade]");
-    print_message("       cpk add <package> [--upgrade]");
-    print_message("       cpk add <path/to/package.cpk> [--upgrade]");
+    print_message("Usage: cpk install <package> [--upgrade] [--no-deps]");
+    print_message("       cpk install <path/to/package.cpk> [--upgrade] [--no-deps]");
+    print_message("       cpk add <package> [--upgrade] [--no-deps]");
+    print_message("       cpk add <path/to/package.cpk> [--upgrade] [--no-deps]");
     print_message("\nDescription:");
     print_message("  Install or upgrade packages on the system");
-    print_message("  Can install from repository or from a local .cpk file");
+    print_message("  add is an alias for install (same behavior)");
+    print_message("  By default resolves dependencies from metadata and installs them first");
     print_message("\nArguments:");
     print_message("  <package>                Package name (from repository)");
     print_message("  <path/to/package.cpk>    Path to local .cpk file");
-    print_message("  --upgrade                Upgrade package if already installed");
-    print_message("\nAliases:");
-    print_message("  add                      Alias for install");
+    print_message("  --upgrade                Upgrade the requested package if already installed");
+    print_message("  --no-deps                Install only the named package (skip dependency tree)");
     print_message("\nExamples:");
     print_message("  cpk install vim");
+    print_message("  cpk install vim --no-deps");
     print_message("  cpk add vim --upgrade");
     print_message("  cpk install /tmp/mypackage#4.1.0-1.i686.cpk");
-    print_message("  sudo cpk add /tmp/mypackage#4.1.0-1.i686.cpk");
     print_general_options();
 }
 
@@ -1203,4 +1203,102 @@ std::string get_cache_dir() {
 std::string get_cache_file(const std::string &filename) {
     std::string cache_dir = get_cache_dir();
     return cache_dir + "/" + filename;
+}
+
+static void split_dependency_words(const std::string& deps_str, std::vector<std::string>& out) {
+    std::istringstream iss(deps_str);
+    std::string tok;
+    while (iss >> tok) {
+        while (!tok.empty() && (tok.back() == ',' || tok.back() == ';')) {
+            tok.pop_back();
+        }
+        if (!tok.empty()) {
+            out.push_back(tok);
+        }
+    }
+}
+
+// spec: repository name / name#version / or path to a .cpk file
+bool get_package_dependency_names(const std::string& spec, std::vector<std::string>& out) {
+    out.clear();
+    std::string deps_str;
+    std::string package, pkgname, pkgver, pkgarch;
+    std::string cache_dir = get_cache_dir();
+
+    if (fs::exists(spec) && fs::is_regular_file(spec)) {
+        if (!parse_cpk_filename(spec, pkgname, pkgver, pkgarch)) {
+            print_message("Invalid .cpk file format: " + spec, RED);
+            return false;
+        }
+        std::string package_source = cache_dir + "/" + pkgname + "/" + pkgver;
+        if (!fs::is_directory(package_source)) {
+            if (!extract_package(spec, cache_dir)) {
+                print_message("Failed to extract package sources", RED);
+                return false;
+            }
+        }
+        std::string pkgfile_path = package_source + "/Pkgfile";
+        if (!fs::exists(pkgfile_path)) {
+            print_message("Pkgfile not found in package", RED);
+            return false;
+        }
+        std::string pn, pd, pu;
+        if (!parse_pkgfile(pkgfile_path, pn, pd, pu, deps_str)) {
+            print_message("Failed to parse Pkgfile", RED);
+            return false;
+        }
+        split_dependency_words(deps_str, out);
+        return true;
+    }
+
+    std::string index_file = CPK_HOME_DIR + "/CPKINDEX";
+    if (!fs::exists(index_file)) {
+        print_message("Package index not found. Run `cpk update` first", RED);
+        return false;
+    }
+    if (!find_package(spec, package, pkgname, pkgver, pkgarch)) {
+        return false;
+    }
+
+    std::string info_url = CPK_REPO_URL + "/" + url_encode(package + ".info");
+    std::string info_path = get_cache_file(package + ".info");
+    bool info_from_file = false;
+    std::string name, version, arch, description, url, dependencies;
+
+    if (fs::exists(info_path) || download_file(info_url, info_path)) {
+        if (parse_cpk_info(info_path, name, version, arch, description, url, dependencies)) {
+            info_from_file = true;
+            deps_str = dependencies;
+        } else {
+            if (fs::exists(info_path)) {
+                fs::remove(info_path);
+            }
+        }
+    }
+
+    if (!info_from_file) {
+        std::string package_url = CPK_REPO_URL + "/" + url_encode(package);
+        std::string package_source = cache_dir + "/" + pkgname + "/" + pkgver;
+        std::string package_path = get_cache_file(package);
+        if (!fs::is_directory(package_source)) {
+            if (!download_file(package_url, package_path) || !extract_package(package_path, cache_dir)) {
+                print_message("Failed to retrieve package info", RED);
+                return false;
+            }
+        }
+        std::string pkgfile_path = package_source + "/Pkgfile";
+        if (!fs::exists(pkgfile_path)) {
+            print_message("Package info file not found and Pkgfile not available", RED);
+            return false;
+        }
+        std::string pkgname_from_file, pkgdesc, pkgurl, pkgdeps;
+        if (!parse_pkgfile(pkgfile_path, pkgname_from_file, pkgdesc, pkgurl, pkgdeps)) {
+            print_message("Failed to parse Pkgfile", RED);
+            return false;
+        }
+        deps_str = pkgdeps;
+    }
+
+    split_dependency_words(deps_str, out);
+    return true;
 }

@@ -41,18 +41,18 @@ Verify integrity of package source files.
 Build a package from source files.
 .TP
 .B install
-[\fI\-\-upgrade\fR] <package>
+[\fI\-\-upgrade\fR] [\fI\-\-no\-deps\fR] <package>
 .br
 .B install
-[\fI\-\-upgrade\fR] <path/to/package.cpk>
-Install or upgrade packages on the system. Can install from repository or from a local .cpk file. Use \fI\-\-upgrade\fR to upgrade an already installed package.
+[\fI\-\-upgrade\fR] [\fI\-\-no\-deps\fR] <path/to/package.cpk>
+Install or upgrade packages on the system. By default reads metadata from the repository (or the local .cpk), resolves direct dependencies recursively, and installs those dependencies before the requested package. Use \fI\-\-no\-deps\fR to install only the named package. Use \fI\-\-upgrade\fR to upgrade an already installed package; \fI\-\-upgrade\fR applies only to the package given on the command line, not to dependencies pulled in automatically.
 .TP
 .B add
-[\fI\-\-upgrade\fR] <package>
+[\fI\-\-upgrade\fR] [\fI\-\-no\-deps\fR] <package>
 .br
 .B add
-[\fI\-\-upgrade\fR] <path/to/package.cpk>
-Alias for \fBinstall\fR.
+[\fI\-\-upgrade\fR] [\fI\-\-no\-deps\fR] <path/to/package.cpk>
+Alias for \fBinstall\fR (same options and behavior).
 .TP
 .B uninstall
 <package>
