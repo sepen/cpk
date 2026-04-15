@@ -1,0 +1,107 @@
+#compdef cpk
+# zsh — installed as _cpk under site-functions
+# Subcommand detection matches completions/cpk (bash): skip -c/--config, -r/--root
+# values and standalone global flags before the first non-option token.
+
+local -a _cpk_cmds
+_cpk_cmds=(
+	update info deps deptree search list diff verify build
+	install add uninstall del rm upgrade clean index archive help version
+)
+
+local -a _cpk_global
+_cpk_global=(
+	'--config[config file]'
+	'-c[config file]'
+	'--root[root directory]'
+	'-r[root directory]'
+	'--color[color mode]'
+	'-C[color mode]'
+	'--verbose[verbose]'
+	'-v[verbose]'
+	'--help[help]'
+	'-h[help]'
+)
+
+local i w cmd= cmd_i=0
+for ((i = 2; i < CURRENT; i++)); do
+	w=$words[i]
+	case $w in
+	-c | --config | -r | --root)
+		((i++))
+		continue
+		;;
+	-C | --color | -v | --verbose | -h | --help) continue ;;
+	-*)
+		[[ $w == *=* ]] && continue
+		continue
+		;;
+	*)
+		cmd=$w
+		cmd_i=$i
+		break
+		;;
+	esac
+done
+
+if [[ -z $cmd ]]; then
+	local cur=$words[CURRENT]
+	if [[ $cur == -* ]]; then
+		_describe -t options 'global option' _cpk_global
+	else
+		_describe -t options 'global option' _cpk_global
+		_describe -t commands 'cpk subcommand' _cpk_cmds
+	fi
+	return 0
+fi
+
+case $cmd in
+install | add)
+	if [[ $words[CURRENT] == -* ]]; then
+		local -a _cpk_install_flags
+		_cpk_install_flags=(
+			'--upgrade[upgrade if already installed]'
+			'--no-deps[do not install dependencies]'
+		)
+		_describe -t options 'install option' _cpk_install_flags
+	else
+		_files
+	fi
+	;;
+info)
+	local -a _cpk_info_flags
+	_cpk_info_flags=(
+		'--name[show name only]'
+		'--version[show version only]'
+		'--arch[show arch only]'
+		'--description[show description only]'
+		'--url[show url only]'
+		'--dependencies[show dependencies only]'
+	)
+	_describe -t options 'info option' _cpk_info_flags
+	;;
+help)
+	_describe -t commands 'help topic' _cpk_cmds
+	;;
+deps | deptree | verify | build | uninstall | del | rm)
+	(( CURRENT > cmd_i )) && _default
+	;;
+upgrade)
+	(( CURRENT > cmd_i )) && _default
+	;;
+index)
+	(( CURRENT > cmd_i )) && _directories
+	;;
+archive)
+	if (( CURRENT > cmd_i )); then
+		case $(( CURRENT - cmd_i )) in
+		1) _directories ;;
+		2) _directories ;;
+		*) _default ;;
+		esac
+	fi
+	;;
+*)
+	_default
+	;;
+esac

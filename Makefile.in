@@ -97,13 +97,15 @@ am__aclocal_m4_deps = $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 DIST_COMMON = $(srcdir)/Makefile.am $(top_srcdir)/configure \
-	$(am__configure_deps) $(noinst_HEADERS) $(am__DIST_COMMON)
+	$(am__configure_deps) $(dist_bashcomp_DATA) \
+	$(dist_zshcomp_DATA) $(noinst_HEADERS) $(am__DIST_COMMON)
 am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
  configure.lineno config.status.lineno
 mkinstalldirs = $(install_sh) -d
 CONFIG_CLEAN_FILES = cpk.conf
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(man1dir)" \
+	"$(DESTDIR)$(bashcompdir)" "$(DESTDIR)$(zshcompdir)" \
 	"$(DESTDIR)$(sysconfdir)"
 PROGRAMS = $(bin_PROGRAMS)
 am__dirstamp = $(am__leading_dot)dirstamp
@@ -212,7 +214,7 @@ am__uninstall_files_from_dir = { \
 man1dir = $(mandir)/man1
 NROFF = nroff
 MANS = $(man_MANS)
-DATA = $(sysconf_DATA)
+DATA = $(dist_bashcomp_DATA) $(dist_zshcomp_DATA) $(sysconf_DATA)
 HEADERS = $(noinst_HEADERS)
 am__tagged_files = $(HEADERS) $(SOURCES) $(TAGS_FILES) $(LISP)
 # Read a list of newline-separated strings from the standard input,
@@ -399,6 +401,10 @@ cpk_LDADD = $(LIBARCHIVE_LIBS) $(LIBCURL_LIBS)
 sysconf_DATA = cpk.conf
 man_MANS = man/cpk.1
 EXTRA_DIST = $(man_MANS) cpk.conf.in
+bashcompdir = $(datadir)/bash-completion/completions
+dist_bashcomp_DATA = completions/cpk
+zshcompdir = $(datadir)/zsh/site-functions
+dist_zshcomp_DATA = completions/_cpk
 all: all-am
 
 .SUFFIXES:
@@ -860,6 +866,48 @@ uninstall-man1:
 	} | sed -e 's,.*/,,;h;s,.*\.,,;s,^[^1][0-9a-z]*$$,1,;x' \
 	      -e 's,\.[0-9a-z]*$$,,;$(transform);G;s,\n,.,'`; \
 	dir='$(DESTDIR)$(man1dir)'; $(am__uninstall_files_from_dir)
+install-dist_bashcompDATA: $(dist_bashcomp_DATA)
+	@$(NORMAL_INSTALL)
+	@list='$(dist_bashcomp_DATA)'; test -n "$(bashcompdir)" || list=; \
+	if test -n "$$list"; then \
+	  echo " $(MKDIR_P) '$(DESTDIR)$(bashcompdir)'"; \
+	  $(MKDIR_P) "$(DESTDIR)$(bashcompdir)" || exit 1; \
+	fi; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; \
+	done | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(bashcompdir)'"; \
+	  $(INSTALL_DATA) $$files "$(DESTDIR)$(bashcompdir)" || exit $$?; \
+	done
+
+uninstall-dist_bashcompDATA:
+	@$(NORMAL_UNINSTALL)
+	@list='$(dist_bashcomp_DATA)'; test -n "$(bashcompdir)" || list=; \
+	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
+	dir='$(DESTDIR)$(bashcompdir)'; $(am__uninstall_files_from_dir)
+install-dist_zshcompDATA: $(dist_zshcomp_DATA)
+	@$(NORMAL_INSTALL)
+	@list='$(dist_zshcomp_DATA)'; test -n "$(zshcompdir)" || list=; \
+	if test -n "$$list"; then \
+	  echo " $(MKDIR_P) '$(DESTDIR)$(zshcompdir)'"; \
+	  $(MKDIR_P) "$(DESTDIR)$(zshcompdir)" || exit 1; \
+	fi; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; \
+	done | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(zshcompdir)'"; \
+	  $(INSTALL_DATA) $$files "$(DESTDIR)$(zshcompdir)" || exit $$?; \
+	done
+
+uninstall-dist_zshcompDATA:
+	@$(NORMAL_UNINSTALL)
+	@list='$(dist_zshcomp_DATA)'; test -n "$(zshcompdir)" || list=; \
+	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
+	dir='$(DESTDIR)$(zshcompdir)'; $(am__uninstall_files_from_dir)
 install-sysconfDATA: $(sysconf_DATA)
 	@$(NORMAL_INSTALL)
 	@list='$(sysconf_DATA)'; test -n "$(sysconfdir)" || list=; \
@@ -1126,7 +1174,7 @@ check-am: all-am
 check: check-am
 all-am: Makefile $(PROGRAMS) $(MANS) $(DATA) $(HEADERS)
 installdirs:
-	for dir in "$(DESTDIR)$(bindir)" "$(DESTDIR)$(man1dir)" "$(DESTDIR)$(sysconfdir)"; do \
+	for dir in "$(DESTDIR)$(bindir)" "$(DESTDIR)$(man1dir)" "$(DESTDIR)$(bashcompdir)" "$(DESTDIR)$(zshcompdir)" "$(DESTDIR)$(sysconfdir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-am
@@ -1202,7 +1250,8 @@ info: info-am
 
 info-am:
 
-install-data-am: install-man
+install-data-am: install-dist_bashcompDATA install-dist_zshcompDATA \
+	install-man
 
 install-dvi: install-dvi-am
 
@@ -1265,8 +1314,8 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-binPROGRAMS uninstall-man \
-	uninstall-sysconfDATA
+uninstall-am: uninstall-binPROGRAMS uninstall-dist_bashcompDATA \
+	uninstall-dist_zshcompDATA uninstall-man uninstall-sysconfDATA
 
 uninstall-man: uninstall-man1
 
@@ -1280,7 +1329,8 @@ uninstall-man: uninstall-man1
 	distclean-compile distclean-generic distclean-tags \
 	distcleancheck distdir distuninstallcheck dvi dvi-am html \
 	html-am info info-am install install-am install-binPROGRAMS \
-	install-data install-data-am install-dvi install-dvi-am \
+	install-data install-data-am install-dist_bashcompDATA \
+	install-dist_zshcompDATA install-dvi install-dvi-am \
 	install-exec install-exec-am install-html install-html-am \
 	install-info install-info-am install-man install-man1 \
 	install-pdf install-pdf-am install-ps install-ps-am \
@@ -1288,7 +1338,8 @@ uninstall-man: uninstall-man1
 	installdirs maintainer-clean maintainer-clean-generic \
 	mostlyclean mostlyclean-compile mostlyclean-generic pdf pdf-am \
 	ps ps-am tags tags-am uninstall uninstall-am \
-	uninstall-binPROGRAMS uninstall-man uninstall-man1 \
+	uninstall-binPROGRAMS uninstall-dist_bashcompDATA \
+	uninstall-dist_zshcompDATA uninstall-man uninstall-man1 \
 	uninstall-sysconfDATA
 
 .PRECIOUS: Makefile

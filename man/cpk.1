@@ -170,3 +170,19 @@ Written by Jose Beneyto (https://github.com/sepen/cpk)
 .BR pkgadd (8),
 .BR pkgrm (8),
 .BR prt-get (8)
+
+.SH FILES
+When installed from the source distribution, shell completion files are installed as
+\fIPREFIX\fR/share/bash-completion/completions/cpk
+and
+\fIPREFIX\fR/share/zsh/site-functions/_cpk .
+For
+.BR bash (1),
+ensure bash-completion loads files from that directory (many distributions do by default).
+For
+.BR zsh (1),
+add the site-functions directory to
+.B fpath
+before
+.B compinit
+if needed.

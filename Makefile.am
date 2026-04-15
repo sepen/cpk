@@ -48,6 +48,12 @@ sysconf_DATA = cpk.conf
 man_MANS     = man/cpk.1
 EXTRA_DIST   = $(man_MANS) cpk.conf.in
 
+bashcompdir = $(datadir)/bash-completion/completions
+dist_bashcomp_DATA = completions/cpk
+
+zshcompdir = $(datadir)/zsh/site-functions
+dist_zshcomp_DATA = completions/_cpk
+
 # Ship a default cpk.conf in the tarball (same bytes as cpk.conf.in); configure
 # still generates cpk.conf from cpk.conf.in in the build tree.
 dist-hook:

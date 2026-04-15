@@ -1,0 +1,57 @@
+# bash completion for cpk(1)
+
+_cpk() {
+	local cur=${COMP_WORDS[COMP_CWORD]}
+	local -a opts cmds
+	opts=(--config -c --root -r --color -C --verbose -v --help -h)
+	cmds=(update info deps deptree search list diff verify build install add uninstall del rm upgrade clean index archive help version)
+
+	local i w cmd="" in_cmd=0
+	for ((i = 1; i < COMP_CWORD; i++)); do
+		w=${COMP_WORDS[i]}
+		case $w in
+		-c | --config | -r | --root)
+			((i++))
+			continue
+			;;
+		-C | --color | -v | --verbose | -h | --help) continue ;;
+		-*)
+			[[ $w == *=* ]] && continue
+			continue
+			;;
+		*)
+			cmd=$w
+			in_cmd=1
+			break
+			;;
+		esac
+	done
+
+	if [[ $in_cmd -eq 0 ]]; then
+		if [[ $cur == -* ]]; then
+			COMPREPLY=($(compgen -W "${opts[*]}" -- "$cur"))
+		else
+			COMPREPLY=($(compgen -W "${opts[*]} ${cmds[*]}" -- "$cur"))
+		fi
+		return
+	fi
+
+	case $cmd in
+	install | add)
+		if [[ $cur == -* ]]; then
+			COMPREPLY=($(compgen -W "--upgrade --no-deps" -- "$cur"))
+		else
+			compopt -o filenames 2>/dev/null
+			COMPREPLY=($(compgen -f -- "$cur"))
+		fi
+		;;
+	info)
+		COMPREPLY=($(compgen -W "--name --version --arch --description --url --dependencies" -- "$cur"))
+		;;
+	help)
+		COMPREPLY=($(compgen -W "${cmds[*]}" -- "$cur"))
+		;;
+	esac
+}
+
+complete -F _cpk cpk
