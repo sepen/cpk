@@ -47,5 +47,5 @@ else
     CXXFLAGS="$CXXFLAGS -std=c++20"
 fi
 
-AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([Makefile cpk.conf])
 AC_OUTPUT
