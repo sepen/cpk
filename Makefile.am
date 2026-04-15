@@ -23,7 +23,7 @@ noinst_HEADERS = src/cpk.h src/utils.h
 AM_CPPFLAGS = -O2 -pipe -Isrc
 AM_CXXFLAGS = 
 
-cpk_CPPFLAGS = $(LIBARCHIVE_CFLAGS) $(LIBCURL_CFLAGS)
+cpk_CPPFLAGS = $(AM_CPPFLAGS) $(LIBARCHIVE_CFLAGS) $(LIBCURL_CFLAGS)
 cpk_LDADD = $(LIBARCHIVE_LIBS) $(LIBCURL_LIBS)
 
 sysconfdir = /etc

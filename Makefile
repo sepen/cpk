@@ -111,6 +111,7 @@ am_cpk_OBJECTS = src/cpk-cpk.$(OBJEXT) src/cpk-utils.$(OBJEXT) \
 	src/commands/cpk-cmd_update.$(OBJEXT) \
 	src/commands/cpk-cmd_info.$(OBJEXT) \
 	src/commands/cpk-cmd_deps.$(OBJEXT) \
+	src/commands/cpk-cmd_deptree.$(OBJEXT) \
 	src/commands/cpk-cmd_search.$(OBJEXT) \
 	src/commands/cpk-cmd_list.$(OBJEXT) \
 	src/commands/cpk-cmd_diff.$(OBJEXT) \
@@ -146,6 +147,7 @@ am__depfiles_remade = src/$(DEPDIR)/cpk-cpk.Po \
 	src/commands/$(DEPDIR)/cpk-cmd_build.Po \
 	src/commands/$(DEPDIR)/cpk-cmd_clean.Po \
 	src/commands/$(DEPDIR)/cpk-cmd_deps.Po \
+	src/commands/$(DEPDIR)/cpk-cmd_deptree.Po \
 	src/commands/$(DEPDIR)/cpk-cmd_diff.Po \
 	src/commands/$(DEPDIR)/cpk-cmd_index.Po \
 	src/commands/$(DEPDIR)/cpk-cmd_info.Po \
@@ -253,27 +255,27 @@ am__distuninstallcheck_listfiles = $(distuninstallcheck_listfiles) \
 distcleancheck_listfiles = \
   find . \( -type f -a \! \
             \( -name .nfs* -o -name .smb* -o -name .__afs* \) \) -print
-ACLOCAL = ${SHELL} '/home/sepen/devel/cpk/missing' aclocal-1.18
+ACLOCAL = ${SHELL} '/Users/sepen/devel/sepen/cpk/missing' aclocal-1.18
 AMTAR = $${TAR-tar}
 AM_DEFAULT_VERBOSITY = 1
-AUTOCONF = ${SHELL} '/home/sepen/devel/cpk/missing' autoconf
-AUTOHEADER = ${SHELL} '/home/sepen/devel/cpk/missing' autoheader
-AUTOMAKE = ${SHELL} '/home/sepen/devel/cpk/missing' automake-1.18
-AWK = gawk
+AUTOCONF = ${SHELL} '/Users/sepen/devel/sepen/cpk/missing' autoconf
+AUTOHEADER = ${SHELL} '/Users/sepen/devel/sepen/cpk/missing' autoheader
+AUTOMAKE = ${SHELL} '/Users/sepen/devel/sepen/cpk/missing' automake-1.18
+AWK = awk
 CC = gcc
 CCDEPMODE = depmode=gcc3
 CFLAGS = -g -O2
-CPPFLAGS = 
+CPPFLAGS = -I/opt/homebrew/opt/zlib/include
 CSCOPE = cscope
 CTAGS = ctags
 CXX = g++
 CXXDEPMODE = depmode=gcc3
 CXXFLAGS = -g -O2 -std=c++20
 CYGPATH_W = echo
-DEFS = -DPACKAGE_NAME=\"cpk\" -DPACKAGE_TARNAME=\"cpk\" -DPACKAGE_VERSION=\"0.3\" -DPACKAGE_STRING=\"cpk\ 0.3\" -DPACKAGE_BUGREPORT=\"sepen@crux-arm.nu\" -DPACKAGE_URL=\"\" -DPACKAGE=\"cpk\" -DVERSION=\"0.3\" -DHAVE_STDIO_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_STRINGS_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_UNISTD_H=1 -DSTDC_HEADERS=1 -DHAVE_ARCHIVE_H=1 -DHAVE_ARCHIVE_ENTRY_H=1 -DHAVE_CURL_CURL_H=1 -DHAVE_SYS_STAT_H=1
+DEFS = -DPACKAGE_NAME=\"cpk\" -DPACKAGE_TARNAME=\"cpk\" -DPACKAGE_VERSION=\"0.3\" -DPACKAGE_STRING=\"cpk\ 0.3\" -DPACKAGE_BUGREPORT=\"sepen@crux-arm.nu\" -DPACKAGE_URL=\"\" -DPACKAGE=\"cpk\" -DVERSION=\"0.3\" -DHAVE_STDIO_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_STRINGS_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_UNISTD_H=1 -DSTDC_HEADERS=1 -DHAVE_CURL_CURL_H=1 -DHAVE_SYS_STAT_H=1
 DEPDIR = .deps
-ECHO_C = 
-ECHO_N = -n
+ECHO_C = \c
+ECHO_N = 
 ECHO_T = 
 ETAGS = etags
 EXEEXT = 
@@ -282,16 +284,16 @@ INSTALL_DATA = ${INSTALL} -m 644
 INSTALL_PROGRAM = ${INSTALL}
 INSTALL_SCRIPT = ${INSTALL}
 INSTALL_STRIP_PROGRAM = $(install_sh) -c -s
-LDFLAGS = 
-LIBARCHIVE_CFLAGS = 
-LIBARCHIVE_LIBS = -larchive
+LDFLAGS = -L/opt/homebrew/opt/zlib/lib
+LIBARCHIVE_CFLAGS = -I/opt/homebrew/opt/libarchive/include
+LIBARCHIVE_LIBS = -L/opt/homebrew/opt/libarchive/lib -larchive
 LIBCURL_CFLAGS = 
 LIBCURL_LIBS = -lcurl
 LIBOBJS = 
 LIBS = 
 LTLIBOBJS = 
-MAKEINFO = ${SHELL} '/home/sepen/devel/cpk/missing' makeinfo
-MKDIR_P = /bin/mkdir -p
+MAKEINFO = ${SHELL} '/Users/sepen/devel/sepen/cpk/missing' makeinfo
+MKDIR_P = mkdir -p
 OBJEXT = o
 PACKAGE = cpk
 PACKAGE_BUGREPORT = sepen@crux-arm.nu
@@ -301,17 +303,17 @@ PACKAGE_TARNAME = cpk
 PACKAGE_URL = 
 PACKAGE_VERSION = 0.3
 PATH_SEPARATOR = :
-PKG_CONFIG = /usr/bin/pkg-config
+PKG_CONFIG = /opt/homebrew/bin/pkg-config
 PKG_CONFIG_LIBDIR = 
-PKG_CONFIG_PATH = 
+PKG_CONFIG_PATH = /opt/homebrew/opt/libarchive/lib/pkgconfig:
 SET_MAKE = 
 SHELL = /bin/sh
 STRIP = 
 VERSION = 0.3
-abs_builddir = /home/sepen/devel/cpk
-abs_srcdir = /home/sepen/devel/cpk
-abs_top_builddir = /home/sepen/devel/cpk
-abs_top_srcdir = /home/sepen/devel/cpk
+abs_builddir = /Users/sepen/devel/sepen/cpk
+abs_srcdir = /Users/sepen/devel/sepen/cpk
+abs_top_builddir = /Users/sepen/devel/sepen/cpk
+abs_top_srcdir = /Users/sepen/devel/sepen/cpk
 ac_ct_CC = gcc
 ac_ct_CXX = g++
 am__include = include
@@ -320,7 +322,7 @@ am__quote =
 am__rm_f_notfound = 
 am__tar = tar --format=ustar -chf - "$$tardir"
 am__untar = tar -xf -
-am__xargs_n = xargs -n
+am__xargs_n = am__xargs_n () { shift; sed "s/ /\\n/g" | while read am__xargs_n_arg; do "" "$am__xargs_n_arg"; done; }
 bindir = ${exec_prefix}/bin
 build_alias = 
 builddir = .
@@ -333,7 +335,7 @@ host_alias =
 htmldir = ${docdir}
 includedir = ${prefix}/include
 infodir = ${datarootdir}/info
-install_sh = ${SHELL} /home/sepen/devel/cpk/install-sh
+install_sh = ${SHELL} /Users/sepen/devel/sepen/cpk/install-sh
 libdir = ${exec_prefix}/lib
 libexecdir = ${exec_prefix}/libexec
 localedir = ${datarootdir}/locale
@@ -342,7 +344,7 @@ mandir = ${datarootdir}/man
 mkdir_p = $(MKDIR_P)
 oldincludedir = /usr/include
 pdfdir = ${docdir}
-prefix = /usr
+prefix = /usr/local
 program_transform_name = s,x,x,
 psdir = ${docdir}
 runstatedir = ${localstatedir}/run
@@ -359,6 +361,7 @@ cpk_SOURCES = src/cpk.cpp src/utils.cpp \
               src/commands/cmd_update.cpp \
               src/commands/cmd_info.cpp \
               src/commands/cmd_deps.cpp \
+              src/commands/cmd_deptree.cpp \
               src/commands/cmd_search.cpp \
               src/commands/cmd_list.cpp \
               src/commands/cmd_diff.cpp \
@@ -374,7 +377,8 @@ cpk_SOURCES = src/cpk.cpp src/utils.cpp \
 noinst_HEADERS = src/cpk.h src/utils.h
 AM_CPPFLAGS = -O2 -pipe -Isrc
 AM_CXXFLAGS = 
-cpk_CPPFLAGS = $(LIBARCHIVE_CFLAGS) $(LIBCURL_CFLAGS)
+
+cpk_CPPFLAGS = $(AM_CPPFLAGS) $(LIBARCHIVE_CFLAGS) $(LIBCURL_CFLAGS)
 cpk_LDADD = $(LIBARCHIVE_LIBS) $(LIBCURL_LIBS)
 sysconf_DATA = cpk.conf
 man_MANS = man/cpk.1
@@ -480,6 +484,8 @@ src/commands/cpk-cmd_info.$(OBJEXT): src/commands/$(am__dirstamp) \
 	src/commands/$(DEPDIR)/$(am__dirstamp)
 src/commands/cpk-cmd_deps.$(OBJEXT): src/commands/$(am__dirstamp) \
 	src/commands/$(DEPDIR)/$(am__dirstamp)
+src/commands/cpk-cmd_deptree.$(OBJEXT): src/commands/$(am__dirstamp) \
+	src/commands/$(DEPDIR)/$(am__dirstamp)
 src/commands/cpk-cmd_search.$(OBJEXT): src/commands/$(am__dirstamp) \
 	src/commands/$(DEPDIR)/$(am__dirstamp)
 src/commands/cpk-cmd_list.$(OBJEXT): src/commands/$(am__dirstamp) \
@@ -522,6 +528,7 @@ include src/commands/$(DEPDIR)/cpk-cmd_archive.Po # am--include-marker
 include src/commands/$(DEPDIR)/cpk-cmd_build.Po # am--include-marker
 include src/commands/$(DEPDIR)/cpk-cmd_clean.Po # am--include-marker
 include src/commands/$(DEPDIR)/cpk-cmd_deps.Po # am--include-marker
+include src/commands/$(DEPDIR)/cpk-cmd_deptree.Po # am--include-marker
 include src/commands/$(DEPDIR)/cpk-cmd_diff.Po # am--include-marker
 include src/commands/$(DEPDIR)/cpk-cmd_index.Po # am--include-marker
 include src/commands/$(DEPDIR)/cpk-cmd_info.Po # am--include-marker
@@ -624,6 +631,20 @@ src/commands/cpk-cmd_deps.obj: src/commands/cmd_deps.cpp
 #	$(AM_V_CXX)source='src/commands/cmd_deps.cpp' object='src/commands/cpk-cmd_deps.obj' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
 #	$(AM_V_CXX_no)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(cpk_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/commands/cpk-cmd_deps.obj `if test -f 'src/commands/cmd_deps.cpp'; then $(CYGPATH_W) 'src/commands/cmd_deps.cpp'; else $(CYGPATH_W) '$(srcdir)/src/commands/cmd_deps.cpp'; fi`
+
+src/commands/cpk-cmd_deptree.o: src/commands/cmd_deptree.cpp
+	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(cpk_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/commands/cpk-cmd_deptree.o -MD -MP -MF src/commands/$(DEPDIR)/cpk-cmd_deptree.Tpo -c -o src/commands/cpk-cmd_deptree.o `test -f 'src/commands/cmd_deptree.cpp' || echo '$(srcdir)/'`src/commands/cmd_deptree.cpp
+	$(AM_V_at)$(am__mv) src/commands/$(DEPDIR)/cpk-cmd_deptree.Tpo src/commands/$(DEPDIR)/cpk-cmd_deptree.Po
+#	$(AM_V_CXX)source='src/commands/cmd_deptree.cpp' object='src/commands/cpk-cmd_deptree.o' libtool=no \
+#	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
+#	$(AM_V_CXX_no)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(cpk_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/commands/cpk-cmd_deptree.o `test -f 'src/commands/cmd_deptree.cpp' || echo '$(srcdir)/'`src/commands/cmd_deptree.cpp
+
+src/commands/cpk-cmd_deptree.obj: src/commands/cmd_deptree.cpp
+	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(cpk_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/commands/cpk-cmd_deptree.obj -MD -MP -MF src/commands/$(DEPDIR)/cpk-cmd_deptree.Tpo -c -o src/commands/cpk-cmd_deptree.obj `if test -f 'src/commands/cmd_deptree.cpp'; then $(CYGPATH_W) 'src/commands/cmd_deptree.cpp'; else $(CYGPATH_W) '$(srcdir)/src/commands/cmd_deptree.cpp'; fi`
+	$(AM_V_at)$(am__mv) src/commands/$(DEPDIR)/cpk-cmd_deptree.Tpo src/commands/$(DEPDIR)/cpk-cmd_deptree.Po
+#	$(AM_V_CXX)source='src/commands/cmd_deptree.cpp' object='src/commands/cpk-cmd_deptree.obj' libtool=no \
+#	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
+#	$(AM_V_CXX_no)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(cpk_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/commands/cpk-cmd_deptree.obj `if test -f 'src/commands/cmd_deptree.cpp'; then $(CYGPATH_W) 'src/commands/cmd_deptree.cpp'; else $(CYGPATH_W) '$(srcdir)/src/commands/cmd_deptree.cpp'; fi`
 
 src/commands/cpk-cmd_search.o: src/commands/cmd_search.cpp
 	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(cpk_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/commands/cpk-cmd_search.o -MD -MP -MF src/commands/$(DEPDIR)/cpk-cmd_search.Tpo -c -o src/commands/cpk-cmd_search.o `test -f 'src/commands/cmd_search.cpp' || echo '$(srcdir)/'`src/commands/cmd_search.cpp
@@ -1133,6 +1154,7 @@ distclean: distclean-am
 	-rm -f src/commands/$(DEPDIR)/cpk-cmd_build.Po
 	-rm -f src/commands/$(DEPDIR)/cpk-cmd_clean.Po
 	-rm -f src/commands/$(DEPDIR)/cpk-cmd_deps.Po
+	-rm -f src/commands/$(DEPDIR)/cpk-cmd_deptree.Po
 	-rm -f src/commands/$(DEPDIR)/cpk-cmd_diff.Po
 	-rm -f src/commands/$(DEPDIR)/cpk-cmd_index.Po
 	-rm -f src/commands/$(DEPDIR)/cpk-cmd_info.Po
@@ -1196,6 +1218,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f src/commands/$(DEPDIR)/cpk-cmd_build.Po
 	-rm -f src/commands/$(DEPDIR)/cpk-cmd_clean.Po
 	-rm -f src/commands/$(DEPDIR)/cpk-cmd_deps.Po
+	-rm -f src/commands/$(DEPDIR)/cpk-cmd_deptree.Po
 	-rm -f src/commands/$(DEPDIR)/cpk-cmd_diff.Po
 	-rm -f src/commands/$(DEPDIR)/cpk-cmd_index.Po
 	-rm -f src/commands/$(DEPDIR)/cpk-cmd_info.Po
