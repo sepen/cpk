@@ -30,4 +30,9 @@ sysconfdir = /etc
 sysconf_DATA = cpk.conf
 
 man_MANS     = man/cpk.1
-EXTRA_DIST   = $(man_MANS)
+EXTRA_DIST   = $(man_MANS) cpk.conf.in
+
+# Ship a default cpk.conf in the tarball (same bytes as cpk.conf.in); configure
+# still generates cpk.conf from cpk.conf.in in the build tree.
+dist-hook:
+	cp '$(srcdir)/cpk.conf.in' '$(distdir)/cpk.conf'

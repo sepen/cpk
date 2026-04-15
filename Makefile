@@ -381,7 +381,7 @@ cpk_CPPFLAGS = $(AM_CPPFLAGS) $(LIBARCHIVE_CFLAGS) $(LIBCURL_CFLAGS)
 cpk_LDADD = $(LIBARCHIVE_LIBS) $(LIBCURL_LIBS)
 sysconf_DATA = cpk.conf
 man_MANS = man/cpk.1
-EXTRA_DIST = $(man_MANS)
+EXTRA_DIST = $(man_MANS) cpk.conf.in
 all: all-am
 
 .SUFFIXES:
@@ -957,6 +957,9 @@ distdir-am: $(DISTFILES)
 	    || exit 1; \
 	  fi; \
 	done
+	$(MAKE) $(AM_MAKEFLAGS) \
+	  top_distdir="$(top_distdir)" distdir="$(distdir)" \
+	  dist-hook
 	-test -n "$(am__skip_mode_fix)" \
 	|| find "$(distdir)" -type d ! -perm -755 \
 		-exec chmod u+rwx,go+rx {} \; -o \
@@ -1253,23 +1256,29 @@ uninstall-man: uninstall-man1
 .PHONY: CTAGS GTAGS TAGS all all-am am--depfiles am--refresh check \
 	check-am clean clean-binPROGRAMS clean-cscope clean-generic \
 	cscope cscopelist-am ctags ctags-am dist dist-all dist-bzip2 \
-	dist-bzip3 dist-gzip dist-lzip dist-shar dist-tarZ dist-xz \
-	dist-zip dist-zstd distcheck distclean distclean-compile \
-	distclean-generic distclean-tags distcleancheck distdir \
-	distuninstallcheck dvi dvi-am html html-am info info-am \
-	install install-am install-binPROGRAMS install-data \
-	install-data-am install-dvi install-dvi-am install-exec \
-	install-exec-am install-html install-html-am install-info \
-	install-info-am install-man install-man1 install-pdf \
-	install-pdf-am install-ps install-ps-am install-strip \
-	install-sysconfDATA installcheck installcheck-am installdirs \
-	maintainer-clean maintainer-clean-generic mostlyclean \
-	mostlyclean-compile mostlyclean-generic pdf pdf-am ps ps-am \
-	tags tags-am uninstall uninstall-am uninstall-binPROGRAMS \
-	uninstall-man uninstall-man1 uninstall-sysconfDATA
+	dist-bzip3 dist-gzip dist-hook dist-lzip dist-shar dist-tarZ \
+	dist-xz dist-zip dist-zstd distcheck distclean \
+	distclean-compile distclean-generic distclean-tags \
+	distcleancheck distdir distuninstallcheck dvi dvi-am html \
+	html-am info info-am install install-am install-binPROGRAMS \
+	install-data install-data-am install-dvi install-dvi-am \
+	install-exec install-exec-am install-html install-html-am \
+	install-info install-info-am install-man install-man1 \
+	install-pdf install-pdf-am install-ps install-ps-am \
+	install-strip install-sysconfDATA installcheck installcheck-am \
+	installdirs maintainer-clean maintainer-clean-generic \
+	mostlyclean mostlyclean-compile mostlyclean-generic pdf pdf-am \
+	ps ps-am tags tags-am uninstall uninstall-am \
+	uninstall-binPROGRAMS uninstall-man uninstall-man1 \
+	uninstall-sysconfDATA
 
 .PRECIOUS: Makefile
 
+
+# Ship a default cpk.conf in the tarball (same bytes as cpk.conf.in); configure
+# still generates cpk.conf from cpk.conf.in in the build tree.
+dist-hook:
+	cp '$(srcdir)/cpk.conf.in' '$(distdir)/cpk.conf'
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
