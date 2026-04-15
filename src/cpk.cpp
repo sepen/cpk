@@ -24,7 +24,7 @@
 
 namespace fs = std::filesystem;
 
-const std::string CPK_VERSION = "0.2";
+const std::string CPK_VERSION = "0.3";
 
 std::string CPK_CONF_FILE = "/etc/cpk.conf";
 std::string CPK_REPO_URL = "https://cpk.user.ninja";

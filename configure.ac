@@ -1,6 +1,6 @@
 # configure.ac
 
-AC_INIT([cpk], [0.2], [sepen@crux-arm.nu])
+AC_INIT([cpk], [0.3], [sepen@crux-arm.nu])
 AM_INIT_AUTOMAKE([foreign -Wall -Werror])
 AC_PROG_CXX
 AC_PROG_INSTALL

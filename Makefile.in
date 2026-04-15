@@ -111,6 +111,7 @@ am_cpk_OBJECTS = src/cpk-cpk.$(OBJEXT) src/cpk-utils.$(OBJEXT) \
 	src/commands/cpk-cmd_update.$(OBJEXT) \
 	src/commands/cpk-cmd_info.$(OBJEXT) \
 	src/commands/cpk-cmd_deps.$(OBJEXT) \
+	src/commands/cpk-cmd_deptree.$(OBJEXT) \
 	src/commands/cpk-cmd_search.$(OBJEXT) \
 	src/commands/cpk-cmd_list.$(OBJEXT) \
 	src/commands/cpk-cmd_diff.$(OBJEXT) \
@@ -146,6 +147,7 @@ am__depfiles_remade = src/$(DEPDIR)/cpk-cpk.Po \
 	src/commands/$(DEPDIR)/cpk-cmd_build.Po \
 	src/commands/$(DEPDIR)/cpk-cmd_clean.Po \
 	src/commands/$(DEPDIR)/cpk-cmd_deps.Po \
+	src/commands/$(DEPDIR)/cpk-cmd_deptree.Po \
 	src/commands/$(DEPDIR)/cpk-cmd_diff.Po \
 	src/commands/$(DEPDIR)/cpk-cmd_index.Po \
 	src/commands/$(DEPDIR)/cpk-cmd_info.Po \
@@ -359,6 +361,7 @@ cpk_SOURCES = src/cpk.cpp src/utils.cpp \
               src/commands/cmd_update.cpp \
               src/commands/cmd_info.cpp \
               src/commands/cmd_deps.cpp \
+              src/commands/cmd_deptree.cpp \
               src/commands/cmd_search.cpp \
               src/commands/cmd_list.cpp \
               src/commands/cmd_diff.cpp \
@@ -480,6 +483,8 @@ src/commands/cpk-cmd_info.$(OBJEXT): src/commands/$(am__dirstamp) \
 	src/commands/$(DEPDIR)/$(am__dirstamp)
 src/commands/cpk-cmd_deps.$(OBJEXT): src/commands/$(am__dirstamp) \
 	src/commands/$(DEPDIR)/$(am__dirstamp)
+src/commands/cpk-cmd_deptree.$(OBJEXT): src/commands/$(am__dirstamp) \
+	src/commands/$(DEPDIR)/$(am__dirstamp)
 src/commands/cpk-cmd_search.$(OBJEXT): src/commands/$(am__dirstamp) \
 	src/commands/$(DEPDIR)/$(am__dirstamp)
 src/commands/cpk-cmd_list.$(OBJEXT): src/commands/$(am__dirstamp) \
@@ -522,6 +527,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/commands/$(DEPDIR)/cpk-cmd_build.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/commands/$(DEPDIR)/cpk-cmd_clean.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/commands/$(DEPDIR)/cpk-cmd_deps.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/commands/$(DEPDIR)/cpk-cmd_deptree.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/commands/$(DEPDIR)/cpk-cmd_diff.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/commands/$(DEPDIR)/cpk-cmd_index.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/commands/$(DEPDIR)/cpk-cmd_info.Po@am__quote@ # am--include-marker
@@ -624,6 +630,20 @@ src/commands/cpk-cmd_deps.obj: src/commands/cmd_deps.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/commands/cmd_deps.cpp' object='src/commands/cpk-cmd_deps.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(cpk_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/commands/cpk-cmd_deps.obj `if test -f 'src/commands/cmd_deps.cpp'; then $(CYGPATH_W) 'src/commands/cmd_deps.cpp'; else $(CYGPATH_W) '$(srcdir)/src/commands/cmd_deps.cpp'; fi`
+
+src/commands/cpk-cmd_deptree.o: src/commands/cmd_deptree.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(cpk_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/commands/cpk-cmd_deptree.o -MD -MP -MF src/commands/$(DEPDIR)/cpk-cmd_deptree.Tpo -c -o src/commands/cpk-cmd_deptree.o `test -f 'src/commands/cmd_deptree.cpp' || echo '$(srcdir)/'`src/commands/cmd_deptree.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/commands/$(DEPDIR)/cpk-cmd_deptree.Tpo src/commands/$(DEPDIR)/cpk-cmd_deptree.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/commands/cmd_deptree.cpp' object='src/commands/cpk-cmd_deptree.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(cpk_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/commands/cpk-cmd_deptree.o `test -f 'src/commands/cmd_deptree.cpp' || echo '$(srcdir)/'`src/commands/cmd_deptree.cpp
+
+src/commands/cpk-cmd_deptree.obj: src/commands/cmd_deptree.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(cpk_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/commands/cpk-cmd_deptree.obj -MD -MP -MF src/commands/$(DEPDIR)/cpk-cmd_deptree.Tpo -c -o src/commands/cpk-cmd_deptree.obj `if test -f 'src/commands/cmd_deptree.cpp'; then $(CYGPATH_W) 'src/commands/cmd_deptree.cpp'; else $(CYGPATH_W) '$(srcdir)/src/commands/cmd_deptree.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/commands/$(DEPDIR)/cpk-cmd_deptree.Tpo src/commands/$(DEPDIR)/cpk-cmd_deptree.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/commands/cmd_deptree.cpp' object='src/commands/cpk-cmd_deptree.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(cpk_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/commands/cpk-cmd_deptree.obj `if test -f 'src/commands/cmd_deptree.cpp'; then $(CYGPATH_W) 'src/commands/cmd_deptree.cpp'; else $(CYGPATH_W) '$(srcdir)/src/commands/cmd_deptree.cpp'; fi`
 
 src/commands/cpk-cmd_search.o: src/commands/cmd_search.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(cpk_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/commands/cpk-cmd_search.o -MD -MP -MF src/commands/$(DEPDIR)/cpk-cmd_search.Tpo -c -o src/commands/cpk-cmd_search.o `test -f 'src/commands/cmd_search.cpp' || echo '$(srcdir)/'`src/commands/cmd_search.cpp
@@ -1133,6 +1153,7 @@ distclean: distclean-am
 	-rm -f src/commands/$(DEPDIR)/cpk-cmd_build.Po
 	-rm -f src/commands/$(DEPDIR)/cpk-cmd_clean.Po
 	-rm -f src/commands/$(DEPDIR)/cpk-cmd_deps.Po
+	-rm -f src/commands/$(DEPDIR)/cpk-cmd_deptree.Po
 	-rm -f src/commands/$(DEPDIR)/cpk-cmd_diff.Po
 	-rm -f src/commands/$(DEPDIR)/cpk-cmd_index.Po
 	-rm -f src/commands/$(DEPDIR)/cpk-cmd_info.Po
@@ -1196,6 +1217,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f src/commands/$(DEPDIR)/cpk-cmd_build.Po
 	-rm -f src/commands/$(DEPDIR)/cpk-cmd_clean.Po
 	-rm -f src/commands/$(DEPDIR)/cpk-cmd_deps.Po
+	-rm -f src/commands/$(DEPDIR)/cpk-cmd_deptree.Po
 	-rm -f src/commands/$(DEPDIR)/cpk-cmd_diff.Po
 	-rm -f src/commands/$(DEPDIR)/cpk-cmd_index.Po
 	-rm -f src/commands/$(DEPDIR)/cpk-cmd_info.Po
