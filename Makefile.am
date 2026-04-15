@@ -18,7 +18,23 @@ cpk_SOURCES = src/cpk.cpp src/utils.cpp \
               src/commands/cmd_clean.cpp \
               src/commands/cmd_index.cpp \
               src/commands/cmd_archive.cpp
-noinst_HEADERS = src/cpk.h src/utils.h
+# All headers used by the tree must be listed so `make dist` includes them.
+noinst_HEADERS = src/cpk.h src/utils.h \
+              src/commands/cmd_archive.h \
+              src/commands/cmd_build.h \
+              src/commands/cmd_clean.h \
+              src/commands/cmd_deps.h \
+              src/commands/cmd_deptree.h \
+              src/commands/cmd_diff.h \
+              src/commands/cmd_index.h \
+              src/commands/cmd_info.h \
+              src/commands/cmd_install.h \
+              src/commands/cmd_list.h \
+              src/commands/cmd_search.h \
+              src/commands/cmd_uninstall.h \
+              src/commands/cmd_update.h \
+              src/commands/cmd_upgrade.h \
+              src/commands/cmd_verify.h
 
 AM_CPPFLAGS = -O2 -pipe -Isrc
 AM_CXXFLAGS = 

@@ -101,7 +101,7 @@ DIST_COMMON = $(srcdir)/Makefile.am $(top_srcdir)/configure \
 am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
  configure.lineno config.status.lineno
 mkinstalldirs = $(install_sh) -d
-CONFIG_CLEAN_FILES =
+CONFIG_CLEAN_FILES = cpk.conf
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(man1dir)" \
 	"$(DESTDIR)$(sysconfdir)"
@@ -232,8 +232,8 @@ am__define_uniq_tagged_files = \
     if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; \
   done | $(am__uniquify_input)`
 AM_RECURSIVE_TARGETS = cscope
-am__DIST_COMMON = $(srcdir)/Makefile.in README.md compile depcomp \
-	install-sh missing
+am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/cpk.conf.in \
+	README.md compile depcomp install-sh missing
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
 top_distdir = $(distdir)
@@ -255,27 +255,27 @@ am__distuninstallcheck_listfiles = $(distuninstallcheck_listfiles) \
 distcleancheck_listfiles = \
   find . \( -type f -a \! \
             \( -name .nfs* -o -name .smb* -o -name .__afs* \) \) -print
-ACLOCAL = ${SHELL} '/home/sepen/devel/cpk/missing' aclocal-1.18
+ACLOCAL = ${SHELL} '/Users/sepen/devel/sepen/cpk/missing' aclocal-1.18
 AMTAR = $${TAR-tar}
 AM_DEFAULT_VERBOSITY = 1
-AUTOCONF = ${SHELL} '/home/sepen/devel/cpk/missing' autoconf
-AUTOHEADER = ${SHELL} '/home/sepen/devel/cpk/missing' autoheader
-AUTOMAKE = ${SHELL} '/home/sepen/devel/cpk/missing' automake-1.18
-AWK = gawk
-CC = gcc -std=gnu23
+AUTOCONF = ${SHELL} '/Users/sepen/devel/sepen/cpk/missing' autoconf
+AUTOHEADER = ${SHELL} '/Users/sepen/devel/sepen/cpk/missing' autoheader
+AUTOMAKE = ${SHELL} '/Users/sepen/devel/sepen/cpk/missing' automake-1.18
+AWK = awk
+CC = gcc
 CCDEPMODE = depmode=gcc3
 CFLAGS = -g -O2
-CPPFLAGS = 
+CPPFLAGS = -I/opt/homebrew/opt/zlib/include
 CSCOPE = cscope
 CTAGS = ctags
 CXX = g++
 CXXDEPMODE = depmode=gcc3
 CXXFLAGS = -g -O2 -std=c++20
 CYGPATH_W = echo
-DEFS = -DPACKAGE_NAME=\"cpk\" -DPACKAGE_TARNAME=\"cpk\" -DPACKAGE_VERSION=\"0.3\" -DPACKAGE_STRING=\"cpk\ 0.3\" -DPACKAGE_BUGREPORT=\"sepen@crux-arm.nu\" -DPACKAGE_URL=\"\" -DPACKAGE=\"cpk\" -DVERSION=\"0.3\" -DHAVE_STDIO_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_STRINGS_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_UNISTD_H=1 -DSTDC_HEADERS=1 -DHAVE_ARCHIVE_H=1 -DHAVE_ARCHIVE_ENTRY_H=1 -DHAVE_CURL_CURL_H=1 -DHAVE_SYS_STAT_H=1
+DEFS = -DPACKAGE_NAME=\"cpk\" -DPACKAGE_TARNAME=\"cpk\" -DPACKAGE_VERSION=\"0.3\" -DPACKAGE_STRING=\"cpk\ 0.3\" -DPACKAGE_BUGREPORT=\"sepen@crux-arm.nu\" -DPACKAGE_URL=\"\" -DPACKAGE=\"cpk\" -DVERSION=\"0.3\" -DHAVE_STDIO_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_STRINGS_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_UNISTD_H=1 -DSTDC_HEADERS=1 -DHAVE_CURL_CURL_H=1 -DHAVE_SYS_STAT_H=1
 DEPDIR = .deps
-ECHO_C = 
-ECHO_N = -n
+ECHO_C = \c
+ECHO_N = 
 ECHO_T = 
 ETAGS = etags
 EXEEXT = 
@@ -284,16 +284,16 @@ INSTALL_DATA = ${INSTALL} -m 644
 INSTALL_PROGRAM = ${INSTALL}
 INSTALL_SCRIPT = ${INSTALL}
 INSTALL_STRIP_PROGRAM = $(install_sh) -c -s
-LDFLAGS = 
-LIBARCHIVE_CFLAGS = 
-LIBARCHIVE_LIBS = -larchive
+LDFLAGS = -L/opt/homebrew/opt/zlib/lib
+LIBARCHIVE_CFLAGS = -I/opt/homebrew/opt/libarchive/include
+LIBARCHIVE_LIBS = -L/opt/homebrew/opt/libarchive/lib -larchive
 LIBCURL_CFLAGS = 
 LIBCURL_LIBS = -lcurl
 LIBOBJS = 
 LIBS = 
 LTLIBOBJS = 
-MAKEINFO = ${SHELL} '/home/sepen/devel/cpk/missing' makeinfo
-MKDIR_P = /bin/mkdir -p
+MAKEINFO = ${SHELL} '/Users/sepen/devel/sepen/cpk/missing' makeinfo
+MKDIR_P = mkdir -p
 OBJEXT = o
 PACKAGE = cpk
 PACKAGE_BUGREPORT = sepen@crux-arm.nu
@@ -303,17 +303,17 @@ PACKAGE_TARNAME = cpk
 PACKAGE_URL = 
 PACKAGE_VERSION = 0.3
 PATH_SEPARATOR = :
-PKG_CONFIG = /usr/bin/pkg-config
+PKG_CONFIG = /opt/homebrew/bin/pkg-config
 PKG_CONFIG_LIBDIR = 
-PKG_CONFIG_PATH = 
+PKG_CONFIG_PATH = /opt/homebrew/opt/libarchive/lib/pkgconfig:
 SET_MAKE = 
 SHELL = /bin/sh
 STRIP = 
 VERSION = 0.3
-abs_builddir = /home/sepen/devel/cpk
-abs_srcdir = /home/sepen/devel/cpk
-abs_top_builddir = /home/sepen/devel/cpk
-abs_top_srcdir = /home/sepen/devel/cpk
+abs_builddir = /Users/sepen/devel/sepen/cpk
+abs_srcdir = /Users/sepen/devel/sepen/cpk
+abs_top_builddir = /Users/sepen/devel/sepen/cpk
+abs_top_srcdir = /Users/sepen/devel/sepen/cpk
 ac_ct_CC = gcc
 ac_ct_CXX = g++
 am__include = include
@@ -322,7 +322,7 @@ am__quote =
 am__rm_f_notfound = 
 am__tar = tar --format=ustar -chf - "$$tardir"
 am__untar = tar -xf -
-am__xargs_n = xargs -n
+am__xargs_n = am__xargs_n () { shift; sed "s/ /\\n/g" | while read am__xargs_n_arg; do "" "$am__xargs_n_arg"; done; }
 bindir = ${exec_prefix}/bin
 build_alias = 
 builddir = .
@@ -335,7 +335,7 @@ host_alias =
 htmldir = ${docdir}
 includedir = ${prefix}/include
 infodir = ${datarootdir}/info
-install_sh = ${SHELL} /home/sepen/devel/cpk/install-sh
+install_sh = ${SHELL} /Users/sepen/devel/sepen/cpk/install-sh
 libdir = ${exec_prefix}/lib
 libexecdir = ${exec_prefix}/libexec
 localedir = ${datarootdir}/locale
@@ -344,7 +344,7 @@ mandir = ${datarootdir}/man
 mkdir_p = $(MKDIR_P)
 oldincludedir = /usr/include
 pdfdir = ${docdir}
-prefix = /usr
+prefix = /usr/local
 program_transform_name = s,x,x,
 psdir = ${docdir}
 runstatedir = ${localstatedir}/run
@@ -374,7 +374,24 @@ cpk_SOURCES = src/cpk.cpp src/utils.cpp \
               src/commands/cmd_index.cpp \
               src/commands/cmd_archive.cpp
 
-noinst_HEADERS = src/cpk.h src/utils.h
+# All headers used by the tree must be listed so `make dist` includes them.
+noinst_HEADERS = src/cpk.h src/utils.h \
+              src/commands/cmd_archive.h \
+              src/commands/cmd_build.h \
+              src/commands/cmd_clean.h \
+              src/commands/cmd_deps.h \
+              src/commands/cmd_deptree.h \
+              src/commands/cmd_diff.h \
+              src/commands/cmd_index.h \
+              src/commands/cmd_info.h \
+              src/commands/cmd_install.h \
+              src/commands/cmd_list.h \
+              src/commands/cmd_search.h \
+              src/commands/cmd_uninstall.h \
+              src/commands/cmd_update.h \
+              src/commands/cmd_upgrade.h \
+              src/commands/cmd_verify.h
+
 AM_CPPFLAGS = -O2 -pipe -Isrc
 AM_CXXFLAGS = 
 cpk_CPPFLAGS = $(AM_CPPFLAGS) $(LIBARCHIVE_CFLAGS) $(LIBCURL_CFLAGS)
@@ -419,6 +436,8 @@ $(top_srcdir)/configure:  $(am__configure_deps)
 $(ACLOCAL_M4):  $(am__aclocal_m4_deps)
 	$(am__cd) $(srcdir) && $(ACLOCAL) $(ACLOCAL_AMFLAGS)
 $(am__aclocal_m4_deps):
+cpk.conf: $(top_builddir)/config.status $(srcdir)/cpk.conf.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
 install-binPROGRAMS: $(bin_PROGRAMS)
 	@$(NORMAL_INSTALL)
 	@list='$(bin_PROGRAMS)'; test -n "$(bindir)" || list=; \
