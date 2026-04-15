@@ -49,6 +49,41 @@
       font-size: 14px;
       color: #c9d1d9;
       border-bottom: 1px solid #2f3032;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px 14px;
+    }
+    #summary .summary-count {
+      font-weight: 500;
+      color: #e6e6e6;
+    }
+    #summary .summary-tags {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+    }
+    #summary .summary-tag {
+      display: inline-flex;
+      border-radius: 6px;
+      border: 1px solid #3b3c3e;
+      overflow: hidden;
+      font-size: 13px;
+      line-height: 1.2;
+    }
+    #summary .summary-tag-lbl {
+      padding: 5px 9px;
+      background: #333435;
+      color: #9aa0a6;
+      font-weight: 500;
+    }
+    #summary .summary-tag-val {
+      padding: 5px 10px;
+      background: #2a2b2d;
+      color: #10a37f;
+      font-weight: 600;
+      font-family: monospace;
     }
 
     #results {
@@ -126,6 +161,31 @@
       margin-right: 8px;
     }
     .note { color: #9aa0a6; font-size: 13px; padding: 8px 16px; }
+
+    .pagination {
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px solid #2f3032;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      color: #c9d1d9;
+    }
+    .pagination .page-stat {
+      color: #9aa0a6;
+      font-size: 13px;
+      margin-left: 4px;
+    }
+    .pagination button:disabled {
+      opacity: 0.38;
+      cursor: not-allowed;
+      color: #9aa0a6;
+    }
+    .pagination button:disabled:hover {
+      color: #9aa0a6;
+    }
   </style>
 </head>
 <body>
@@ -133,6 +193,13 @@
     <!-- Search controls -->
     <label>Package:
       <input id="searchName" type="text" placeholder="e.g. bash" />
+    </label>
+
+    <label>Version:
+      <select id="versionSelect">
+        <option value="">All</option>
+        <option>3.8</option>
+      </select>
     </label>
 
     <label>Arch:
@@ -166,7 +233,7 @@
 <script>
 /*
   index.html script
-  - Edit `versions` to match the versions present on the server (e.g. 3.7, 3.8, ...)
+  - Edit `versions` and the Version &lt;select&gt; options to match the server (e.g. 3.7, 3.8, ...)
   - Script will try to fetch: `${version}/${arch}/CPKINDEX`
   - It collects filenames from those CPKINDEX files and builds a searchable index.
 */
@@ -177,6 +244,10 @@ const arches = ["arm64", "armhf", "armhf-efikamx", "x86_64", "i686", "ppc64"];
 
 // In-memory package list
 let allPackages = [];
+/** Last list from filters (pagination slices this array) */
+let filteredView = [];
+let currentPage = 1;
+const PAGE_SIZE = 50;
 
 // Utility: fetch a CPKINDEX and return array of filenames (or empty on fail)
 async function fetchIndex(version, arch) {
@@ -235,41 +306,39 @@ async function loadAllIndexes() {
   applyFilters();
 }
 
-// Build the result list based on filters
-function applyFilters() {
+function updateSummary(total) {
   const nameFilter = document.getElementById("searchName").value.trim().toLowerCase();
+  const versionFilter = document.getElementById("versionSelect").value;
   const archFilter = document.getElementById("archSelect").value;
-  const resultsEl = document.getElementById("results");
   const summaryEl = document.getElementById("summary");
 
-  // Filter packages
-  const filtered = allPackages.filter(p => {
-    const matchesName = !nameFilter || p.name.toLowerCase().includes(nameFilter);
-    const matchesArch = !archFilter || p.arch === archFilter;
-    return matchesName && matchesArch;
-  });
-
-  // Update summary
-  let summaryText = `Found ${filtered.length} package${filtered.length !== 1 ? "s" : ""}`;
-  if (nameFilter) summaryText += ` | name: "${nameFilter}"`;
-  if (archFilter) summaryText += ` | arch: "${archFilter}"`;
-  summaryEl.innerHTML = summaryText;
-
-  // Render list
-  if (filtered.length === 0) {
-    resultsEl.innerHTML = `<div class="note">No packages found.</div>`;
-    return;
+  const countHtml = `<span class="summary-count">Found ${total} package${total !== 1 ? "s" : ""}</span>`;
+  const tags = [];
+  if (nameFilter) {
+    tags.push(
+      `<span class="summary-tag"><span class="summary-tag-lbl">Name</span><span class="summary-tag-val">${escapeHtml(nameFilter)}</span></span>`
+    );
   }
+  if (versionFilter) {
+    tags.push(
+      `<span class="summary-tag"><span class="summary-tag-lbl">Version</span><span class="summary-tag-val">${escapeHtml(versionFilter)}</span></span>`
+    );
+  }
+  if (archFilter) {
+    tags.push(
+      `<span class="summary-tag"><span class="summary-tag-lbl">Arch</span><span class="summary-tag-val">${escapeHtml(archFilter)}</span></span>`
+    );
+  }
+  const tagsHtml = tags.length ? `<span class="summary-tags">${tags.join("")}</span>` : "";
+  summaryEl.innerHTML = countHtml + tagsHtml;
+}
 
-  // Show each package as: [info icon] [download icon] filename [info panel]
-  // Link is encoded to escape '#' and other special chars.
-  resultsEl.innerHTML = filtered.map(p => {
-    const encoded = encodeURIComponent(p.file);
-    const link = `${p.version}/${p.arch}/${encoded}`;
-    const infoFile = `${p.version}/${p.arch}/${encoded}.info`;
-    const pkgId = `pkg-${p.file.replace(/[^a-zA-Z0-9]/g, '-')}`;
-    // Display raw filename but link encoded URL
-    return `
+function renderPackageRow(p) {
+  const encoded = encodeURIComponent(p.file);
+  const link = `${p.version}/${p.arch}/${encoded}`;
+  const infoFile = `${p.version}/${p.arch}/${encoded}.info`;
+  const pkgId = `pkg-${p.file.replace(/[^a-zA-Z0-9]/g, "-")}`;
+  return `
       <div class="pkg-wrapper">
         <div class="pkg">
           <span class="pkg-name">${escapeHtml(p.file)}</span>
@@ -290,7 +359,76 @@ function applyFilters() {
         <div id="${pkgId}" class="pkg-info"></div>
       </div>
     `;
-  }).join("");
+}
+
+function renderPaginationBar(total) {
+  const totalPages = Math.ceil(total / PAGE_SIZE);
+  if (totalPages <= 1) return "";
+  const prevDisabled = currentPage <= 1 ? " disabled" : "";
+  const nextDisabled = currentPage >= totalPages ? " disabled" : "";
+  return `
+    <nav class="pagination" aria-label="Package pages">
+      <button type="button" id="page-prev"${prevDisabled}>Previous</button>
+      <button type="button" id="page-next"${nextDisabled}>Next</button>
+      <span class="page-stat">Page ${currentPage} of ${totalPages} (${PAGE_SIZE} per page)</span>
+    </nav>
+  `;
+}
+
+function renderCurrentPage() {
+  const resultsEl = document.getElementById("results");
+  const total = filteredView.length;
+
+  updateSummary(total);
+
+  if (total === 0) {
+    resultsEl.innerHTML = `<div class="note">No packages found.</div>`;
+    return;
+  }
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  if (currentPage > totalPages) currentPage = totalPages;
+  if (currentPage < 1) currentPage = 1;
+
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const slice = filteredView.slice(start, start + PAGE_SIZE);
+
+  resultsEl.innerHTML =
+    slice.map(renderPackageRow).join("") + renderPaginationBar(total);
+
+  const prevBtn = document.getElementById("page-prev");
+  const nextBtn = document.getElementById("page-next");
+  if (prevBtn && !prevBtn.disabled) {
+    prevBtn.addEventListener("click", () => {
+      currentPage -= 1;
+      renderCurrentPage();
+      resultsEl.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
+  if (nextBtn && !nextBtn.disabled) {
+    nextBtn.addEventListener("click", () => {
+      currentPage += 1;
+      renderCurrentPage();
+      resultsEl.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
+}
+
+// Build the result list based on filters (resets to page 1)
+function applyFilters() {
+  const nameFilter = document.getElementById("searchName").value.trim().toLowerCase();
+  const versionFilter = document.getElementById("versionSelect").value;
+  const archFilter = document.getElementById("archSelect").value;
+
+  filteredView = allPackages.filter(p => {
+    const matchesName = !nameFilter || p.name.toLowerCase().includes(nameFilter);
+    const matchesVersion = !versionFilter || p.version === versionFilter;
+    const matchesArch = !archFilter || p.arch === archFilter;
+    return matchesName && matchesVersion && matchesArch;
+  });
+
+  currentPage = 1;
+  renderCurrentPage();
 }
 
 // Small helper to prevent HTML injection when showing filenames
@@ -362,6 +500,8 @@ document.getElementById("searchBtn").addEventListener("click", applyFilters);
 document.getElementById("searchName").addEventListener("keyup", function(e){
   if (e.key === "Enter") applyFilters();
 });
+document.getElementById("versionSelect").addEventListener("change", applyFilters);
+document.getElementById("archSelect").addEventListener("change", applyFilters);
 
 // Start
 loadAllIndexes();
