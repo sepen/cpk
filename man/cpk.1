@@ -24,6 +24,13 @@ Show information about installed or available packages. Attempts to download the
 <package>
 Show package dependencies (alias for \fBinfo\fR \fI\-\-dependencies\fR).
 .TP
+.B deptree
+<package>
+.br
+.B deptree
+<path/to/package.cpk>
+Print a recursive dependency tree using repository metadata (or a local .cpk), similar to \fBprt\-get deptree\fR. Each line is prefixed with \fB[i]\fR if the package appears installed, \fB[ ]\fR otherwise. A dependency already shown earlier in the tree is listed again with \fB\-\->\fR instead of expanding its subtree.
+.TP
 .B search
 <keyword>
 Search for packages by name or keyword.
@@ -116,6 +123,9 @@ Show only the version of a package:
 .TP
 Show package dependencies:
 .B cpk deps vim
+.TP
+Show recursive dependency tree:
+.B cpk deptree vim
 .TP
 Search for a package:
 .B cpk search curl

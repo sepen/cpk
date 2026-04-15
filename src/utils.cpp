@@ -300,6 +300,21 @@ void print_help_deps() {
     print_general_options();
 }
 
+void print_help_deptree() {
+    print_message("Usage: cpk deptree <package>");
+    print_message("       cpk deptree <path/to/package.cpk>");
+    print_message("\nDescription:");
+    print_message("  Print a recursive dependency tree (similar to prt-get deptree)");
+    print_message("  Uses the same metadata as install (repository .info / .cpk or local .cpk)");
+    print_message("\nArguments:");
+    print_message("  <package>                Package name or name#version-release");
+    print_message("  <path/to/package.cpk>    Local package file");
+    print_message("\nExamples:");
+    print_message("  cpk deptree vim");
+    print_message("  cpk deptree /tmp/foo#1.0-1.i686.cpk");
+    print_general_options();
+}
+
 void print_help_search() {
     print_message("Usage: cpk search <keyword>");
     print_message("\nDescription:");
@@ -412,6 +427,7 @@ void print_help(const std::string& command) {
         print_message("  update      Update the index of available packages");
         print_message("  info        Show information about installed or available packages");
         print_message("  deps        Show package dependencies");
+        print_message("  deptree     Show recursive dependency tree for a package");
         print_message("  search      Search for packages by name or keyword");
         print_message("  list        List all installed packages");
         print_message("  diff        Show differences between installed and available packages");
@@ -442,6 +458,8 @@ void print_help(const std::string& command) {
             print_help_update();
         } else if (command == "deps") {
             print_help_deps();
+        } else if (command == "deptree") {
+            print_help_deptree();
         } else if (command == "search") {
             print_help_search();
         } else if (command == "list") {

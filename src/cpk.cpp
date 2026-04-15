@@ -3,6 +3,7 @@
 #include "commands/cmd_update.h"
 #include "commands/cmd_info.h"
 #include "commands/cmd_deps.h"
+#include "commands/cmd_deptree.h"
 #include "commands/cmd_search.h"
 #include "commands/cmd_list.h"
 #include "commands/cmd_diff.h"
@@ -85,6 +86,8 @@ int main(int argc, char* argv[]) {
         cmd_info(args);
     } else if (command == "deps") {
         cmd_deps(args);
+    } else if (command == "deptree") {
+        cmd_deptree(args);
     } else if (command == "search") {
         cmd_search(args);
     } else if (command == "list") {

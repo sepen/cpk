@@ -6,6 +6,7 @@ cpk_SOURCES = src/cpk.cpp src/utils.cpp \
               src/commands/cmd_update.cpp \
               src/commands/cmd_info.cpp \
               src/commands/cmd_deps.cpp \
+              src/commands/cmd_deptree.cpp \
               src/commands/cmd_search.cpp \
               src/commands/cmd_list.cpp \
               src/commands/cmd_diff.cpp \

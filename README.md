@@ -38,7 +38,7 @@ All low-level package management tasks (installation, removal, querying, etc.) a
 What `cpk` adds on top is:
 
 - A richer package format (`.cpk`) that embeds port sources, metadata, and architecture information.
-- Higher-level commands (`cpk search`, `cpk verify`, `cpk diff`, etc.) that extend the functionality of `pkgutils`.
+- Higher-level commands (`cpk search`, `cpk deptree`, `cpk verify`, `cpk diff`, etc.) that extend the functionality of `pkgutils`.
 - Improved portability and reproducibility while maintaining full compatibility with the existing CRUX ecosystem.
 
 In short, `pkgutils` does the heavy lifting, while `cpk` provides the missing context and metadata.
@@ -57,6 +57,7 @@ Commands:
   update      Update the index of available packages
   info        Show information about installed or available packages
   deps        Show package dependencies
+  deptree     Show recursive dependency tree for a package
   search      Search for packages by name or keyword
   list        List all installed packages
   diff        Show differences between installed and available packages
@@ -82,9 +83,7 @@ General Options:
   -h, --help               Print this help information
 ```
 
-For detailed help on a specific command, use `cpk help <command>`. For example:
-- `cpk help info` - Shows detailed information about the `info` command and its field options
-- `cpk help install` - Shows detailed information about the `install` command and `--upgrade` option
+For detailed help on a specific command, use `cpk help <command>`.
 
 ## Command Reference
 
@@ -116,6 +115,15 @@ For detailed help on a specific command, use `cpk help <command>`. For example:
 
 - Shows package dependencies (alias for `cpk info <package> --dependencies`).
 - Finds the package in `CPKINDEX` and displays its dependencies.
+
+### `cpk deptree <package>`
+
+**Usage**: one argument (package name, `pkgname#version-release`, or path to a `.cpk` file)
+
+- Prints a recursive dependency tree (similar to `prt-get deptree`).
+- Uses the same metadata resolution as `install` / `info` (repository `.cpk.info` or `.cpk` / `Pkgfile`, or a local `.cpk`).
+- Lines use `[i]` when the package appears installed and `[ ]` otherwise.
+- If a dependency was already expanded earlier in the tree, it is shown again with `-->` instead of repeating its subtree (shared or diamond dependencies).
 
 ### `cpk search <term>`
 
@@ -156,18 +164,21 @@ For detailed help on a specific command, use `cpk help <command>`. For example:
 - Runs `pkgmk -d` inside the source directory to build the package.
 - Prints a success message or an error if the build fails.
 
-### `cpk install <package> [--upgrade]`
-### `cpk install <path/to/package.cpk> [--upgrade]`
-### `cpk add <package> [--upgrade]`
-### `cpk add <path/to/package.cpk> [--upgrade]`
+### `cpk install <package> [--upgrade] [--no-deps]`
+### `cpk install <path/to/package.cpk> [--upgrade] [--no-deps]`
+### `cpk add <package> [--upgrade] [--no-deps]`
+### `cpk add <path/to/package.cpk> [--upgrade] [--no-deps]`
 
-**Usage**: one required argument (package name or path to .cpk file), optional `--upgrade` flag
+**Usage**: one required argument (package name or path to `.cpk`), optional flags
 
-- Can install from repository or from a local .cpk file.
+- Can install from repository or from a local `.cpk` file.
+- `add` is an alias for `install` (same options and behavior).
+- **Dependency order**: by default, reads each package’s metadata (`.cpk.info` or extracted `Pkgfile`), resolves dependencies recursively, and installs missing dependencies before the package you asked for. Use **`--no-deps`** to install only that package.
+- **`--upgrade`** applies only to the package named on the command line, not to dependencies pulled in automatically.
 - If installing from repository:
-  - Finds the package in the repository index.
+  - Finds the package in `CPKINDEX` (newest version, or an exact **`pkgname#version-release`** if you specify it).
 - If installing from local file:
-  - Parses the .cpk filename to extract package name, version, and architecture.
+  - Parses the `.cpk` filename to extract package name, version, and architecture.
   - Extracts the package to access pre/post install scripts and README.
 - If already installed:
   - Continues only if `--upgrade` is specified; otherwise prints a warning.
@@ -175,11 +186,12 @@ For detailed help on a specific command, use `cpk help <command>`. For example:
 - Executes pre-install and post-install scripts when present.
 - Runs `pkgadd -r <CPK_INSTALL_ROOT> [ -u ] <package_file>` to install or upgrade.
 - Displays the README (if available) after installation.
-- `add` is an alias for `install`.
 - Examples:
-  - `cpk install vim` - Install from repository
+  - `cpk install vim` - Install from repository (dependencies first)
+  - `cpk install vim --no-deps` - Install only `vim`
+  - `cpk install bash#5.2-1` - Install a specific version from the index
   - `cpk install /tmp/mypackage#4.1.0-1.i686.cpk` - Install from local file
-  - `sudo cpk add /tmp/mypackage#4.1.0-1.i686.cpk` - Install from local file with sudo
+  - `sudo cpk add /tmp/mypackage#4.1.0-1.i686.cpk` - Same as `install` with sudo
 
 ### `cpk uninstall <package>`
 ### `cpk del <package>`
