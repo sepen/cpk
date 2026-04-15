@@ -691,15 +691,33 @@ bool parse_cpk_filename(const std::string& filepath, std::string& pkgname, std::
 }
 
 // Helper function to find package details
+// package_name is either "pkgname" (newest version in index) or "pkgname#version-release"
+// (exact version; architecture prefers get_system_architecture() when several match).
 bool find_package(const std::string& package_name, std::string& package, std::string& pkgname, std::string& pkgver, std::string& pkgarch) {
     // Try cache directory first, then fallback to CPK_HOME_DIR
     std::string index_file = get_cache_file("CPKINDEX");
     if (!fs::exists(index_file)) {
         index_file = CPK_HOME_DIR + "/CPKINDEX";
     }
-    
+
+    std::string requested_name = package_name;
+    std::string requested_version;
+    size_t spec_hash = package_name.find('#');
+    if (spec_hash != std::string::npos) {
+        requested_name = package_name.substr(0, spec_hash);
+        requested_version = package_name.substr(spec_hash + 1);
+        if (requested_name.empty() || requested_version.empty()) {
+            print_message("Invalid package specifier (use name or name#version-release): " + package_name, RED);
+            return false;
+        }
+    }
+
+    const std::string search_prefix = requested_name + "#";
+    const std::string sys_arch = requested_version.empty() ? std::string() : get_system_architecture();
+
     bool result = false;
-    std::string best_version;  // Store the newest version
+    std::string best_version;  // Store the newest version (unpinned queries only)
+    bool pinned_have_system_arch = false;
 
     if (!fs::exists(index_file)) {
         print_message("Package index not found. Run `cpk update` first", RED);
@@ -713,7 +731,7 @@ bool find_package(const std::string& package_name, std::string& package, std::st
         else {
             std::string index_line;
             while (std::getline(file, index_line)) {
-                if (index_line.find(package_name + "#") != std::string::npos) {
+                if (index_line.find(search_prefix) != std::string::npos) {
                     size_t cpk_pos = index_line.rfind(".cpk");
                     size_t last_dot = index_line.rfind('.', cpk_pos - 1);
                     size_t hash_pos = index_line.find('#');
@@ -722,9 +740,32 @@ bool find_package(const std::string& package_name, std::string& package, std::st
                         std::string temp_pkgname = index_line.substr(0, hash_pos);
                         std::string temp_pkgver = index_line.substr(hash_pos + 1, last_dot - hash_pos - 1);
                         std::string temp_pkgarch = index_line.substr(last_dot + 1, cpk_pos - last_dot - 1);
-                        
-                        if (package_name == temp_pkgname) {
-                            // If it's the first version or newer than the previous one
+
+                        if (requested_name != temp_pkgname) {
+                            continue;
+                        }
+
+                        if (!requested_version.empty()) {
+                            if (temp_pkgver != requested_version) {
+                                continue;
+                            }
+                            if (temp_pkgarch == sys_arch) {
+                                pkgname = temp_pkgname;
+                                pkgver = temp_pkgver;
+                                pkgarch = temp_pkgarch;
+                                package = index_line;
+                                result = true;
+                                pinned_have_system_arch = true;
+                            } else if (!pinned_have_system_arch) {
+                                if (!result) {
+                                    pkgname = temp_pkgname;
+                                    pkgver = temp_pkgver;
+                                    pkgarch = temp_pkgarch;
+                                    package = index_line;
+                                    result = true;
+                                }
+                            }
+                        } else {
                             if (!result || compare_versions(temp_pkgver, best_version) > 0) {
                                 pkgname = temp_pkgname;
                                 pkgver = temp_pkgver;
