@@ -27,7 +27,7 @@ void cmd_info(const std::vector<std::string>& args) {
         }
     }
 
-    std::string index_file = CPK_HOME_DIR + "/CPKINDEX";
+    std::string index_file = get_cpkindex_path();
     if (!fs::exists(index_file)) {
         print_message("Package index not found. Run `cpk update` first", RED);
         return;

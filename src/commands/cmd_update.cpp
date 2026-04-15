@@ -11,7 +11,7 @@ void cmd_update(const std::vector<std::string>& args) {
         return;
     }
 
-    const std::string index_file = CPK_HOME_DIR + "/CPKINDEX";
+    const std::string index_file = get_cpkindex_path();
     if (CPK_VERBOSE) {
         if (!fs::exists(index_file)) {
             print_header("Initializing index of available packages", BLUE);

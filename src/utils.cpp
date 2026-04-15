@@ -712,11 +712,7 @@ bool parse_cpk_filename(const std::string& filepath, std::string& pkgname, std::
 // package_name is either "pkgname" (newest version in index) or "pkgname#version-release"
 // (exact version; architecture prefers get_system_architecture() when several match).
 bool find_package(const std::string& package_name, std::string& package, std::string& pkgname, std::string& pkgver, std::string& pkgarch) {
-    // Try cache directory first, then fallback to CPK_HOME_DIR
-    std::string index_file = get_cache_file("CPKINDEX");
-    if (!fs::exists(index_file)) {
-        index_file = CPK_HOME_DIR + "/CPKINDEX";
-    }
+    const std::string index_file = get_cpkindex_path();
 
     std::string requested_name = package_name;
     std::string requested_version;
@@ -823,11 +819,7 @@ bool is_package_installed(const std::string& package_name) {
 }
 
 int get_number_of_packages() {
-    // Try cache directory first, then fallback to CPK_HOME_DIR
-    std::string index_file = get_cache_file("CPKINDEX");
-    if (!fs::exists(index_file)) {
-        index_file = CPK_HOME_DIR + "/CPKINDEX";
-    }
+    const std::string index_file = get_cpkindex_path();
     if (!fs::exists(index_file)) {
         print_message("Package index not found. Run `cpk update` first", RED);
         return false;
@@ -1167,7 +1159,11 @@ bool parse_cpk_info(const std::string &info_file_path, std::string &name, std::s
     return found_valid_field && !name.empty() && !version.empty();
 }
 
-// Function to get cache directory, trying CPK_HOME_DIR first, then falling back to ~/.cpk
+std::string get_cpkindex_path() {
+    return CPK_HOME_DIR + "/CPKINDEX";
+}
+
+// Writable cache: CPK_HOME_DIR when writable, else ~/.cpk (never used for CPKINDEX).
 std::string get_cache_dir() {
     // Check if we can write to CPK_HOME_DIR
     if (fs::exists(CPK_HOME_DIR) && fs::is_directory(CPK_HOME_DIR)) {
@@ -1217,7 +1213,6 @@ std::string get_cache_dir() {
     return CPK_HOME_DIR;
 }
 
-// Function to get cache file path, trying CPK_HOME_DIR first, then falling back to ~/.cpk
 std::string get_cache_file(const std::string &filename) {
     std::string cache_dir = get_cache_dir();
     return cache_dir + "/" + filename;
@@ -1269,7 +1264,7 @@ bool get_package_dependency_names(const std::string& spec, std::vector<std::stri
         return true;
     }
 
-    std::string index_file = CPK_HOME_DIR + "/CPKINDEX";
+    const std::string index_file = get_cpkindex_path();
     if (!fs::exists(index_file)) {
         print_message("Package index not found. Run `cpk update` first", RED);
         return false;

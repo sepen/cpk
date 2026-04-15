@@ -13,14 +13,9 @@ void cmd_verify(const std::vector<std::string>& args) {
     }
 
     std::string cache_dir = get_cache_dir();
-    std::string index_file = get_cache_file("CPKINDEX");
-    if (!fs::exists(index_file)) {
-        // Fallback to CPK_HOME_DIR for reading index if cache_dir is user home
-        index_file = CPK_HOME_DIR + "/CPKINDEX";
-        if (!fs::exists(index_file)) {
-            print_message("Package index not found. Run `cpk update` first", RED);
-            return;
-        }
+    if (!fs::exists(get_cpkindex_path())) {
+        print_message("Package index not found. Run `cpk update` first", RED);
+        return;
     }
 
     std::string package, pkgname, pkgver, pkgarch;

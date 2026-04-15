@@ -84,7 +84,7 @@ static bool install_package_spec(const std::string& spec, bool allow_upgrade_if_
             return false;
         }
     } else {
-        std::string index_file = CPK_HOME_DIR + "/CPKINDEX";
+        std::string index_file = get_cpkindex_path();
         if (!fs::exists(index_file)) {
             print_message("Package index not found. Run `cpk update` first", RED);
             return false;

@@ -58,8 +58,11 @@ std::string get_system_architecture();
 std::vector<std::string> get_installed_packages();
 std::string calculate_sha256(const std::string &file_path);
 bool parse_cpk_info(const std::string &info_file_path, std::string &name, std::string &version, std::string &arch, std::string &description, std::string &url, std::string &dependencies);
+// Writable cache (~/.cpk when CPK_HOME_DIR is not writable): .info, .cpk downloads, extracted trees.
 std::string get_cache_dir();
 std::string get_cache_file(const std::string &filename);
+// Package index is always read/updated under CPK_HOME_DIR (never the user cache).
+std::string get_cpkindex_path();
 
 #endif  // UTILS_H
 
