@@ -39,7 +39,7 @@ void cmd_info(const std::vector<std::string>& args) {
     }
 
     // Try to download .cpk.info file directly from repository (faster than downloading the whole .cpk)
-    std::string info_url = CPK_REPO_URL + "/" + url_encode(package + ".info");
+    std::string info_url = cpk_repo_join(url_encode(package + ".info"));
     std::string info_path = get_cache_file(package + ".info");
     bool info_from_file = false;
     
@@ -60,7 +60,7 @@ void cmd_info(const std::vector<std::string>& args) {
     // Fallback: if .cpk.info doesn't exist or failed to parse, download .cpk and extract info from Pkgfile
     if (!info_from_file) {
         std::string cache_dir = get_cache_dir();
-        std::string package_url = CPK_REPO_URL + "/" + url_encode(package);
+        std::string package_url = cpk_repo_join(url_encode(package));
         std::string package_source = cache_dir + "/" + pkgname + "/" + pkgver;
         std::string package_path = get_cache_file(package);
         

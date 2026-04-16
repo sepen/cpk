@@ -121,6 +121,20 @@ std::string url_decode(const std::string &value) {
     return decoded.str();
 }
 
+std::string cpk_repo_join(const std::string& path_component) {
+    std::string base = CPK_REPO_URL;
+    while (!base.empty() && base.back() == '/') {
+        base.pop_back();
+    }
+    if (path_component.empty()) {
+        return base;
+    }
+    if (path_component.front() == '/') {
+        return base + path_component;
+    }
+    return base + "/" + path_component;
+}
+
 // Prompt user for confirmation
 bool prompt_user(const std::string& message) {
     std::string response;
@@ -283,7 +297,9 @@ void print_help_uninstall() {
 void print_help_update() {
     print_message("Usage: cpk update");
     print_message("\nDescription:");
-    print_message("  Update the index of available packages from the repository");
+    print_message("  Update the index of available packages from the repository, then");
+    print_message("  ensure .cpk.info metadata in cache (download only when missing or invalid)");
+    print_message("  Summary lists new and updated packages (vs. previous cache) for fetched entries");
     print_message("\nExamples:");
     print_message("  cpk update");
     print_general_options();
@@ -1275,7 +1291,7 @@ bool get_package_dependency_names(const std::string& spec, std::vector<std::stri
         return false;
     }
 
-    std::string info_url = CPK_REPO_URL + "/" + url_encode(package + ".info");
+    std::string info_url = cpk_repo_join(url_encode(package + ".info"));
     std::string info_path = get_cache_file(package + ".info");
     bool info_from_file = false;
     std::string name, version, arch, description, url, dependencies;
@@ -1292,7 +1308,7 @@ bool get_package_dependency_names(const std::string& spec, std::vector<std::stri
     }
 
     if (!info_from_file) {
-        std::string package_url = CPK_REPO_URL + "/" + url_encode(package);
+        std::string package_url = cpk_repo_join(url_encode(package));
         std::string package_source = cache_dir + "/" + pkgname + "/" + pkgver;
         std::string package_path = get_cache_file(package);
         if (!fs::is_directory(package_source)) {

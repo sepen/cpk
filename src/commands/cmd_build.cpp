@@ -21,7 +21,7 @@ void cmd_build(const std::vector<std::string>& args) {
     std::string package, pkgname, pkgver, pkgarch;
     if (!find_package(args[0], package, pkgname, pkgver, pkgarch)) return;
 
-    std::string package_url = CPK_REPO_URL + "/" + url_encode(package);
+    std::string package_url = cpk_repo_join(url_encode(package));
     std::string package_source = CPK_HOME_DIR + "/" + pkgname + "/" + pkgver;
     std::string package_path = CPK_HOME_DIR + "/" + package;
 

@@ -1,7 +1,9 @@
 # cpk.conf
 
 # Repository URL to fetch packages from
-# Make sure to include the trailing slash
+#
+# IMPORTANT: If the correct architecture is not selected, cpk will install
+# packages for a different architecture, which will cause serious system issues
 cpk_repo_url         https://cpk.user.ninja/3.8/x86_64/
 
 # Local directory where index file and package sources are stored
@@ -20,4 +22,5 @@ cpk_pkginfo_cmd      pkginfo
 cpk_color_mode       false
 
 # Enable verbose messages
-cpk_verbose_mode     false
+cpk_verbose_mode     true
+

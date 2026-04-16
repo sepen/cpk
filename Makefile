@@ -97,13 +97,15 @@ am__aclocal_m4_deps = $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 DIST_COMMON = $(srcdir)/Makefile.am $(top_srcdir)/configure \
-	$(am__configure_deps) $(noinst_HEADERS) $(am__DIST_COMMON)
+	$(am__configure_deps) $(dist_bashcomp_DATA) \
+	$(dist_zshcomp_DATA) $(noinst_HEADERS) $(am__DIST_COMMON)
 am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
  configure.lineno config.status.lineno
 mkinstalldirs = $(install_sh) -d
 CONFIG_CLEAN_FILES = cpk.conf
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(man1dir)" \
+	"$(DESTDIR)$(bashcompdir)" "$(DESTDIR)$(zshcompdir)" \
 	"$(DESTDIR)$(sysconfdir)"
 PROGRAMS = $(bin_PROGRAMS)
 am__dirstamp = $(am__leading_dot)dirstamp
@@ -212,7 +214,7 @@ am__uninstall_files_from_dir = { \
 man1dir = $(mandir)/man1
 NROFF = nroff
 MANS = $(man_MANS)
-DATA = $(sysconf_DATA)
+DATA = $(dist_bashcomp_DATA) $(dist_zshcomp_DATA) $(sysconf_DATA)
 HEADERS = $(noinst_HEADERS)
 am__tagged_files = $(HEADERS) $(SOURCES) $(TAGS_FILES) $(LISP)
 # Read a list of newline-separated strings from the standard input,
@@ -255,17 +257,17 @@ am__distuninstallcheck_listfiles = $(distuninstallcheck_listfiles) \
 distcleancheck_listfiles = \
   find . \( -type f -a \! \
             \( -name .nfs* -o -name .smb* -o -name .__afs* \) \) -print
-ACLOCAL = ${SHELL} '/home/sepen/devel/cpk/missing' aclocal-1.18
+ACLOCAL = ${SHELL} '/Users/sepen/devel/sepen/cpk/missing' aclocal-1.18
 AMTAR = $${TAR-tar}
 AM_DEFAULT_VERBOSITY = 1
-AUTOCONF = ${SHELL} '/home/sepen/devel/cpk/missing' autoconf
-AUTOHEADER = ${SHELL} '/home/sepen/devel/cpk/missing' autoheader
-AUTOMAKE = ${SHELL} '/home/sepen/devel/cpk/missing' automake-1.18
-AWK = gawk
-CC = gcc -std=gnu23
+AUTOCONF = ${SHELL} '/Users/sepen/devel/sepen/cpk/missing' autoconf
+AUTOHEADER = ${SHELL} '/Users/sepen/devel/sepen/cpk/missing' autoheader
+AUTOMAKE = ${SHELL} '/Users/sepen/devel/sepen/cpk/missing' automake-1.18
+AWK = awk
+CC = gcc
 CCDEPMODE = depmode=gcc3
 CFLAGS = -g -O2
-CPPFLAGS = 
+CPPFLAGS = -I/opt/homebrew/opt/libarchive/include
 CSCOPE = cscope
 CTAGS = ctags
 CXX = g++
@@ -274,8 +276,8 @@ CXXFLAGS = -g -O2 -std=c++20
 CYGPATH_W = echo
 DEFS = -DPACKAGE_NAME=\"cpk\" -DPACKAGE_TARNAME=\"cpk\" -DPACKAGE_VERSION=\"0.3\" -DPACKAGE_STRING=\"cpk\ 0.3\" -DPACKAGE_BUGREPORT=\"sepen@crux-arm.nu\" -DPACKAGE_URL=\"\" -DPACKAGE=\"cpk\" -DVERSION=\"0.3\" -DHAVE_STDIO_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_STRINGS_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_UNISTD_H=1 -DSTDC_HEADERS=1 -DHAVE_ARCHIVE_H=1 -DHAVE_ARCHIVE_ENTRY_H=1 -DHAVE_CURL_CURL_H=1 -DHAVE_SYS_STAT_H=1
 DEPDIR = .deps
-ECHO_C = 
-ECHO_N = -n
+ECHO_C = \c
+ECHO_N = 
 ECHO_T = 
 ETAGS = etags
 EXEEXT = 
@@ -284,16 +286,16 @@ INSTALL_DATA = ${INSTALL} -m 644
 INSTALL_PROGRAM = ${INSTALL}
 INSTALL_SCRIPT = ${INSTALL}
 INSTALL_STRIP_PROGRAM = $(install_sh) -c -s
-LDFLAGS = 
-LIBARCHIVE_CFLAGS = 
-LIBARCHIVE_LIBS = -larchive
+LDFLAGS = -L/opt/homebrew/opt/libarchive/lib
+LIBARCHIVE_CFLAGS = -I/opt/homebrew/opt/libarchive/include
+LIBARCHIVE_LIBS = -L/opt/homebrew/opt/libarchive/lib -larchive
 LIBCURL_CFLAGS = 
 LIBCURL_LIBS = -lcurl
 LIBOBJS = 
 LIBS = 
 LTLIBOBJS = 
-MAKEINFO = ${SHELL} '/home/sepen/devel/cpk/missing' makeinfo
-MKDIR_P = /bin/mkdir -p
+MAKEINFO = ${SHELL} '/Users/sepen/devel/sepen/cpk/missing' makeinfo
+MKDIR_P = mkdir -p
 OBJEXT = o
 PACKAGE = cpk
 PACKAGE_BUGREPORT = sepen@crux-arm.nu
@@ -303,17 +305,17 @@ PACKAGE_TARNAME = cpk
 PACKAGE_URL = 
 PACKAGE_VERSION = 0.3
 PATH_SEPARATOR = :
-PKG_CONFIG = /usr/bin/pkg-config
+PKG_CONFIG = /opt/homebrew/bin/pkg-config
 PKG_CONFIG_LIBDIR = 
-PKG_CONFIG_PATH = 
+PKG_CONFIG_PATH = /opt/homebrew/opt/libarchive/lib/pkgconfig
 SET_MAKE = 
 SHELL = /bin/sh
 STRIP = 
 VERSION = 0.3
-abs_builddir = /home/sepen/devel/cpk
-abs_srcdir = /home/sepen/devel/cpk
-abs_top_builddir = /home/sepen/devel/cpk
-abs_top_srcdir = /home/sepen/devel/cpk
+abs_builddir = /Users/sepen/devel/sepen/cpk
+abs_srcdir = /Users/sepen/devel/sepen/cpk
+abs_top_builddir = /Users/sepen/devel/sepen/cpk
+abs_top_srcdir = /Users/sepen/devel/sepen/cpk
 ac_ct_CC = gcc
 ac_ct_CXX = g++
 am__include = include
@@ -335,7 +337,7 @@ host_alias =
 htmldir = ${docdir}
 includedir = ${prefix}/include
 infodir = ${datarootdir}/info
-install_sh = ${SHELL} /home/sepen/devel/cpk/install-sh
+install_sh = ${SHELL} /Users/sepen/devel/sepen/cpk/install-sh
 libdir = ${exec_prefix}/lib
 libexecdir = ${exec_prefix}/libexec
 localedir = ${datarootdir}/locale
@@ -344,7 +346,7 @@ mandir = ${datarootdir}/man
 mkdir_p = $(MKDIR_P)
 oldincludedir = /usr/include
 pdfdir = ${docdir}
-prefix = /usr
+prefix = /usr/local
 program_transform_name = s,x,x,
 psdir = ${docdir}
 runstatedir = ${localstatedir}/run
@@ -399,6 +401,10 @@ cpk_LDADD = $(LIBARCHIVE_LIBS) $(LIBCURL_LIBS)
 sysconf_DATA = cpk.conf
 man_MANS = man/cpk.1
 EXTRA_DIST = $(man_MANS) cpk.conf.in
+bashcompdir = $(datadir)/bash-completion/completions
+dist_bashcomp_DATA = completions/cpk
+zshcompdir = $(datadir)/zsh/site-functions
+dist_zshcomp_DATA = completions/_cpk
 all: all-am
 
 .SUFFIXES:
@@ -860,6 +866,48 @@ uninstall-man1:
 	} | sed -e 's,.*/,,;h;s,.*\.,,;s,^[^1][0-9a-z]*$$,1,;x' \
 	      -e 's,\.[0-9a-z]*$$,,;$(transform);G;s,\n,.,'`; \
 	dir='$(DESTDIR)$(man1dir)'; $(am__uninstall_files_from_dir)
+install-dist_bashcompDATA: $(dist_bashcomp_DATA)
+	@$(NORMAL_INSTALL)
+	@list='$(dist_bashcomp_DATA)'; test -n "$(bashcompdir)" || list=; \
+	if test -n "$$list"; then \
+	  echo " $(MKDIR_P) '$(DESTDIR)$(bashcompdir)'"; \
+	  $(MKDIR_P) "$(DESTDIR)$(bashcompdir)" || exit 1; \
+	fi; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; \
+	done | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(bashcompdir)'"; \
+	  $(INSTALL_DATA) $$files "$(DESTDIR)$(bashcompdir)" || exit $$?; \
+	done
+
+uninstall-dist_bashcompDATA:
+	@$(NORMAL_UNINSTALL)
+	@list='$(dist_bashcomp_DATA)'; test -n "$(bashcompdir)" || list=; \
+	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
+	dir='$(DESTDIR)$(bashcompdir)'; $(am__uninstall_files_from_dir)
+install-dist_zshcompDATA: $(dist_zshcomp_DATA)
+	@$(NORMAL_INSTALL)
+	@list='$(dist_zshcomp_DATA)'; test -n "$(zshcompdir)" || list=; \
+	if test -n "$$list"; then \
+	  echo " $(MKDIR_P) '$(DESTDIR)$(zshcompdir)'"; \
+	  $(MKDIR_P) "$(DESTDIR)$(zshcompdir)" || exit 1; \
+	fi; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; \
+	done | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(zshcompdir)'"; \
+	  $(INSTALL_DATA) $$files "$(DESTDIR)$(zshcompdir)" || exit $$?; \
+	done
+
+uninstall-dist_zshcompDATA:
+	@$(NORMAL_UNINSTALL)
+	@list='$(dist_zshcomp_DATA)'; test -n "$(zshcompdir)" || list=; \
+	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
+	dir='$(DESTDIR)$(zshcompdir)'; $(am__uninstall_files_from_dir)
 install-sysconfDATA: $(sysconf_DATA)
 	@$(NORMAL_INSTALL)
 	@list='$(sysconf_DATA)'; test -n "$(sysconfdir)" || list=; \
@@ -1126,7 +1174,7 @@ check-am: all-am
 check: check-am
 all-am: Makefile $(PROGRAMS) $(MANS) $(DATA) $(HEADERS)
 installdirs:
-	for dir in "$(DESTDIR)$(bindir)" "$(DESTDIR)$(man1dir)" "$(DESTDIR)$(sysconfdir)"; do \
+	for dir in "$(DESTDIR)$(bindir)" "$(DESTDIR)$(man1dir)" "$(DESTDIR)$(bashcompdir)" "$(DESTDIR)$(zshcompdir)" "$(DESTDIR)$(sysconfdir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-am
@@ -1202,7 +1250,8 @@ info: info-am
 
 info-am:
 
-install-data-am: install-man
+install-data-am: install-dist_bashcompDATA install-dist_zshcompDATA \
+	install-man
 
 install-dvi: install-dvi-am
 
@@ -1265,8 +1314,8 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-binPROGRAMS uninstall-man \
-	uninstall-sysconfDATA
+uninstall-am: uninstall-binPROGRAMS uninstall-dist_bashcompDATA \
+	uninstall-dist_zshcompDATA uninstall-man uninstall-sysconfDATA
 
 uninstall-man: uninstall-man1
 
@@ -1280,7 +1329,8 @@ uninstall-man: uninstall-man1
 	distclean-compile distclean-generic distclean-tags \
 	distcleancheck distdir distuninstallcheck dvi dvi-am html \
 	html-am info info-am install install-am install-binPROGRAMS \
-	install-data install-data-am install-dvi install-dvi-am \
+	install-data install-data-am install-dist_bashcompDATA \
+	install-dist_zshcompDATA install-dvi install-dvi-am \
 	install-exec install-exec-am install-html install-html-am \
 	install-info install-info-am install-man install-man1 \
 	install-pdf install-pdf-am install-ps install-ps-am \
@@ -1288,7 +1338,8 @@ uninstall-man: uninstall-man1
 	installdirs maintainer-clean maintainer-clean-generic \
 	mostlyclean mostlyclean-compile mostlyclean-generic pdf pdf-am \
 	ps ps-am tags tags-am uninstall uninstall-am \
-	uninstall-binPROGRAMS uninstall-man uninstall-man1 \
+	uninstall-binPROGRAMS uninstall-dist_bashcompDATA \
+	uninstall-dist_zshcompDATA uninstall-man uninstall-man1 \
 	uninstall-sysconfDATA
 
 .PRECIOUS: Makefile

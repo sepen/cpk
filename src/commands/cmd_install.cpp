@@ -120,7 +120,7 @@ static bool install_package_spec(const std::string& spec, bool allow_upgrade_if_
             }
         }
     } else {
-        std::string package_url = CPK_REPO_URL + "/" + url_encode(package);
+        std::string package_url = cpk_repo_join(url_encode(package));
         std::string package_path = get_cache_file(package);
 
         if (!fs::is_directory(package_source)) {

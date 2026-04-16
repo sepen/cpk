@@ -19,6 +19,8 @@ extern const std::string NEWLINE;
 // 
 std::string url_encode(const std::string& value);
 std::string url_decode(const std::string& value);
+// Append path under CPK_REPO_URL (avoids "//" when the configured URL ends with "/")
+std::string cpk_repo_join(const std::string& path_component);
 std::string ltrim(const std::string& str);
 
 // Compare versions semantically
