@@ -1,108 +1,234 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="no-js">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>CPK Repository</title>
+  <script>
+    (function () {
+      document.documentElement.classList.remove("no-js");
+      try {
+        if (localStorage.getItem("cpk-theme") === "light")
+          document.documentElement.classList.add("light");
+      } catch (e) {}
+    })();
+  </script>
   <style>
-    /* Soft dark theme */
+    :root {
+      color-scheme: dark;
+      --bg: #1e1f20;
+      --bg-elevated: #2a2b2d;
+      --bg-card: #2d2f31;
+      --bg-muted: #252627;
+      --border: #3b3c3e;
+      --border-input: #505254;
+      --text: #e6e6e6;
+      --text-soft: #c9d1d9;
+      --text-muted: #9aa0a6;
+      --text-label: #cfcfcf;
+      --accent: #10a37f;
+      --btn-on-accent: #1a1c1f;
+      --bg-page: #141515;
+    }
+    html.light {
+      color-scheme: light;
+      /* Surfaces: neutral greys. Accent: same green as dark mode. */
+      --bg: #dcdde0;
+      --bg-elevated: #ffffff;
+      --bg-card: #ececed;
+      --bg-muted: #e4e4e6;
+      --border: #c2c3c8;
+      --border-input: #a9aab0;
+      --text: #141519;
+      --text-soft: #3a3b40;
+      --text-muted: #6a6b73;
+      --text-label: #4d4e55;
+      --accent: #10a37f;
+      --btn-on-accent: #1a1c1f;
+      --bg-page: #f2f2f4;
+    }
     body {
       font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
       margin: 0;
-      background: #1e1f20;
-      color: #e6e6e6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+      color: var(--text);
     }
     header {
-      background: #2a2b2d;
-      padding: 12px 16px;
-      display: flex;
-      gap: 12px;
+      --header-trim: 42px;
+      box-sizing: border-box;
+      margin-left: 10%;
+      margin-right: 10%;
+      background: var(--bg-elevated);
+      padding: 14px 18px;
+      display: grid;
+      grid-template-columns: var(--header-trim) 1fr var(--header-trim);
       align-items: center;
-      border-bottom: 1px solid #3b3c3e;
+      gap: 12px;
+      border: 1px solid var(--border);
     }
-    label { font-size: 14px; color: #cfcfcf; }
-    input, select {
-      margin-left: 8px;
-      padding: 6px 10px;
-      border-radius: 6px;
-      border: 1px solid #505254;
-      background: #333435;
-      color: #fff;
-      font-size: 14px;
+    .header-spacer {
+      width: var(--header-trim);
+      pointer-events: none;
     }
-    button {
-      margin-left: 6px;
-      padding: 6px 10px;
-      border-radius: 6px;
-      border: none;
-      background: #10a37f;
-      color: #333435;
-      cursor: pointer;
+    .site-title {
+      margin: 0;
+      font-size: 1.2rem;
+      font-weight: 500;
+      color: var(--text-soft);
+      letter-spacing: -0.02em;
+      line-height: 1.35;
+      text-align: center;
+      justify-self: center;
+      max-width: 100%;
+    }
+    .site-title .brand {
+      color: var(--accent);
       font-weight: 600;
     }
-    button:hover {
-      color: #10a37f;
+    .site-title .subtitle {
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+    .theme-toggle {
+      flex-shrink: 0;
+      width: var(--header-trim, 42px);
+      height: var(--header-trim, 42px);
+      justify-self: end;
+      margin: 0;
+      padding: 0;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text-soft);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+    }
+    .theme-toggle:hover {
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+    .theme-toggle:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+    .theme-toggle svg {
+      width: 20px;
+      height: 20px;
+      stroke: currentColor;
+      fill: none;
+    }
+    html:not(.light) .theme-toggle .icon-moon,
+    html.light .theme-toggle .icon-sun {
+      display: none;
     }
 
-    #summary {
-      padding: 12px 16px;
-      font-size: 14px;
-      color: #c9d1d9;
-      border-bottom: 1px solid #2f3032;
+    .page-content {
+      flex: 1;
+      min-width: 680px;
+      margin-left: 10%;
+      margin-right: 10%;
+      padding: 26px 18px 28px;
+      box-sizing: border-box;
+      background: var(--bg-page);
+      border-left: 1px solid var(--border);
+      border-right: 1px solid var(--border);
+    }
+
+    .search-controls {
+      background: transparent;
+      padding: 4px 2px 16px;
+      margin-bottom: 4px;
       display: flex;
       flex-wrap: wrap;
       align-items: center;
       gap: 10px 14px;
+      row-gap: 8px;
+      border-bottom: 1px solid var(--border);
     }
-    #summary .summary-count {
-      font-weight: 500;
-      color: #e6e6e6;
-    }
-    #summary .summary-tags {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 8px;
-    }
-    #summary .summary-tag {
+    .search-query {
       display: inline-flex;
-      border-radius: 6px;
-      border: 1px solid #3b3c3e;
-      overflow: hidden;
+      align-items: center;
+      gap: 3px;
+    }
+    .search-controls label {
       font-size: 13px;
-      line-height: 1.2;
+      color: var(--text-label);
     }
-    #summary .summary-tag-lbl {
+    .search-controls input,
+    .search-controls select {
+      margin-left: 6px;
       padding: 5px 9px;
-      background: #333435;
-      color: #9aa0a6;
-      font-weight: 500;
+      border-radius: 5px;
+      border: 1px solid var(--border-input);
+      background: var(--bg-elevated);
+      color: var(--text);
+      font-size: 13px;
     }
-    #summary .summary-tag-val {
-      padding: 5px 10px;
-      background: #2a2b2d;
-      color: #10a37f;
-      font-weight: 600;
-      font-family: monospace;
+    #searchName {
+      margin-left: 0;
+    }
+    #searchName::placeholder {
+      color: color-mix(in srgb, var(--text) 50%, var(--bg-elevated) 50%);
+      opacity: 1;
+    }
+    #searchBtn {
+      flex-shrink: 0;
+      margin: 0;
+      padding: 8px;
+      border: none;
+      border-radius: 8px;
+      background: transparent;
+      color: var(--accent);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 0;
+      transition: color 0.15s ease, opacity 0.15s ease, transform 0.15s ease;
+    }
+    #searchBtn:hover {
+      opacity: 0.85;
+      transform: scale(1.06);
+    }
+    #searchBtn:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+    #searchBtn svg {
+      width: 22px;
+      height: 22px;
+      stroke: currentColor;
+      fill: none;
     }
 
     #results {
       padding: 12px 16px;
     }
     .pkg-wrapper {
-      margin-bottom: 8px;
+      --pkg-row-gap: 8px;
+      margin-bottom: var(--pkg-row-gap);
+    }
+    /* Extra gap when info is open: put it on .pkg-info so it does not collapse with the wrapper margin */
+    .pkg-wrapper:has(.pkg-info.visible) {
+      margin-bottom: 0;
     }
     .pkg {
-      background: #2d2f31;
+      background: var(--bg-card);
       padding: 10px 12px;
       border-radius: 8px;
       display: flex;
       align-items: center;
       gap: 10px;
-      border: 1px solid #3b3c3e;
+      border: 1px solid var(--border);
       font-family: monospace;
       font-size: 14px;
-      color: #e6e6e6;
+      color: var(--text);
       word-break: break-all;
     }
     .pkg .pkg-name {
@@ -122,7 +248,7 @@
       justify-content: center;
       opacity: 0.8;
       transition: opacity 0.2s;
-      color: #e6e6e6;
+      color: var(--text);
     }
     .pkg a.download-icon:hover,
     .pkg button.info-icon:hover {
@@ -132,96 +258,505 @@
     .pkg button.info-icon svg {
       width: 100%;
       height: 100%;
-      fill: #e6e6e6;
-      stroke: #e6e6e6;
+      fill: currentColor;
+      stroke: currentColor;
+    }
+    .pkg-wrapper:has(.pkg-info.visible) .pkg {
+      border-radius: 8px 8px 0 0;
+      border-bottom: none;
     }
     .pkg-info {
       display: none;
-      margin-top: 4px;
+      margin-top: 0;
       margin-left: 0;
       padding: 12px;
-      background: #252627;
+      background: var(--bg-muted);
       border-radius: 6px;
-      border: 1px solid #3b3c3e;
+      border: 1px solid var(--border);
       font-family: monospace;
       font-size: 13px;
-      color: #cfcfcf;
+      color: var(--text-label);
       width: 100%;
       box-sizing: border-box;
     }
     .pkg-info.visible {
       display: block;
+      border-radius: 0 0 6px 6px;
+      margin-bottom: calc(var(--pkg-row-gap) * 2);
     }
     .pkg-info-line {
       margin: 4px 0;
     }
     .pkg-info-label {
-      color: #10a37f;
+      color: var(--accent);
       font-weight: 600;
       margin-right: 8px;
     }
-    .note { color: #9aa0a6; font-size: 13px; padding: 8px 16px; }
+    .pkg-info a.pkg-info-link {
+      color: var(--accent);
+    }
+    .note { color: var(--text-muted); font-size: 13px; padding: 8px 16px; }
 
     .pagination {
-      margin-top: 16px;
-      padding-top: 14px;
-      border-top: 1px solid #2f3032;
+      margin-top: 18px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
       display: flex;
       flex-wrap: wrap;
       align-items: center;
-      gap: 10px;
-      font-size: 14px;
-      color: #c9d1d9;
+      justify-content: center;
+      gap: 10px 14px;
+      font-size: 13px;
+      color: var(--text-soft);
+    }
+    .pagination button {
+      margin: 0;
+      padding: 4px 11px;
+      border-radius: 5px;
+      border: none;
+      background: var(--accent);
+      color: var(--btn-on-accent);
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 12px;
+      line-height: 1.25;
+    }
+    .pagination button:not(:disabled):hover {
+      filter: brightness(1.08);
     }
     .pagination .page-stat {
-      color: #9aa0a6;
-      font-size: 13px;
-      margin-left: 4px;
+      color: var(--text-muted);
+      font-size: 12px;
+      margin: 0;
+      flex-basis: 100%;
+      text-align: center;
+      order: 3;
+    }
+    .pagination #page-prev {
+      order: 1;
+    }
+    .pagination #page-next {
+      order: 2;
     }
     .pagination button:disabled {
       opacity: 0.38;
       cursor: not-allowed;
-      color: #9aa0a6;
+      color: var(--text-muted);
+      filter: none;
     }
     .pagination button:disabled:hover {
+      color: var(--text-muted);
+    }
+
+    .site-footer {
+      flex-shrink: 0;
+      margin-top: auto;
+      padding: 18px 10%;
+      border-top: 1px solid var(--border);
+      background: var(--bg-elevated);
+      font-size: 13px;
+      line-height: 1.55;
+      color: var(--text-muted);
+      text-align: center;
+    }
+    .site-footer a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .site-footer a:hover {
+      text-decoration: underline;
+    }
+
+    /* Script removes `no-js` from &lt;html&gt;; mount stays empty/hidden until controls are cloned */
+    html.no-js #search-controls-mount {
+      display: none !important;
+    }
+    html.no-js .page-content {
+      text-align: center;
+    }
+    /* Center no-JS panel: table+td align=center works in Dillo and old UAs where margin/text-align fails */
+    html.no-js table.noscript-panel-frame {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0;
+    }
+    html.no-js table.noscript-panel-frame td {
+      padding: 0;
+      vertical-align: top;
+    }
+    #search-controls-template {
+      display: none !important;
+    }
+
+    /*
+      No-JS panel: block + fixed max width + horizontal auto margins (inside td align=center).
+    */
+    .noscript-panel,
+    #results noscript .noscript-panel {
+      display: block;
+      width: 544px;
+      max-width: 100%;
+      margin-left: auto;
+      margin-right: auto;
+      text-align: left;
+      padding: 20px 22px;
+      box-sizing: border-box;
+      border-width: 1px;
+      border-style: solid;
+      border-color: #3b3c3e;
+      background-color: #2d2f31;
+      color: #c9d1d9;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 15px;
+      line-height: 1.55;
+    }
+    .noscript-panel br,
+    #results noscript .noscript-panel br {
+      display: none;
+    }
+    .noscript-panel h3,
+    .noscript-panel .noscript-title,
+    #results noscript .noscript-panel h3.noscript-title {
+      margin: 0 0 16px 0;
+      font-size: 19px;
+      font-weight: bold;
+      color: #e6e6e6;
+      padding-bottom: 14px;
+      border-bottom-width: 1px;
+      border-bottom-style: solid;
+      border-bottom-color: #3b3c3e;
+    }
+    .noscript-panel .noscript-title span,
+    .noscript-panel h3 span,
+    #results noscript .noscript-panel h3.noscript-title span {
+      color: #10a37f;
+    }
+    .noscript-panel p,
+    #results noscript .noscript-panel p {
+      margin: 0 0 14px 0;
+      color: #c9d1d9;
+    }
+    .noscript-panel p.noscript-hint,
+    #results noscript .noscript-panel p.noscript-hint {
+      margin-bottom: 0;
       color: #9aa0a6;
+      font-size: 14px;
+    }
+    .noscript-panel strong,
+    .noscript-panel b,
+    #results noscript .noscript-panel strong,
+    #results noscript .noscript-panel b {
+      color: #e6e6e6;
+      font-weight: bold;
+    }
+    .noscript-panel em,
+    #results noscript .noscript-panel em {
+      color: #c9d1d9;
+      font-style: italic;
+    }
+    .noscript-panel code,
+    #results noscript .noscript-panel code {
+      font-family: monospace;
+      font-size: 14px;
+      color: #c9d1d9;
+      background-color: #252627;
+      border-width: 1px;
+      border-style: solid;
+      border-color: #3b3c3e;
+      padding: 2px 6px;
+    }
+    .noscript-panel ul,
+    #results noscript .noscript-panel ul {
+      margin: 10px 0 16px 0;
+      padding-left: 22px;
+      list-style-type: disc;
+      color: #c9d1d9;
+    }
+    .noscript-panel li,
+    #results noscript .noscript-panel li {
+      margin: 6px 0;
+      color: #c9d1d9;
+    }
+    .noscript-panel a:link,
+    .noscript-panel a:visited,
+    #results noscript .noscript-panel a:link,
+    #results noscript .noscript-panel a:visited {
+      color: #10a37f;
+      text-decoration: none;
+    }
+    .noscript-panel a:hover,
+    #results noscript .noscript-panel a:hover {
+      text-decoration: underline;
+    }
+    .noscript-panel ul.noscript-arch-list a:link,
+    .noscript-panel ul.noscript-arch-list a:visited,
+    #results noscript .noscript-panel ul.noscript-arch-list a:link,
+    #results noscript .noscript-panel ul.noscript-arch-list a:visited {
+      font-family: monospace;
+      font-size: 14px;
     }
   </style>
 </head>
 <body>
+  <noscript>
+    <style>
+      /* Static page when scripts are disabled: same dark palette as :root in main CSS + CPK green */
+      html { color-scheme: only dark !important; }
+      body {
+        margin: 0 !important;
+        min-height: 100vh !important;
+        display: flex !important;
+        flex-direction: column !important;
+        font-family: system-ui, "Segoe UI", Roboto, Arial, sans-serif !important;
+        background: #1e1f20 !important;
+        color: #e6e6e6 !important;
+      }
+      header {
+        box-sizing: border-box !important;
+        margin-left: 10% !important;
+        margin-right: 10% !important;
+        padding: 14px 18px !important;
+        background: #2a2b2d !important;
+        border: 1px solid #3b3c3e !important;
+        display: grid !important;
+        grid-template-columns: 42px 1fr 42px !important;
+        align-items: center !important;
+        gap: 12px !important;
+      }
+      .site-title { color: #c9d1d9 !important; }
+      .site-title .brand { color: #10a37f !important; font-weight: 600 !important; }
+      .site-title .subtitle { color: #9aa0a6 !important; }
+      .theme-toggle { display: none !important; }
+      .page-content {
+        box-sizing: border-box !important;
+        margin-left: 10% !important;
+        margin-right: 10% !important;
+        padding: 26px 18px 28px !important;
+        background: #141515 !important;
+        border-left: 1px solid #3b3c3e !important;
+        border-right: 1px solid #3b3c3e !important;
+        flex: 1 !important;
+        text-align: center !important;
+      }
+      #results { padding: 12px 16px !important; text-align: center !important; }
+      table.noscript-panel-frame {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        margin: 0 !important;
+      }
+      table.noscript-panel-frame td {
+        padding: 0 !important;
+        vertical-align: top !important;
+      }
+      /* Panel: same rules as &lt;head&gt; but !important for cascade (Dillo: class + px + longhand) */
+      .noscript-panel,
+      #results noscript .noscript-panel {
+        display: block !important;
+        width: 544px !important;
+        max-width: 100% !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+        text-align: left !important;
+        padding: 20px 22px !important;
+        box-sizing: border-box !important;
+        border-width: 1px !important;
+        border-style: solid !important;
+        border-color: #3b3c3e !important;
+        background-color: #2d2f31 !important;
+        color: #c9d1d9 !important;
+        font-family: Arial, Helvetica, sans-serif !important;
+        font-size: 15px !important;
+        line-height: 1.55 !important;
+      }
+      .noscript-panel br,
+      #results noscript .noscript-panel br {
+        display: none !important;
+      }
+      .noscript-panel h3,
+      .noscript-panel .noscript-title,
+      #results noscript .noscript-panel h3.noscript-title {
+        margin: 0 0 16px 0 !important;
+        font-size: 19px !important;
+        font-weight: bold !important;
+        color: #e6e6e6 !important;
+        padding-bottom: 14px !important;
+        border-bottom-width: 1px !important;
+        border-bottom-style: solid !important;
+        border-bottom-color: #3b3c3e !important;
+      }
+      .noscript-panel .noscript-title span,
+      .noscript-panel h3 span,
+      #results noscript .noscript-panel h3.noscript-title span {
+        color: #10a37f !important;
+      }
+      .noscript-panel p,
+      #results noscript .noscript-panel p {
+        margin: 0 0 14px 0 !important;
+        color: #c9d1d9 !important;
+      }
+      .noscript-panel p.noscript-hint,
+      #results noscript .noscript-panel p.noscript-hint {
+        margin-bottom: 0 !important;
+        color: #9aa0a6 !important;
+        font-size: 14px !important;
+      }
+      .noscript-panel strong,
+      .noscript-panel b,
+      #results noscript .noscript-panel strong,
+      #results noscript .noscript-panel b {
+        color: #e6e6e6 !important;
+        font-weight: bold !important;
+      }
+      .noscript-panel em,
+      #results noscript .noscript-panel em {
+        color: #c9d1d9 !important;
+        font-style: italic !important;
+      }
+      .noscript-panel code,
+      #results noscript .noscript-panel code {
+        font-family: monospace !important;
+        font-size: 14px !important;
+        color: #c9d1d9 !important;
+        background-color: #252627 !important;
+        border-width: 1px !important;
+        border-style: solid !important;
+        border-color: #3b3c3e !important;
+        padding: 2px 6px !important;
+      }
+      .noscript-panel ul,
+      #results noscript .noscript-panel ul {
+        margin: 10px 0 16px 0 !important;
+        padding-left: 22px !important;
+        list-style-type: disc !important;
+        color: #c9d1d9 !important;
+      }
+      .noscript-panel li,
+      #results noscript .noscript-panel li {
+        margin: 6px 0 !important;
+        color: #c9d1d9 !important;
+      }
+      .noscript-panel a:link,
+      .noscript-panel a:visited,
+      #results noscript .noscript-panel a:link,
+      #results noscript .noscript-panel a:visited {
+        color: #10a37f !important;
+        text-decoration: none !important;
+      }
+      .noscript-panel a:hover,
+      #results noscript .noscript-panel a:hover {
+        text-decoration: underline !important;
+      }
+      .noscript-panel ul.noscript-arch-list a:link,
+      .noscript-panel ul.noscript-arch-list a:visited,
+      #results noscript .noscript-panel ul.noscript-arch-list a:link,
+      #results noscript .noscript-panel ul.noscript-arch-list a:visited {
+        font-family: monospace !important;
+        font-size: 14px !important;
+      }
+      .site-footer {
+        margin-top: auto !important;
+        padding: 18px 10% !important;
+        border-top: 1px solid #3b3c3e !important;
+        background: #2a2b2d !important;
+        font-size: 13px !important;
+        line-height: 1.55 !important;
+        color: #9aa0a6 !important;
+        text-align: center !important;
+      }
+      .site-footer a { color: #10a37f !important; font-weight: 500 !important; text-decoration: none !important; }
+    </style>
+  </noscript>
   <header>
-    <!-- Search controls -->
-    <label>Package:
-      <input id="searchName" type="text" placeholder="e.g. bash" />
-    </label>
-
-    <label>Version:
-      <select id="versionSelect">
-        <option value="">All</option>
-        <option>3.8</option>
-      </select>
-    </label>
-
-    <label>Arch:
-      <select id="archSelect">
-        <option value="">All</option>
-        <option>arm64</option>
-        <option>armhf</option>
-        <option>armhf-efikamx</option>
-        <option>x86_64</option>
-        <option>i686</option>
-	      <option>ppc64</option>
-      </select>
-    </label>
-
-    <button id="searchBtn">Search</button>
+    <div class="header-spacer" aria-hidden="true"></div>
+    <h1 class="site-title">
+      <span class="brand">CPK</span>
+      <span class="subtitle"> — CRUX Package Keeper</span>
+    </h1>
+    <button type="button" id="themeToggle" class="theme-toggle" aria-label="Switch theme" title="Light / dark mode">
+      <span class="icon-sun" aria-hidden="true">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" stroke-width="1.75" stroke-linecap="round">
+          <circle cx="12" cy="12" r="4" />
+          <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
+        </svg>
+      </span>
+      <span class="icon-moon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+        </svg>
+      </span>
+    </button>
   </header>
 
-  <!-- Summary area (total + current filters) -->
-  <div id="summary">Summary: loading indexes...</div>
+  <main class="page-content">
+  <div id="search-controls-mount" hidden></div>
+  <template id="search-controls-template">
+    <section class="search-controls" aria-label="Search filters">
+      <div class="search-query">
+      <button type="button" id="searchBtn" aria-label="Search" title="Search">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="7" />
+          <path d="M20 20l-4.3-4.3" />
+        </svg>
+      </button>
+      <input id="searchName" type="text" placeholder="Search" aria-label="Filter by package name" />
+      </div>
 
-  <!-- Results list -->
-  <div id="results">Loading indexes...</div>
+      <label>Version:
+        <select id="versionSelect">
+          <option value="">All</option>
+          <option>3.8</option>
+        </select>
+      </label>
+
+      <label>Arch:
+        <select id="archSelect">
+          <option value="">All</option>
+          <option>arm64</option>
+          <option>armhf</option>
+          <option>armhf-efikamx</option>
+          <option>x86_64</option>
+          <option>i686</option>
+          <option>ppc64</option>
+        </select>
+      </label>
+    </section>
+  </template>
+
+  <div id="results">
+    <noscript>
+      <table class="noscript-panel-frame" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation">
+        <tr>
+          <td align="center" valign="top">
+      <div class="noscript-panel" role="alert" style="background-color:#2d2f31;color:#c9d1d9;border:1px solid #3b3c3e;">
+        <h3 class="noscript-title"><span>No JavaScript Detected</span></h3>
+        <p>
+          The interactive listing requires JavaScript to load the indexes and the search UI.
+          If JavaScript is disabled, use the server’s <strong>directory-based fallback</strong> instead.
+        </p>
+        <p>
+          Append <strong>/VERSION/ARCH/</strong> to the site URL
+          (use the version and architecture that apply to your repository).
+          For this tree, version <strong>3.8</strong> is available under the paths below:
+        </p>
+        <ul class="noscript-arch-list">
+          <li><a href="/3.8/arm64/">/3.8/arm64/</a></li>
+          <li><a href="/3.8/armhf/">/3.8/armhf/</a></li>
+          <li><a href="/3.8/armhf-efikamx/">/3.8/armhf-efikamx/</a></li>
+          <li><a href="/3.8/x86_64/">/3.8/x86_64/</a></li>
+          <li><a href="/3.8/i686/">/3.8/i686/</a></li>
+          <li><a href="/3.8/ppc64/">/3.8/ppc64/</a></li>
+        </ul>
+        <p class="noscript-hint">
+          Under each path the server will show a directory listing; there you will find
+          <strong>.cpk</strong> packages and their <strong>.cpk.info</strong> metadata files.
+        </p>
+      </div>
+          </td>
+        </tr>
+      </table>
+    </noscript>
+  </div>
 
   <!--
   <div class="note">
@@ -229,14 +764,32 @@
     Links are safe-encoded (so `#` becomes `%23`).
   </div>
   -->
+  </main>
+
+  <footer class="site-footer">
+    <a href="https://github.com/sepen/cpk" target="_blank" rel="noopener noreferrer">cpk on GitHub</a>
+    · CRUX Package Keeper for
+    <a href="https://crux.nu" target="_blank" rel="noopener noreferrer">CRUX Linux</a>.
+  </footer>
 
 <script>
 /*
   index.html script
+  - `&lt;html class="no-js"&gt;` is cleared by the first inline script when JS runs (hides search mount until clone).
   - Edit `versions` and the Version &lt;select&gt; options to match the server (e.g. 3.7, 3.8, ...)
+  - Search UI template is in `.page-content` (`#search-controls-template`); keep its &lt;select&gt; options in sync with `versions` / `arches`.
+  - Keep the &lt;noscript&gt; block inside `#results` (directory &lt;ul&gt;) in sync with `versions` / `arches`.
   - Script will try to fetch: `${version}/${arch}/CPKINDEX`
   - It collects filenames from those CPKINDEX files and builds a searchable index.
 */
+
+(function mountSearchControls() {
+  const tpl = document.getElementById("search-controls-template");
+  const mount = document.getElementById("search-controls-mount");
+  if (!tpl || !mount) return;
+  mount.appendChild(tpl.content.cloneNode(true));
+  mount.removeAttribute("hidden");
+})();
 
 // Edit these arrays to reflect your repository versions and arches
 const versions = ["3.8"];
@@ -301,36 +854,8 @@ async function loadAllIndexes() {
   allPackages.sort((a, b) => a.file.localeCompare(b.file, undefined, { numeric: true, sensitivity: "base" }));
 
   console.log("Indexes loaded. packages:", allPackages.length, "indexes_with_content:", loadedCount);
-  document.getElementById("summary").textContent = `Indexes loaded (${loadedCount}) — total packages discovered: ${allPackages.length}`;
   // After loading indexes, display filtered results (initially no filter)
   applyFilters();
-}
-
-function updateSummary(total) {
-  const nameFilter = document.getElementById("searchName").value.trim().toLowerCase();
-  const versionFilter = document.getElementById("versionSelect").value;
-  const archFilter = document.getElementById("archSelect").value;
-  const summaryEl = document.getElementById("summary");
-
-  const countHtml = `<span class="summary-count">Found ${total} package${total !== 1 ? "s" : ""}</span>`;
-  const tags = [];
-  if (nameFilter) {
-    tags.push(
-      `<span class="summary-tag"><span class="summary-tag-lbl">Name</span><span class="summary-tag-val">${escapeHtml(nameFilter)}</span></span>`
-    );
-  }
-  if (versionFilter) {
-    tags.push(
-      `<span class="summary-tag"><span class="summary-tag-lbl">Version</span><span class="summary-tag-val">${escapeHtml(versionFilter)}</span></span>`
-    );
-  }
-  if (archFilter) {
-    tags.push(
-      `<span class="summary-tag"><span class="summary-tag-lbl">Arch</span><span class="summary-tag-val">${escapeHtml(archFilter)}</span></span>`
-    );
-  }
-  const tagsHtml = tags.length ? `<span class="summary-tags">${tags.join("")}</span>` : "";
-  summaryEl.innerHTML = countHtml + tagsHtml;
 }
 
 function renderPackageRow(p) {
@@ -350,9 +875,9 @@ function renderPackageRow(p) {
           </button>
           <a class="download-icon" href="${link}" title="Download" download>
             <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" fill="none" stroke="#e6e6e6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              <polyline points="7 10 12 15 17 10" fill="none" stroke="#e6e6e6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              <line x1="12" y1="15" x2="12" y2="3" fill="none" stroke="#e6e6e6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <polyline points="7 10 12 15 17 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <line x1="12" y1="15" x2="12" y2="3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </a>
         </div>
@@ -378,8 +903,6 @@ function renderPaginationBar(total) {
 function renderCurrentPage() {
   const resultsEl = document.getElementById("results");
   const total = filteredView.length;
-
-  updateSummary(total);
 
   if (total === 0) {
     resultsEl.innerHTML = `<div class="note">No packages found.</div>`;
@@ -483,7 +1006,7 @@ async function toggleInfo(pkgId, infoFile) {
         info.version ? `<div class="pkg-info-line"><span class="pkg-info-label">Version:</span>${escapeHtml(info.version)}</div>` : "",
         info.arch ? `<div class="pkg-info-line"><span class="pkg-info-label">Arch:</span>${escapeHtml(info.arch)}</div>` : "",
         info.description ? `<div class="pkg-info-line"><span class="pkg-info-label">Description:</span>${escapeHtml(info.description)}</div>` : "",
-        info.url ? `<div class="pkg-info-line"><span class="pkg-info-label">URL:</span><a href="${escapeHtml(info.url)}" target="_blank" style="color: #10a37f;">${escapeHtml(info.url)}</a></div>` : "",
+        info.url ? `<div class="pkg-info-line"><span class="pkg-info-label">URL:</span><a class="pkg-info-link" href="${escapeHtml(info.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(info.url)}</a></div>` : "",
         info.dependencies ? `<div class="pkg-info-line"><span class="pkg-info-label">Dependencies:</span>${escapeHtml(info.dependencies)}</div>` : "",
       ].filter(Boolean).join("");
 
@@ -503,7 +1026,27 @@ document.getElementById("searchName").addEventListener("keyup", function(e){
 document.getElementById("versionSelect").addEventListener("change", applyFilters);
 document.getElementById("archSelect").addEventListener("change", applyFilters);
 
-// Start
+(function initThemeToggle() {
+  const root = document.documentElement;
+  const btn = document.getElementById("themeToggle");
+  function syncAria() {
+    const light = root.classList.contains("light");
+    btn.setAttribute("aria-label", light ? "Switch to dark theme" : "Switch to light theme");
+    btn.title = light ? "Use dark mode" : "Use light mode";
+  }
+  btn.addEventListener("click", function () {
+    const next = !root.classList.contains("light");
+    root.classList.toggle("light", next);
+    try {
+      localStorage.setItem("cpk-theme", next ? "light" : "dark");
+    } catch (e) {}
+    syncAria();
+  });
+  syncAria();
+})();
+
+// Start: replace noscript fallback with loading text, then fetch indexes
+document.getElementById("results").textContent = "Loading indexes...";
 loadAllIndexes();
 </script>
 </body>
