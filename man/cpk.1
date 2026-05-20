@@ -81,7 +81,7 @@ Must be run as \fBroot\fR. Upgrade all or specific installed packages to the lat
 As \fBroot\fR, removes cached files under \fBcpk_home_dir\fR except \fBCPKINDEX\fR; otherwise cleans \fB$HOME/.cpk\fR.
 .TP
 .B index <repo>
-Create a CPKINDEX file for a local repository.
+Create \fBCPKINDEX\fR for a local repository.
 .TP
 .B archive <prtdir> <repo>
 Create .cpk archive(s) from a directory containing ports.
@@ -188,10 +188,18 @@ before
 if needed.
 The repository index
 .B CPKINDEX
-is always read from
+is read from
 .BR cpk_home_dir /CPKINDEX\fR;
-non\-root users need read access to that file (after a privileged
+non\-root users need read access (after a privileged
 .BR cpk update ).
+.B cpk deptree
+and
+.B cpk deps
+use dependency data from
+.B CPKINDEX
+when resolving repository packages.
+.B cpk search
+prints package names from the index.
 Sidecar
 .B .cpk.info
 files and extracted trees may live under

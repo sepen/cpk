@@ -17,5 +17,6 @@ void cmd_index(const std::vector<std::string>& args) {
         print_header("Updating index of local repository", BLUE);
     }
     generate_cpk_index(repo_dir);
+    print_message("Generated CPKINDEX in " + repo_dir.string(), GREEN);
     return;
 }

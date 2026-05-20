@@ -17,6 +17,7 @@
 #include <iostream>
 #include <cstdio>
 #include <unistd.h>
+#include <unordered_map>
 
 namespace fs = std::filesystem;
 
@@ -312,7 +313,7 @@ void print_help_update() {
     print_message("Usage: cpk update");
     print_message("\nDescription:");
     print_message("  Must be run as root (writes under cpk_home_dir)");
-    print_message("  Update the index of available packages from the repository, then");
+    print_message("  Download CPKINDEX from the repository, then");
     print_message("  ensure .cpk.info for each port once (first index line = newest; skip older versions)");
     print_message("  download only when that .cpk.info is missing or invalid");
     print_message("  Summary lists new and updated packages (vs. previous cache) for fetched entries");
@@ -337,7 +338,6 @@ void print_help_deptree() {
     print_message("       cpk deptree <path/to/package.cpk>");
     print_message("\nDescription:");
     print_message("  Print a recursive dependency tree (similar to prt-get deptree)");
-    print_message("  Uses the same metadata as install (repository .info / .cpk or local .cpk)");
     print_message("\nArguments:");
     print_message("  <package>                Package name or name#version-release");
     print_message("  <path/to/package.cpk>    Local package file");
@@ -427,7 +427,7 @@ void print_help_clean() {
 void print_help_index() {
     print_message("Usage: cpk index <repo>");
     print_message("\nDescription:");
-    print_message("  Create a CPKINDEX file for a local repository");
+    print_message("  Create CPKINDEX for a local repository");
     print_message("\nArguments:");
     print_message("  <repo>                   Path to repository directory");
     print_message("\nExamples:");
@@ -474,7 +474,7 @@ void print_help(const std::string& command) {
         print_message("  rm          Alias for uninstall");
         print_message("  upgrade     Upgrade all installed packages to the latest versions");
         print_message("  clean       Clean up package source files and temporary directories");
-        print_message("  index       Create a CPKINDEX file for a local repository");
+        print_message("  index       Create CPKINDEX for a local repository");
         print_message("  archive     Create .cpk archive(s) from a directory containing ports");
         print_message("  help        Show this help message or detailed help for a command");
         print_message("  version     Show version information");
@@ -742,6 +742,54 @@ bool parse_cpk_filename(const std::string& filepath, std::string& pkgname, std::
     return !pkgname.empty() && !pkgver.empty() && !pkgarch.empty();
 }
 
+static std::string cpk_trim_index_line(std::string line) {
+    while (!line.empty() && (line.back() == '\r' || line.back() == '\n' || line.back() == ' ' || line.back() == '\t')) {
+        line.pop_back();
+    }
+    size_t i = 0;
+    while (i < line.size() && (line[i] == ' ' || line[i] == '\t')) {
+        ++i;
+    }
+    return line.substr(i);
+}
+
+bool cpk_index_line_valid(const std::string& index_line) {
+    const std::string line = cpk_trim_index_line(index_line);
+    if (line.empty() || line[0] == '#') {
+        return false;
+    }
+    const size_t cpk_pos = line.rfind(".cpk");
+    if (cpk_pos == std::string::npos) {
+        return false;
+    }
+    const size_t after = cpk_pos + 4;
+    return after < line.size() && line[after] == ':';
+}
+
+std::string cpk_index_line_package(const std::string& index_line) {
+    if (!cpk_index_line_valid(index_line)) {
+        return "";
+    }
+    const std::string line = cpk_trim_index_line(index_line);
+    const size_t cpk_pos = line.rfind(".cpk");
+    const size_t after = cpk_pos + 4;
+    return line.substr(0, after);
+}
+
+std::string cpk_index_line_deps(const std::string& index_line) {
+    if (!cpk_index_line_valid(index_line)) {
+        return "";
+    }
+    const std::string line = cpk_trim_index_line(index_line);
+    const size_t cpk_pos = line.rfind(".cpk");
+    const size_t after = cpk_pos + 4;
+    size_t deps_start = after + 1;
+    while (deps_start < line.size() && (line[deps_start] == ' ' || line[deps_start] == '\t')) {
+        ++deps_start;
+    }
+    return line.substr(deps_start);
+}
+
 // Helper function to find package details
 // package_name is either "pkgname" (newest version in index) or "pkgname#version-release"
 // (exact version; architecture prefers get_system_architecture() when several match).
@@ -774,15 +822,19 @@ bool find_package(const std::string& package_name, std::string& package, std::st
     } else {
             std::string index_line;
             while (std::getline(file, index_line)) {
-                if (index_line.find(search_prefix) != std::string::npos) {
-                    size_t cpk_pos = index_line.rfind(".cpk");
-                    size_t last_dot = index_line.rfind('.', cpk_pos - 1);
-                    size_t hash_pos = index_line.find('#');
+                if (!cpk_index_line_valid(index_line)) {
+                    continue;
+                }
+                const std::string pkg_entry = cpk_index_line_package(index_line);
+                if (pkg_entry.find(search_prefix) != std::string::npos) {
+                    size_t cpk_pos = pkg_entry.rfind(".cpk");
+                    size_t last_dot = pkg_entry.rfind('.', cpk_pos - 1);
+                    size_t hash_pos = pkg_entry.find('#');
 
                     if (cpk_pos != std::string::npos && last_dot != std::string::npos && hash_pos != std::string::npos) {
-                        std::string temp_pkgname = index_line.substr(0, hash_pos);
-                        std::string temp_pkgver = index_line.substr(hash_pos + 1, last_dot - hash_pos - 1);
-                        std::string temp_pkgarch = index_line.substr(last_dot + 1, cpk_pos - last_dot - 1);
+                        std::string temp_pkgname = pkg_entry.substr(0, hash_pos);
+                        std::string temp_pkgver = pkg_entry.substr(hash_pos + 1, last_dot - hash_pos - 1);
+                        std::string temp_pkgarch = pkg_entry.substr(last_dot + 1, cpk_pos - last_dot - 1);
 
                         if (requested_name != temp_pkgname) {
                             continue;
@@ -796,7 +848,7 @@ bool find_package(const std::string& package_name, std::string& package, std::st
                                 pkgname = temp_pkgname;
                                 pkgver = temp_pkgver;
                                 pkgarch = temp_pkgarch;
-                                package = index_line;
+                                package = pkg_entry;
                                 result = true;
                                 pinned_have_system_arch = true;
                             } else if (!pinned_have_system_arch) {
@@ -804,7 +856,7 @@ bool find_package(const std::string& package_name, std::string& package, std::st
                                     pkgname = temp_pkgname;
                                     pkgver = temp_pkgver;
                                     pkgarch = temp_pkgarch;
-                                    package = index_line;
+                                    package = pkg_entry;
                                     result = true;
                                 }
                             }
@@ -813,7 +865,7 @@ bool find_package(const std::string& package_name, std::string& package, std::st
                                 pkgname = temp_pkgname;
                                 pkgver = temp_pkgver;
                                 pkgarch = temp_pkgarch;
-                                package = index_line;
+                                package = pkg_entry;
                                 best_version = temp_pkgver;
                                 result = true;
                             }
@@ -859,8 +911,8 @@ int get_number_of_packages() {
     
     // Read the file line by line and count the lines (packages)
     while (std::getline(file, index_line)) {
-        if (!index_line.empty()) {  // Count only non-empty lines
-            ++package_count;  // Increment for each non-empty line
+        if (cpk_index_line_valid(index_line)) {
+            ++package_count;
         }
     }
 
@@ -1001,7 +1053,33 @@ void package_files(const std::string &name, const std::string &version, const st
 }
 
 
-// Function to update the index of a local repositor
+static bool dependencies_from_local_cpk(const fs::path& cpk_path, std::string& deps_str, const fs::path& work_dir) {
+    const std::string info_path = cpk_path.string() + ".info";
+    std::string name, ver, arch, desc, url;
+    if (fs::exists(info_path) && parse_cpk_info(info_path, name, ver, arch, desc, url, deps_str)) {
+        return true;
+    }
+
+    std::string pkgname, pkgver, pkgarch;
+    if (!parse_cpk_filename(cpk_path.string(), pkgname, pkgver, pkgarch)) {
+        return false;
+    }
+
+    fs::remove_all(work_dir);
+    ensure_directory(work_dir);
+    if (!extract_package(cpk_path.string(), work_dir.string())) {
+        return false;
+    }
+
+    const fs::path pkgfile = work_dir / pkgname / pkgver / "Pkgfile";
+    std::string pn, pd, pu;
+    if (!parse_pkgfile(pkgfile.string(), pn, pd, pu, deps_str)) {
+        return false;
+    }
+    return true;
+}
+
+// Function to update the index of a local repository
 void generate_cpk_index(const fs::path &repo_dir) {
     std::vector<std::string> cpk_files;
     for (const auto &entry : fs::directory_iterator(repo_dir)) {
@@ -1012,14 +1090,30 @@ void generate_cpk_index(const fs::path &repo_dir) {
 
     std::sort(cpk_files.rbegin(), cpk_files.rend());
 
+    const fs::path work_dir = repo_dir / ".cpk-index-work";
     fs::path index_tmp = repo_dir / "CPKINDEX.tmp";
     std::ofstream index_file(index_tmp);
+    int failures = 0;
+
     for (const auto &file : cpk_files) {
-        index_file << file << "\n";
+        const fs::path cpk_path = repo_dir / file;
+        std::string deps_str;
+        if (!dependencies_from_local_cpk(cpk_path, deps_str, work_dir)) {
+            ++failures;
+            if (CPK_VERBOSE) {
+                print_message("Warning: could not read dependencies for " + file, YELLOW);
+            }
+        }
+        index_file << file << ": " << deps_str << "\n";
     }
     index_file.close();
-
+    fs::remove_all(work_dir);
     fs::rename(index_tmp, repo_dir / "CPKINDEX");
+    cpk_invalidate_cpkindex_deps_cache();
+
+    if (failures > 0) {
+        print_message("CPKINDEX: " + std::to_string(failures) + " package(s) have empty deps (check .cpk.info or Pkgfile)", YELLOW);
+    }
 }
 
 // Function to get system architecture
@@ -1280,6 +1374,76 @@ static void split_dependency_words(const std::string& deps_str, std::vector<std:
     }
 }
 
+static std::unordered_map<std::string, std::vector<std::string>> g_cpkindex_deps_cache;
+static std::unordered_map<std::string, std::vector<std::string>> g_cpkindex_deps_by_port;
+static std::string g_cpkindex_deps_cache_path;
+static bool g_cpkindex_deps_cache_loaded = false;
+
+void cpk_invalidate_cpkindex_deps_cache() {
+    g_cpkindex_deps_cache.clear();
+    g_cpkindex_deps_by_port.clear();
+    g_cpkindex_deps_cache_path.clear();
+    g_cpkindex_deps_cache_loaded = false;
+}
+
+static void load_cpkindex_deps_cache() {
+    const std::string path = get_cpkindex_path();
+    if (g_cpkindex_deps_cache_loaded && g_cpkindex_deps_cache_path == path) {
+        return;
+    }
+    cpk_invalidate_cpkindex_deps_cache();
+    g_cpkindex_deps_cache_path = path;
+    g_cpkindex_deps_cache_loaded = true;
+
+    std::ifstream in(path);
+    if (!in.is_open()) {
+        return;
+    }
+
+    std::string line;
+    while (std::getline(in, line)) {
+        const std::string trimmed = cpk_trim_index_line(line);
+        if (!cpk_index_line_valid(trimmed)) {
+            continue;
+        }
+        const std::string pkg = cpk_index_line_package(trimmed);
+        std::vector<std::string> deps;
+        split_dependency_words(cpk_index_line_deps(trimmed), deps);
+        g_cpkindex_deps_cache[pkg] = std::move(deps);
+        const size_t hash = pkg.find('#');
+        if (hash != std::string::npos && hash > 0) {
+            const std::string port = pkg.substr(0, hash);
+            if (g_cpkindex_deps_by_port.find(port) == g_cpkindex_deps_by_port.end()) {
+                g_cpkindex_deps_by_port[port] = g_cpkindex_deps_cache[pkg];
+            }
+        }
+    }
+}
+
+void cpk_preload_index_deps_cache() {
+    load_cpkindex_deps_cache();
+}
+
+bool lookup_cpkindex_deps_by_port(const std::string& port_name, std::vector<std::string>& out) {
+    load_cpkindex_deps_cache();
+    const auto it = g_cpkindex_deps_by_port.find(port_name);
+    if (it == g_cpkindex_deps_by_port.end()) {
+        return false;
+    }
+    out = it->second;
+    return true;
+}
+
+bool lookup_cpkindex_deps(const std::string& package_line, std::vector<std::string>& out) {
+    load_cpkindex_deps_cache();
+    const auto it = g_cpkindex_deps_cache.find(package_line);
+    if (it == g_cpkindex_deps_cache.end()) {
+        return false;
+    }
+    out = it->second;
+    return true;
+}
+
 // spec: repository name / name#version / or path to a .cpk file
 bool get_package_dependency_names(const std::string& spec, std::vector<std::string>& out) {
     out.clear();
@@ -1313,52 +1477,19 @@ bool get_package_dependency_names(const std::string& spec, std::vector<std::stri
         return true;
     }
 
+    if (spec.find('#') == std::string::npos && lookup_cpkindex_deps_by_port(spec, out)) {
+        return true;
+    }
+
     if (!find_package(spec, package, pkgname, pkgver, pkgarch)) {
         print_message("Package not in index: " + spec, RED);
         return false;
     }
 
-    std::string info_url = cpk_repo_join(url_encode(package + ".info"));
-    const std::string info_bn = package + ".info";
-    const std::string info_read = resolve_cpk_metadata_read_path(info_bn);
-    const std::string info_write = get_cache_file(info_bn);
-    bool info_from_file = false;
-    std::string name, version, arch, description, url, dependencies;
-
-    if (cpk_file_readable(info_read) && parse_cpk_info(info_read, name, version, arch, description, url, dependencies)) {
-        info_from_file = true;
-        deps_str = dependencies;
-    } else if (download_file(info_url, info_write, true) && parse_cpk_info(info_write, name, version, arch, description, url, dependencies)) {
-        info_from_file = true;
-        deps_str = dependencies;
-    } else if (fs::exists(info_write)) {
-        fs::remove(info_write);
+    if (lookup_cpkindex_deps(package, out)) {
+        return true;
     }
 
-    if (!info_from_file) {
-        std::string package_url = cpk_repo_join(url_encode(package));
-        std::string package_source = resolve_package_extract_dir(pkgname, pkgver);
-        std::string package_path = get_cache_file(package);
-        if (!fs::is_directory(package_source) || !fs::exists(package_source + "/Pkgfile")) {
-            package_source = cache_dir + "/" + pkgname + "/" + pkgver;
-            if (!download_file(package_url, package_path) || !extract_package(package_path, cache_dir)) {
-                print_message("Failed to retrieve package info", RED);
-                return false;
-            }
-        }
-        std::string pkgfile_path = package_source + "/Pkgfile";
-        if (!fs::exists(pkgfile_path)) {
-            print_message("Package info file not found and Pkgfile not available", RED);
-            return false;
-        }
-        std::string pkgname_from_file, pkgdesc, pkgurl, pkgdeps;
-        if (!parse_pkgfile(pkgfile_path, pkgname_from_file, pkgdesc, pkgurl, pkgdeps)) {
-            print_message("Failed to parse Pkgfile", RED);
-            return false;
-        }
-        deps_str = pkgdeps;
-    }
-
-    split_dependency_words(deps_str, out);
-    return true;
+    print_message("Invalid CPKINDEX entry for \"" + package + "\"", RED);
+    return false;
 }

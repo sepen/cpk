@@ -56,6 +56,14 @@ std::vector<std::string> get_local_files(const std::vector<std::string> &sources
 void copy_files(const fs::path &source_dir, const fs::path &dest_dir, const std::vector<std::string> &files);
 void package_files(const std::string &name, const std::string &version, const std::string &release, const std::string &arch, const fs::path &output_dir);
 void generate_cpk_index(const fs::path &repo_dir);
+// CPKINDEX line format (required): "name#ver-rel.arch.cpk: dep1 dep2" (deps may be empty)
+bool cpk_index_line_valid(const std::string& index_line);
+std::string cpk_index_line_package(const std::string& index_line);
+std::string cpk_index_line_deps(const std::string& index_line);
+bool lookup_cpkindex_deps(const std::string& package_line, std::vector<std::string>& out);
+bool lookup_cpkindex_deps_by_port(const std::string& port_name, std::vector<std::string>& out);
+void cpk_preload_index_deps_cache();
+void cpk_invalidate_cpkindex_deps_cache();
 std::string get_system_architecture();
 std::vector<std::string> get_installed_packages();
 std::string calculate_sha256(const std::string &file_path);

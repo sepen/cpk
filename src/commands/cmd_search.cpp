@@ -24,9 +24,13 @@ void cmd_search(const std::vector<std::string>& args) {
 
     std::ostringstream search_results;
     while (std::getline(file, index_line)) {
-        if (index_line.find(search_term) != std::string::npos) {
+        if (!cpk_index_line_valid(index_line)) {
+            continue;
+        }
+        const std::string pkg = cpk_index_line_package(index_line);
+        if (pkg.find(search_term) != std::string::npos) {
             found = true;
-            search_results << index_line << '\n';
+            search_results << pkg << '\n';
         }
     }
     file.close();

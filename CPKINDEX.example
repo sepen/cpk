@@ -1,0 +1,7 @@
+# CPKINDEX: one line per package (required format):
+#   pkgname#version-release.arch.cpk: dep1 dep2
+
+vim#9.1.1918-1.armhf.cpk: acl ncurses
+bash#5.3.3-1.armhf.cpk: glibc ncurses readline
+xz#5.8.2-1.x86_64.cpk:
+sysvinit#3.15-1.armhf.cpk:

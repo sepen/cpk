@@ -6,7 +6,6 @@ namespace fs = std::filesystem;
 
 void cmd_clean(const std::vector<std::string>& args) {
 
-    std::string excluded_file = "CPKINDEX";
     // As root: clean system cpk home except CPKINDEX; otherwise clean user cache only.
     std::string cache_dir = cpk_is_privileged_process() ? CPK_HOME_DIR : get_cache_dir();
 
@@ -17,7 +16,7 @@ void cmd_clean(const std::vector<std::string>& args) {
     if (fs::exists(cache_dir) && fs::is_directory(cache_dir)) {
         // Iterate over directory contents and remove them
         for (const auto& entry : fs::directory_iterator(cache_dir)) {
-            if (entry.path().filename() == excluded_file) {
+            if (entry.path().filename() == "CPKINDEX") {
                 continue;
             }
             fs::remove_all(entry);

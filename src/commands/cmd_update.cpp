@@ -19,7 +19,7 @@ static std::string trim_index_line(std::string line) {
     return line.substr(i);
 }
 
-// CPKINDEX line "name#ver-rel.arch.cpk" -> unique label without ".cpk"
+// CPKINDEX line "name#ver-rel.arch.cpk: deps" -> unique label without ".cpk"
 static std::string index_package_label(const std::string& pkg_line) {
     if (pkg_line.size() >= 4 && pkg_line.compare(pkg_line.size() - 4, 4, ".cpk") == 0) {
         return pkg_line.substr(0, pkg_line.size() - 4);
@@ -27,7 +27,7 @@ static std::string index_package_label(const std::string& pkg_line) {
     return pkg_line;
 }
 
-// Port name for CPKINDEX lines "name#version-release.arch.cpk"
+// Port name for CPKINDEX lines "name#version-release.arch.cpk: deps"
 static std::string index_pkgname(const std::string& pkg_line) {
     const size_t h = pkg_line.find('#');
     if (h == std::string::npos || h == 0) {
@@ -62,6 +62,7 @@ void cmd_update(const std::vector<std::string>& args) {
         print_message("Failed to update index file " + index_file, RED);
         return;
     }
+    cpk_invalidate_cpkindex_deps_cache();
 
     if (CPK_VERBOSE) {
         print_header("Syncing .cpk.info metadata for indexed packages", BLUE);
@@ -82,13 +83,11 @@ void cmd_update(const std::vector<std::string>& args) {
 
     std::string index_line;
     while (std::getline(index_in, index_line)) {
-        const std::string pkg_line = trim_index_line(index_line);
-        if (pkg_line.empty()) {
+        const std::string trimmed = trim_index_line(index_line);
+        if (!cpk_index_line_valid(trimmed)) {
             continue;
         }
-        if (pkg_line.size() < 5 || pkg_line.compare(pkg_line.size() - 4, 4, ".cpk") != 0) {
-            continue;
-        }
+        const std::string pkg_line = cpk_index_line_package(trimmed);
 
         // Only the first index row per port name needs .cpk.info (newest revision is listed first).
         const std::string pkgname = index_pkgname(pkg_line);

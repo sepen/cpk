@@ -70,7 +70,7 @@ Commands:
   rm          Alias for uninstall
   upgrade     Upgrade all installed packages to the latest versions
   clean       Clean up package source files and temporary directories
-  index       Create a CPKINDEX file for a local repository
+  index       Create CPKINDEX for a local repository
   archive     Create .cpk archive(s) from a directory containing ports
   help        Show this help message or detailed help for a command
   version     Show version information
@@ -93,7 +93,7 @@ For detailed help on a specific command, use `cpk help <command>`.
 
 - Ensures `CPK_HOME_DIR` exists; otherwise prints an error.
 - Downloads `CPKINDEX` from `${CPK_REPO_URL}/CPKINDEX` into `CPK_HOME_DIR`.
-- Counts available packages and prints the total.
+- Counts packages in the index and prints the total.
 
 ### `cpk info <package> [--field]`
 
@@ -121,7 +121,7 @@ For detailed help on a specific command, use `cpk help <command>`.
 **Usage**: one argument (package name, `pkgname#version-release`, or path to a `.cpk` file)
 
 - Prints a recursive dependency tree (similar to `prt-get deptree`).
-- Uses the same metadata resolution as `install` / `info` (repository `.cpk.info` or `.cpk` / `Pkgfile`, or a local `.cpk`).
+- For repository packages, resolves dependencies from `CPKINDEX`. Local `.cpk` paths use `Pkgfile` inside the archive.
 - Lines use `[i]` when the package appears installed and `[ ]` otherwise.
 - If a dependency was already expanded earlier in the tree, it is shown again with `-->` instead of repeating its subtree (shared or diamond dependencies).
 
@@ -129,7 +129,7 @@ For detailed help on a specific command, use `cpk help <command>`.
 
 **Usage**: one argument (substring to match)
 
-- Opens `CPKINDEX` and searches all lines containing the given term.
+- Opens `CPKINDEX` and searches for the given term; lists matching package names.
 - Displays all matches in a formatted list, or shows a "no matches found" message.
 
 ### `cpk list`
@@ -173,7 +173,7 @@ For detailed help on a specific command, use `cpk help <command>`.
 
 - Can install from repository or from a local `.cpk` file.
 - `add` is an alias for `install` (same options and behavior).
-- **Dependency order**: by default, reads each package’s metadata (`.cpk.info` or extracted `Pkgfile`), resolves dependencies recursively, and installs missing dependencies before the package you asked for. Use **`--no-deps`** to install only that package.
+- **Dependency order**: by default, resolves dependencies from `CPKINDEX` recursively before installing the requested package. Local `.cpk` paths use `Pkgfile`. Use **`--no-deps`** to install only that package.
 - **`--upgrade`** applies only to the package named on the command line, not to dependencies pulled in automatically.
 - If installing from repository:
   - Finds the package in `CPKINDEX` (newest version, or an exact **`pkgname#version-release`** if you specify it).
@@ -226,7 +226,7 @@ For detailed help on a specific command, use `cpk help <command>`.
 **Usage**: one argument (local repository path)
 
 - Validates that the argument is a directory.
-- Rebuild or update the local `CPKINDEX`.
+- Rebuild the local `CPKINDEX` from `.cpk` files in the repository directory.
 
 ### `cpk archive <portsdir> <repo>`
 
