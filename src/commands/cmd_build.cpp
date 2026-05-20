@@ -12,9 +12,8 @@ void cmd_build(const std::vector<std::string>& args) {
         return;
     }
 
-    std::string index_file = get_cpkindex_path();
-    if (!fs::exists(index_file)) {
-        print_message("Package index not found. Run `cpk update` first", RED);
+    if (!cpk_is_privileged_process()) {
+        print_message("cpk build must be run as root.", RED);
         return;
     }
 

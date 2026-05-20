@@ -7,6 +7,11 @@
 
 void cmd_upgrade(const std::vector<std::string>& args) {
 
+    if (!cpk_is_privileged_process()) {
+        print_message("cpk upgrade must be run as root.", RED);
+        return;
+    }
+
     std::vector<std::string> packages;
 
     // If no specific packages are provided, upgrade only packages with newer versions available

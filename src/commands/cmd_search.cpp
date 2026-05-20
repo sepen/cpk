@@ -13,13 +13,12 @@ void cmd_search(const std::vector<std::string>& args) {
     }
     std::string search_term = args[0];
 
-    std::string index_file = get_cpkindex_path();
-    if (!fs::exists(index_file)) {
-        print_message("Package index not found. Run `cpk update` first", RED);
+    const std::string index_file = get_cpkindex_path();
+    std::ifstream file(index_file);
+    if (!file.is_open()) {
+        cpk_print_missing_index_error();
         return;
     }
-
-    std::ifstream file(index_file);
     std::string index_line;
     bool found = false;
 

@@ -43,7 +43,8 @@ static bool spec_resolves_installed(const std::string& spec) {
 static bool visit_for_plan(const std::string& spec,
                            std::vector<std::string>& plan,
                            std::set<std::string>& visit_stack,
-                           std::set<std::string>& done) {
+                           std::set<std::string>& done,
+                           bool allow_skip_missing_index_dep) {
     if (done.count(spec)) {
         return true;
     }
@@ -51,13 +52,48 @@ static bool visit_for_plan(const std::string& spec,
         return true;
     }
     visit_stack.insert(spec);
+
+    // Local .cpk: resolve deps from the archive only (find_package would fail on path).
+    if (fs::exists(spec) && fs::is_regular_file(spec)) {
+        std::vector<std::string> deps;
+        if (!get_package_dependency_names(spec, deps)) {
+            visit_stack.erase(spec);
+            return false;
+        }
+        for (const auto& d : deps) {
+            if (!visit_for_plan(d, plan, visit_stack, done, true)) {
+                visit_stack.erase(spec);
+                return false;
+            }
+        }
+        visit_stack.erase(spec);
+        done.insert(spec);
+        plan.push_back(spec);
+        return true;
+    }
+
+    // Names in Depends-on lines are not always literal CPKINDEX ports (e.g. CRUX virtual "db").
+    // Transitive deps may be skipped with a warning; the root spec must exist in the index.
+    std::string package_dummy, pkgname_dummy, pkgver_dummy, pkgarch_dummy;
+    if (!find_package(spec, package_dummy, pkgname_dummy, pkgver_dummy, pkgarch_dummy)) {
+        if (!allow_skip_missing_index_dep) {
+            visit_stack.erase(spec);
+            return false;
+        }
+        print_message("Warning: dependency \"" + spec + "\" is not in the package index (skipping; often a virtual or footprint name).", YELLOW);
+        visit_stack.erase(spec);
+        done.insert(spec);
+        return true;
+    }
+
     std::vector<std::string> deps;
     if (!get_package_dependency_names(spec, deps)) {
+        print_message("Failed to read dependency metadata for \"" + spec + "\" while resolving the install plan.", RED);
         visit_stack.erase(spec);
         return false;
     }
     for (const auto& d : deps) {
-        if (!visit_for_plan(d, plan, visit_stack, done)) {
+        if (!visit_for_plan(d, plan, visit_stack, done, true)) {
             visit_stack.erase(spec);
             return false;
         }
@@ -84,12 +120,6 @@ static bool install_package_spec(const std::string& spec, bool allow_upgrade_if_
             return false;
         }
     } else {
-        std::string index_file = get_cpkindex_path();
-        if (!fs::exists(index_file)) {
-            print_message("Package index not found. Run `cpk update` first", RED);
-            return false;
-        }
-
         if (!find_package(spec, package, pkgname, pkgver, pkgarch)) {
             return false;
         }
@@ -167,6 +197,11 @@ static bool install_package_spec(const std::string& spec, bool allow_upgrade_if_
 }
 
 void cmd_install(const std::vector<std::string>& args) {
+    if (!cpk_is_privileged_process()) {
+        print_message("cpk install must be run as root.", RED);
+        return;
+    }
+
     std::vector<std::string> positional;
     bool upgrade = false;
     bool no_deps = false;
@@ -182,7 +217,7 @@ void cmd_install(const std::vector<std::string>& args) {
     if (!no_deps) {
         std::vector<std::string> plan;
         std::set<std::string> visit_stack, done;
-        if (!visit_for_plan(primary, plan, visit_stack, done)) {
+        if (!visit_for_plan(primary, plan, visit_stack, done, false)) {
             print_message("Failed to resolve dependency tree", RED);
             return;
         }

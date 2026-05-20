@@ -63,8 +63,16 @@ bool parse_cpk_info(const std::string &info_file_path, std::string &name, std::s
 // Writable cache (~/.cpk when CPK_HOME_DIR is not writable): .info, .cpk downloads, extracted trees.
 std::string get_cache_dir();
 std::string get_cache_file(const std::string &filename);
-// Package index is always read/updated under CPK_HOME_DIR (never the user cache).
+// System package index (cpk_home_dir/CPKINDEX); read-only commands use this path only.
 std::string get_cpkindex_path();
+void cpk_print_missing_index_error();
+// True if running as root (privileged commands).
+bool cpk_is_privileged_process();
+bool cpk_file_readable(const std::string& path);
+// Prefer cpk_home_dir/<basename> if that .info (etc.) is readable; else user cache path.
+std::string resolve_cpk_metadata_read_path(const std::string& basename);
+// Prefer extracted tree under cpk_home_dir when it has a Pkgfile; else under get_cache_dir().
+std::string resolve_package_extract_dir(const std::string& pkgname, const std::string& pkgver);
 
 #endif  // UTILS_H
 

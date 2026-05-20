@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <fstream>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 namespace fs = std::filesystem;
@@ -26,9 +27,23 @@ static std::string index_package_label(const std::string& pkg_line) {
     return pkg_line;
 }
 
+// Port name for CPKINDEX lines "name#version-release.arch.cpk"
+static std::string index_pkgname(const std::string& pkg_line) {
+    const size_t h = pkg_line.find('#');
+    if (h == std::string::npos || h == 0) {
+        return pkg_line;
+    }
+    return pkg_line.substr(0, h);
+}
+
 void cmd_update(const std::vector<std::string>& args) {
     if(!fs::is_directory(CPK_HOME_DIR)) {
         print_message("Home directory does not exists " + CPK_HOME_DIR, RED);
+        return;
+    }
+
+    if (!cpk_is_privileged_process()) {
+        print_message("cpk update must be run as root to refresh the system index under " + CPK_HOME_DIR + ".", RED);
         return;
     }
 
@@ -57,6 +72,7 @@ void cmd_update(const std::vector<std::string>& args) {
     int info_failures = 0;
     std::vector<std::string> new_labels;
     std::vector<std::string> updated_labels;
+    std::unordered_set<std::string> info_synced_pkgname;
 
     std::ifstream index_in(index_file);
     if (!index_in.is_open()) {
@@ -74,6 +90,12 @@ void cmd_update(const std::vector<std::string>& args) {
             continue;
         }
 
+        // Only the first index row per port name needs .cpk.info (newest revision is listed first).
+        const std::string pkgname = index_pkgname(pkg_line);
+        if (info_synced_pkgname.contains(pkgname)) {
+            continue;
+        }
+
         const std::string info_path = get_cache_file(pkg_line + ".info");
         const bool had_file = fs::exists(info_path);
         std::string old_name, old_ver, old_arch, old_desc, old_url, old_deps;
@@ -84,6 +106,7 @@ void cmd_update(const std::vector<std::string>& args) {
 
         // Valid local .cpk.info: keep it (no network fetch)
         if (old_ok) {
+            info_synced_pkgname.insert(pkgname);
             continue;
         }
 
@@ -97,6 +120,7 @@ void cmd_update(const std::vector<std::string>& args) {
                 fs::remove(tmp_path);
             }
             ++info_failures;
+            info_synced_pkgname.insert(pkgname);
             continue;
         }
 
@@ -104,6 +128,7 @@ void cmd_update(const std::vector<std::string>& args) {
         if (!parse_cpk_info(tmp_path, name, ver, arch, desc, url, deps)) {
             fs::remove(tmp_path);
             ++info_failures;
+            info_synced_pkgname.insert(pkgname);
             continue;
         }
 
@@ -112,6 +137,7 @@ void cmd_update(const std::vector<std::string>& args) {
         } catch (const fs::filesystem_error&) {
             fs::remove(tmp_path);
             ++info_failures;
+            info_synced_pkgname.insert(pkgname);
             continue;
         }
 
@@ -124,6 +150,8 @@ void cmd_update(const std::vector<std::string>& args) {
             ++version_changes;
             updated_labels.push_back(label);
         }
+
+        info_synced_pkgname.insert(pkgname);
     }
     index_in.close();
 

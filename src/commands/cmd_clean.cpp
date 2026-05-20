@@ -7,7 +7,8 @@ namespace fs = std::filesystem;
 void cmd_clean(const std::vector<std::string>& args) {
 
     std::string excluded_file = "CPKINDEX";
-    std::string cache_dir = get_cache_dir();
+    // As root: clean system cpk home except CPKINDEX; otherwise clean user cache only.
+    std::string cache_dir = cpk_is_privileged_process() ? CPK_HOME_DIR : get_cache_dir();
 
     if (CPK_VERBOSE) {
         print_header("Cleaning cache contents", BLUE);

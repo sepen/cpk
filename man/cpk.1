@@ -14,11 +14,11 @@ CRUX Package Keeper is a toolset designed to efficiently manage packages and the
 .SH COMMANDS
 .TP
 .B update
-Update the index of available packages, then ensure a \fB.cpk.info\fR sidecar exists in the cache for each index entry: existing valid files are left unchanged; missing or unreadable ones are downloaded. Prints counts of new and updated metadata (vs. the previous cache) for packages that were fetched this run, each followed by the matching index entries (without the \fB.cpk\fR suffix).
+Must be run as \fBroot\fR. Update the index of available packages under \fBcpk_home_dir\fR, then ensure a \fB.cpk.info\fR sidecar exists for the first index row of each port name (newer revisions are listed before older ones; older rows are skipped). Existing valid files are left unchanged; missing or unreadable ones are downloaded. Prints counts of new and updated metadata (vs. the previous cache) for packages that were fetched this run, each followed by the matching index entries (without the \fB.cpk\fR suffix).
 .TP
 .B info
 <package> [\fI\-\-name\fR | \fI\-\-version\fR | \fI\-\-arch\fR | \fI\-\-description\fR | \fI\-\-url\fR | \fI\-\-dependencies\fR]
-Show information about installed or available packages. Attempts to download the .cpk.info file first (faster), falling back to downloading the full .cpk archive if needed. Use field filters to show only specific information.
+Uses the index at \fBcpk_home_dir\fR/CPKINDEX (run \fBsudo cpk update\fR if unreadable). Reads \fB.cpk.info\fR from \fBcpk_home_dir\fR when present, otherwise downloads metadata into \fB$HOME/.cpk\fR. Falls back to the full \fB.cpk\fR when needed. Use field filters to show only specific information.
 .TP
 .B deps
 <package>
@@ -33,7 +33,7 @@ Print a recursive dependency tree using repository metadata (or a local .cpk), s
 .TP
 .B search
 <keyword>
-Search for packages by name or keyword.
+Search for packages by name or keyword in \fBcpk_home_dir\fR/CPKINDEX (read\-only; no root required).
 .TP
 .B list
 List all installed packages.
@@ -42,17 +42,17 @@ List all installed packages.
 Show differences between installed and available packages.
 .TP
 .B verify <package>
-Verify integrity of package source files.
+Verify integrity of package source files. Uses the system index; reuses an extracted tree under \fBcpk_home_dir\fR when available, otherwise downloads into \fB$HOME/.cpk\fR.
 .TP
 .B build <package>
-Build a package from source files.
+Must be run as \fBroot\fR. Build a package from source files.
 .TP
 .B install
 [\fI\-\-upgrade\fR] [\fI\-\-no\-deps\fR] <package>
 .br
 .B install
 [\fI\-\-upgrade\fR] [\fI\-\-no\-deps\fR] <path/to/package.cpk>
-Install or upgrade packages on the system. By default reads metadata from the repository (or the local .cpk), resolves direct dependencies recursively, and installs those dependencies before the requested package. Use \fI\-\-no\-deps\fR to install only the named package. Use \fI\-\-upgrade\fR to upgrade an already installed package; \fI\-\-upgrade\fR applies only to the package given on the command line, not to dependencies pulled in automatically.
+Must be run as \fBroot\fR. Install or upgrade packages on the system. By default reads metadata from the repository (or the local .cpk), resolves direct dependencies recursively, and installs those dependencies before the requested package. Use \fI\-\-no\-deps\fR to install only the named package. Use \fI\-\-upgrade\fR to upgrade an already installed package; \fI\-\-upgrade\fR applies only to the package given on the command line, not to dependencies pulled in automatically.
 .TP
 .B add
 [\fI\-\-upgrade\fR] [\fI\-\-no\-deps\fR] <package>
@@ -63,7 +63,7 @@ Alias for \fBinstall\fR (same options and behavior).
 .TP
 .B uninstall
 <package>
-Remove packages from the system.
+Must be run as \fBroot\fR. Remove packages from the system.
 .TP
 .B del
 <package>
@@ -75,10 +75,10 @@ Alias for \fBuninstall\fR.
 .TP
 .B upgrade
 [<package>...]
-Upgrade all or specific installed packages to the latest versions. If no package names are provided, upgrades all installed packages.
+Must be run as \fBroot\fR. Upgrade all or specific installed packages to the latest versions. If no package names are provided, upgrades all installed packages.
 .TP
 .B clean
-Clean up package source files and temporary directories.
+As \fBroot\fR, removes cached files under \fBcpk_home_dir\fR except \fBCPKINDEX\fR; otherwise cleans \fB$HOME/.cpk\fR.
 .TP
 .B index <repo>
 Create a CPKINDEX file for a local repository.
@@ -186,3 +186,23 @@ add the site-functions directory to
 before
 .B compinit
 if needed.
+The repository index
+.B CPKINDEX
+is always read from
+.BR cpk_home_dir /CPKINDEX\fR;
+non\-root users need read access to that file (after a privileged
+.BR cpk update ).
+Sidecar
+.B .cpk.info
+files and extracted trees may live under
+.B cpk_home_dir
+when present, or under
+.B $HOME/.cpk
+for downloads by unprivileged users.
+.B cpk clean
+removes cache under
+.B cpk_home_dir
+when run as root (except
+.BR CPKINDEX ),
+otherwise it cleans
+.BR $HOME/.cpk .

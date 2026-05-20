@@ -27,45 +27,37 @@ void cmd_info(const std::vector<std::string>& args) {
         }
     }
 
-    std::string index_file = get_cpkindex_path();
-    if (!fs::exists(index_file)) {
-        print_message("Package index not found. Run `cpk update` first", RED);
-        return;
-    }
-
     std::string package, pkgname, pkgver, pkgarch;
     if (!find_package(pkg_name, package, pkgname, pkgver, pkgarch)) {
         return;
     }
 
-    // Try to download .cpk.info file directly from repository (faster than downloading the whole .cpk)
+    // Prefer .cpk.info under cpk_home_dir; otherwise download into user/writable cache
     std::string info_url = cpk_repo_join(url_encode(package + ".info"));
-    std::string info_path = get_cache_file(package + ".info");
+    const std::string info_bn = package + ".info";
+    const std::string info_read = resolve_cpk_metadata_read_path(info_bn);
+    const std::string info_write = get_cache_file(info_bn);
     bool info_from_file = false;
-    
+
     std::string name, version, arch, description, url, dependencies;
-    
-    // Try to get info from .cpk.info file
-    if (fs::exists(info_path) || download_file(info_url, info_path)) {
-        if (parse_cpk_info(info_path, name, version, arch, description, url, dependencies)) {
-            info_from_file = true;
-        } else {
-            // If parsing failed, remove the invalid file so fallback can work
-            if (fs::exists(info_path)) {
-                fs::remove(info_path);
-            }
-        }
+
+    if (cpk_file_readable(info_read) && parse_cpk_info(info_read, name, version, arch, description, url, dependencies)) {
+        info_from_file = true;
+    } else if (download_file(info_url, info_write, true) && parse_cpk_info(info_write, name, version, arch, description, url, dependencies)) {
+        info_from_file = true;
+    } else if (fs::exists(info_write)) {
+        fs::remove(info_write);
     }
-    
-    // Fallback: if .cpk.info doesn't exist or failed to parse, download .cpk and extract info from Pkgfile
+
+    // Fallback: download .cpk and extract info from Pkgfile
     if (!info_from_file) {
         std::string cache_dir = get_cache_dir();
         std::string package_url = cpk_repo_join(url_encode(package));
-        std::string package_source = cache_dir + "/" + pkgname + "/" + pkgver;
+        std::string package_source = resolve_package_extract_dir(pkgname, pkgver);
         std::string package_path = get_cache_file(package);
-        
-        // Download and extract package if not already done
-        if (!fs::is_directory(package_source)) {
+
+        if (!fs::is_directory(package_source) || !fs::exists(package_source + "/Pkgfile")) {
+            package_source = cache_dir + "/" + pkgname + "/" + pkgver;
             if (!download_file(package_url, package_path) || !extract_package(package_path, cache_dir)) {
                 print_message("Failed to retrieve package info", RED);
                 return;

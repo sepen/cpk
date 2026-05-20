@@ -15,8 +15,19 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <cstdio>
+#include <unistd.h>
 
 namespace fs = std::filesystem;
+
+bool cpk_file_readable(const std::string& path) {
+    FILE* fp = fopen(path.c_str(), "rb");
+    if (fp == nullptr) {
+        return false;
+    }
+    fclose(fp);
+    return true;
+}
 
 const std::string RED     = "\033[31m";
 const std::string GREEN   = "\033[32m";
@@ -240,6 +251,7 @@ void print_help_info() {
     print_message("Usage: cpk info <package> [--field]");
     print_message("\nDescription:");
     print_message("  Show information about installed or available packages");
+    print_message("  Uses cpk_home_dir/CPKINDEX; .cpk.info there if readable, else cache under ~/.cpk");
     print_message("\nArguments:");
     print_message("  <package>                Package name");
     print_message("\nFields:");
@@ -262,6 +274,7 @@ void print_help_install() {
     print_message("       cpk add <package> [--upgrade] [--no-deps]");
     print_message("       cpk add <path/to/package.cpk> [--upgrade] [--no-deps]");
     print_message("\nDescription:");
+    print_message("  Must be run as root");
     print_message("  Install or upgrade packages on the system");
     print_message("  add is an alias for install (same behavior)");
     print_message("  By default resolves dependencies from metadata and installs them first");
@@ -283,6 +296,7 @@ void print_help_uninstall() {
     print_message("       cpk del <package>");
     print_message("       cpk rm <package>");
     print_message("\nDescription:");
+    print_message("  Must be run as root");
     print_message("  Remove packages from the system");
     print_message("\nArguments:");
     print_message("  <package>                Package name");
@@ -297,8 +311,10 @@ void print_help_uninstall() {
 void print_help_update() {
     print_message("Usage: cpk update");
     print_message("\nDescription:");
+    print_message("  Must be run as root (writes under cpk_home_dir)");
     print_message("  Update the index of available packages from the repository, then");
-    print_message("  ensure .cpk.info metadata in cache (download only when missing or invalid)");
+    print_message("  ensure .cpk.info for each port once (first index line = newest; skip older versions)");
+    print_message("  download only when that .cpk.info is missing or invalid");
     print_message("  Summary lists new and updated packages (vs. previous cache) for fetched entries");
     print_message("\nExamples:");
     print_message("  cpk update");
@@ -334,7 +350,7 @@ void print_help_deptree() {
 void print_help_search() {
     print_message("Usage: cpk search <keyword>");
     print_message("\nDescription:");
-    print_message("  Search for packages by name or keyword in the package index");
+    print_message("  Search cpk_home_dir/CPKINDEX by keyword (no root required)");
     print_message("\nArguments:");
     print_message("  <keyword>                Search term");
     print_message("\nExamples:");
@@ -375,6 +391,7 @@ void print_help_verify() {
 void print_help_build() {
     print_message("Usage: cpk build <package>");
     print_message("\nDescription:");
+    print_message("  Must be run as root");
     print_message("  Build a package from source files using pkgmk");
     print_message("\nArguments:");
     print_message("  <package>                Package name");
@@ -386,6 +403,7 @@ void print_help_build() {
 void print_help_upgrade() {
     print_message("Usage: cpk upgrade [<package>...]");
     print_message("\nDescription:");
+    print_message("  Must be run as root");
     print_message("  Upgrade all installed packages to the latest versions");
     print_message("  If package names are provided, only upgrade those packages");
     print_message("\nArguments:");
@@ -399,8 +417,8 @@ void print_help_upgrade() {
 void print_help_clean() {
     print_message("Usage: cpk clean");
     print_message("\nDescription:");
-    print_message("  Clean up package source files and temporary directories");
-    print_message("  Removes all cached packages except CPKINDEX");
+    print_message("  As root: clean cpk_home_dir except CPKINDEX");
+    print_message("  Otherwise: clean user cache (~/.cpk)");
     print_message("\nExamples:");
     print_message("  cpk clean");
     print_general_options();
@@ -749,16 +767,11 @@ bool find_package(const std::string& package_name, std::string& package, std::st
     std::string best_version;  // Store the newest version (unpinned queries only)
     bool pinned_have_system_arch = false;
 
-    if (!fs::exists(index_file)) {
-        print_message("Package index not found. Run `cpk update` first", RED);
+    std::ifstream file(index_file);
+    if (!file.is_open()) {
+        cpk_print_missing_index_error();
         result = false;
     } else {
-        std::ifstream file(index_file);
-        if (!file.is_open()) {
-            print_message("Error opening file: " + index_file, RED);
-            result = false;
-        }
-        else {
             std::string index_line;
             while (std::getline(file, index_line)) {
                 if (index_line.find(search_prefix) != std::string::npos) {
@@ -808,7 +821,6 @@ bool find_package(const std::string& package_name, std::string& package, std::st
                     }
                 }
             }
-        }
         file.close();
     }
 
@@ -836,15 +848,10 @@ bool is_package_installed(const std::string& package_name) {
 
 int get_number_of_packages() {
     const std::string index_file = get_cpkindex_path();
-    if (!fs::exists(index_file)) {
-        print_message("Package index not found. Run `cpk update` first", RED);
-        return false;
-    }
-
-    std::ifstream file(index_file);  // Open the CPKINDEX file for reading
+    std::ifstream file(index_file);
     if (!file.is_open()) {
-        print_message("Error opening file: " + index_file, RED);
-        return -1;  // Return an error code if the file cannot be opened
+        cpk_print_missing_index_error();
+        return -1;
     }
 
     int package_count = 0;
@@ -1236,6 +1243,30 @@ std::string get_cache_file(const std::string &filename) {
     return cache_dir + "/" + filename;
 }
 
+void cpk_print_missing_index_error() {
+    print_message("Package index not found or not readable. Run `sudo cpk update` first", RED);
+}
+
+bool cpk_is_privileged_process() {
+    return geteuid() == static_cast<uid_t>(0);
+}
+
+std::string resolve_cpk_metadata_read_path(const std::string& basename) {
+    const std::string sys = CPK_HOME_DIR + "/" + basename;
+    if (cpk_file_readable(sys)) {
+        return sys;
+    }
+    return get_cache_dir() + "/" + basename;
+}
+
+std::string resolve_package_extract_dir(const std::string& pkgname, const std::string& pkgver) {
+    const std::string sys = CPK_HOME_DIR + "/" + pkgname + "/" + pkgver;
+    if (fs::is_directory(sys) && fs::exists(sys + "/Pkgfile")) {
+        return sys;
+    }
+    return get_cache_dir() + "/" + pkgname + "/" + pkgver;
+}
+
 static void split_dependency_words(const std::string& deps_str, std::vector<std::string>& out) {
     std::istringstream iss(deps_str);
     std::string tok;
@@ -1282,36 +1313,34 @@ bool get_package_dependency_names(const std::string& spec, std::vector<std::stri
         return true;
     }
 
-    const std::string index_file = get_cpkindex_path();
-    if (!fs::exists(index_file)) {
-        print_message("Package index not found. Run `cpk update` first", RED);
-        return false;
-    }
     if (!find_package(spec, package, pkgname, pkgver, pkgarch)) {
+        print_message("Package not in index: " + spec, RED);
         return false;
     }
 
     std::string info_url = cpk_repo_join(url_encode(package + ".info"));
-    std::string info_path = get_cache_file(package + ".info");
+    const std::string info_bn = package + ".info";
+    const std::string info_read = resolve_cpk_metadata_read_path(info_bn);
+    const std::string info_write = get_cache_file(info_bn);
     bool info_from_file = false;
     std::string name, version, arch, description, url, dependencies;
 
-    if (fs::exists(info_path) || download_file(info_url, info_path)) {
-        if (parse_cpk_info(info_path, name, version, arch, description, url, dependencies)) {
-            info_from_file = true;
-            deps_str = dependencies;
-        } else {
-            if (fs::exists(info_path)) {
-                fs::remove(info_path);
-            }
-        }
+    if (cpk_file_readable(info_read) && parse_cpk_info(info_read, name, version, arch, description, url, dependencies)) {
+        info_from_file = true;
+        deps_str = dependencies;
+    } else if (download_file(info_url, info_write, true) && parse_cpk_info(info_write, name, version, arch, description, url, dependencies)) {
+        info_from_file = true;
+        deps_str = dependencies;
+    } else if (fs::exists(info_write)) {
+        fs::remove(info_write);
     }
 
     if (!info_from_file) {
         std::string package_url = cpk_repo_join(url_encode(package));
-        std::string package_source = cache_dir + "/" + pkgname + "/" + pkgver;
+        std::string package_source = resolve_package_extract_dir(pkgname, pkgver);
         std::string package_path = get_cache_file(package);
-        if (!fs::is_directory(package_source)) {
+        if (!fs::is_directory(package_source) || !fs::exists(package_source + "/Pkgfile")) {
+            package_source = cache_dir + "/" + pkgname + "/" + pkgver;
             if (!download_file(package_url, package_path) || !extract_package(package_path, cache_dir)) {
                 print_message("Failed to retrieve package info", RED);
                 return false;
