@@ -5751,19 +5751,24 @@ CXXFLAGS=`echo "$CXXFLAGS" | sed 's/-std=c++0-9a-z*//g'`
 if test "x$GCC_VERSION" != "x"; then
     GCC_MAJOR=`echo $GCC_VERSION | cut -d. -f1`
 
-    if test "$GCC_MAJOR" -lt 9; then
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: Detected GCC < 9 → using -std=c++2a and linking with -lstdc++fs" >&5
-printf "%s\n" "$as_me: Detected GCC < 9 → using -std=c++2a and linking with -lstdc++fs" >&6;}
+    if test "$GCC_MAJOR" -lt 8; then
+        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: Detected GCC < 8, using -std=c++17 with std::experimental::filesystem and linking with -lstdc++fs" >&5
+printf "%s\n" "$as_me: Detected GCC < 8 using -std=c++17 with std::experimental::filesystem and linking with -lstdc++fs" >&6;}
+        CXXFLAGS="$CXXFLAGS -std=c++17 -DCPK_USE_EXPERIMENTAL_FS"
+        LIBS="$LIBS -lstdc++fs"
+    elif test "$GCC_MAJOR" -lt 9; then
+        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: Detected GCC < 9, using -std=c++2a and linking with -lstdc++fs" >&5
+printf "%s\n" "$as_me: Detected GCC < 9, using -std=c++2a and linking with -lstdc++fs" >&6;}
         CXXFLAGS="$CXXFLAGS -std=c++2a"
         LIBS="$LIBS -lstdc++fs"
     else
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: Detected GCC >= 9 → using -std=c++20" >&5
-printf "%s\n" "$as_me: Detected GCC >= 9 → using -std=c++20" >&6;}
+        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: Detected GCC >= 9, using -std=c++20" >&5
+printf "%s\n" "$as_me: Detected GCC >= 9, using -std=c++20" >&6;}
         CXXFLAGS="$CXXFLAGS -std=c++20"
     fi
 else
-    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: Unable to detect GCC version → defaulting to -std=c++20" >&5
-printf "%s\n" "$as_me: WARNING: Unable to detect GCC version → defaulting to -std=c++20" >&2;}
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: Unable to detect GCC version, defaulting to -std=c++20" >&5
+printf "%s\n" "$as_me: WARNING: Unable to detect GCC version, defaulting to -std=c++20" >&2;}
     CXXFLAGS="$CXXFLAGS -std=c++20"
 fi
 

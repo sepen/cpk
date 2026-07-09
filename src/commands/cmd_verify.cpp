@@ -1,11 +1,9 @@
 #include "../cpk.h"
 #include "../utils.h"
-#include <filesystem>
+#include "../fs_compat.h"
 #include <fstream>
 #include <vector>
 #include <string>
-
-namespace fs = std::filesystem;
 
 void cmd_verify(const std::vector<std::string>& args) {
     if (args.empty()) {

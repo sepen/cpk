@@ -34,7 +34,11 @@ CXXFLAGS=`echo "$CXXFLAGS" | sed 's/-std=c++[0-9a-z]*//g'`
 if test "x$GCC_VERSION" != "x"; then
     GCC_MAJOR=`echo $GCC_VERSION | cut -d. -f1`
 
-    if test "$GCC_MAJOR" -lt 9; then
+    if test "$GCC_MAJOR" -lt 8; then
+        AC_MSG_NOTICE([Detected GCC < 8 → using -std=c++17 with std::experimental::filesystem and linking with -lstdc++fs])
+        CXXFLAGS="$CXXFLAGS -std=c++17 -DCPK_USE_EXPERIMENTAL_FS"
+        LIBS="$LIBS -lstdc++fs"
+    elif test "$GCC_MAJOR" -lt 9; then
         AC_MSG_NOTICE([Detected GCC < 9 → using -std=c++2a and linking with -lstdc++fs])
         CXXFLAGS="$CXXFLAGS -std=c++2a"
         LIBS="$LIBS -lstdc++fs"

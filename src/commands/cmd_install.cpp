@@ -1,11 +1,9 @@
 #include "../cpk.h"
 #include "../utils.h"
-#include <filesystem>
+#include "../fs_compat.h"
 #include <vector>
 #include <string>
 #include <set>
-
-namespace fs = std::filesystem;
 
 static void parse_install_flags(const std::vector<std::string>& args,
                                 std::vector<std::string>& positional,

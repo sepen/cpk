@@ -17,12 +17,10 @@
 #include "commands/cmd_archive.h"
 #include <fstream>
 #include <iostream>
-#include <filesystem>
+#include "fs_compat.h"
 #include <set>
 #include <sstream>
 #include <system_error>
-
-namespace fs = std::filesystem;
 
 const std::string CPK_VERSION = "0.3";
 

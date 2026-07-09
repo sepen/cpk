@@ -19,7 +19,7 @@ cpk_SOURCES = src/cpk.cpp src/utils.cpp \
               src/commands/cmd_index.cpp \
               src/commands/cmd_archive.cpp
 # All headers used by the tree must be listed so `make dist` includes them.
-noinst_HEADERS = src/cpk.h src/utils.h \
+noinst_HEADERS = src/cpk.h src/utils.h src/fs_compat.h \
               src/commands/cmd_archive.h \
               src/commands/cmd_build.h \
               src/commands/cmd_clean.h \

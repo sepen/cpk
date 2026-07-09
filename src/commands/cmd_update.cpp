@@ -1,12 +1,10 @@
 #include "../cpk.h"
 #include "../utils.h"
-#include <filesystem>
+#include "../fs_compat.h"
 #include <fstream>
 #include <string>
 #include <unordered_set>
 #include <vector>
-
-namespace fs = std::filesystem;
 
 static std::string trim_index_line(std::string line) {
     while (!line.empty() && (line.back() == '\r' || line.back() == '\n' || line.back() == ' ' || line.back() == '\t')) {
@@ -91,7 +89,7 @@ void cmd_update(const std::vector<std::string>& args) {
 
         // Only the first index row per port name needs .cpk.info (newest revision is listed first).
         const std::string pkgname = index_pkgname(pkg_line);
-        if (info_synced_pkgname.contains(pkgname)) {
+        if (info_synced_pkgname.count(pkgname)) {
             continue;
         }
 

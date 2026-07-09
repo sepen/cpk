@@ -1,10 +1,8 @@
 #include "../cpk.h"
 #include "../utils.h"
-#include <filesystem>
+#include "../fs_compat.h"
 #include <fstream>
 #include <sstream>
-
-namespace fs = std::filesystem;
 
 void cmd_search(const std::vector<std::string>& args) {
     if (args.empty()) {

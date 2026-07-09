@@ -1,8 +1,6 @@
 #include "../cpk.h"
 #include "../utils.h"
-#include <filesystem>
-
-namespace fs = std::filesystem;
+#include "../fs_compat.h"
 
 void cmd_clean(const std::vector<std::string>& args) {
 

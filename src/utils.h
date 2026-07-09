@@ -3,10 +3,8 @@
 
 #include <string>
 #include <vector>
-#include <filesystem>
+#include "fs_compat.h"
 #include <algorithm>
-
-namespace fs = std::filesystem;
 
 extern const std::string RED;
 extern const std::string GREEN;

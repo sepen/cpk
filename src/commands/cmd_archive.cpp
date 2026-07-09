@@ -1,11 +1,14 @@
 #include "../cpk.h"
 #include "../utils.h"
-#include <filesystem>
+#include "../fs_compat.h"
 #include <fstream>
 #include <vector>
 #include <string>
 
-namespace fs = std::filesystem;
+static bool ends_with(const std::string& str, const std::string& suffix) {
+    return str.size() >= suffix.size() &&
+           str.compare(str.size() - suffix.size(), suffix.size(), suffix) == 0;
+}
 
 void cmd_archive(const std::vector<std::string>& args) {
     if (args.size() != 2) {
@@ -31,13 +34,13 @@ void cmd_archive(const std::vector<std::string>& args) {
     for (const auto &entry : fs::recursive_directory_iterator(ports_dir)) {
         //if (entry.path().extension().string().find(".pkg.") != std::string::npos) {
 
-        if (!entry.is_regular_file()) continue;
+        if (!fs::is_regular_file(entry.path())) continue;
 
         fs::path package_path = entry.path();
         std::string package = package_path.filename().string();
 
         // Detect known compressed pkg formats
-        if ((package.ends_with(".pkg.tar.gz") || package.ends_with(".pkg.tar.bz2") || package.ends_with(".pkg.tar.xz"))) {
+        if ((ends_with(package, ".pkg.tar.gz") || ends_with(package, ".pkg.tar.bz2") || ends_with(package, ".pkg.tar.xz"))) {
             if (CPK_VERBOSE) {
                 print_message("Processing package file: " + entry.path().string());
             }

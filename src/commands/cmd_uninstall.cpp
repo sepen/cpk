@@ -1,10 +1,8 @@
 #include "../cpk.h"
 #include "../utils.h"
-#include <filesystem>
+#include "../fs_compat.h"
 #include <vector>
 #include <string>
-
-namespace fs = std::filesystem;
 
 void cmd_uninstall(const std::vector<std::string>& args) {
 

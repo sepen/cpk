@@ -2,7 +2,7 @@
 #include "utils.h"
 #include <string>
 #include <vector>
-#include <filesystem>
+#include "fs_compat.h"
 #include <algorithm>
 #include <archive.h>
 #include <archive_entry.h>
@@ -18,8 +18,6 @@
 #include <cstdio>
 #include <unistd.h>
 #include <unordered_map>
-
-namespace fs = std::filesystem;
 
 bool cpk_file_readable(const std::string& path) {
     FILE* fp = fopen(path.c_str(), "rb");
@@ -967,7 +965,7 @@ std::vector<std::string> find_public_keys(const std::string& directory) {
     std::vector<std::string> pub_keys;
 
     for (const auto& entry : fs::directory_iterator(directory)) {
-        if (entry.is_regular_file() && entry.path().extension() == ".pub") {
+        if (fs::is_regular_file(entry.path()) && entry.path().extension() == ".pub") {
             pub_keys.push_back(entry.path().string());
         }
     }
@@ -1016,7 +1014,7 @@ void package_files(const std::string &name, const std::string &version, const st
 
     fs::path basedir = output_dir / name;
     for (const auto &entry : fs::recursive_directory_iterator(basedir)) {
-        if (!entry.is_regular_file()) {
+        if (!fs::is_regular_file(entry.path())) {
             // Ommit non-regular files (directories, symlinks, etc.)
             continue;
         }
@@ -1024,7 +1022,7 @@ void package_files(const std::string &name, const std::string &version, const st
         struct archive_entry *entry_struct = archive_entry_new();
 
         // Relative path to .cpk file
-        fs::path rel_path = fs::relative(entry.path(), output_dir);
+        fs::path rel_path = fs_relative(entry.path(), output_dir);
         archive_entry_set_pathname(entry_struct, rel_path.c_str());
 
         // Setup basic file properties
@@ -1083,7 +1081,7 @@ static bool dependencies_from_local_cpk(const fs::path& cpk_path, std::string& d
 void generate_cpk_index(const fs::path &repo_dir) {
     std::vector<std::string> cpk_files;
     for (const auto &entry : fs::directory_iterator(repo_dir)) {
-        if (entry.is_regular_file() && entry.path().extension() == ".cpk") {
+        if (fs::is_regular_file(entry.path()) && entry.path().extension() == ".cpk") {
             cpk_files.push_back(entry.path().filename().string());
         }
     }
