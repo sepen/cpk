@@ -14,7 +14,7 @@ CRUX Package Keeper is a toolset designed to efficiently manage packages and the
 .SH COMMANDS
 .TP
 .B update
-Must be run as \fBroot\fR. Update the index of available packages under \fBcpk_home_dir\fR, then ensure a \fB.cpk.info\fR sidecar exists for the first index row of each port name (newer revisions are listed before older ones; older rows are skipped). Existing valid files are left unchanged; missing or unreadable ones are downloaded. Prints counts of new and updated metadata (vs. the previous cache) for packages that were fetched this run, each followed by the matching index entries (without the \fB.cpk\fR suffix).
+Must be run as \fBroot\fR. Download the index of available packages (CPKINDEX) under \fBcpk_home_dir\fR. Each index line already embeds the \fB.cpk\fR file name and its dependencies, so no \fB.cpk.info\fR metadata is fetched here; the extra fields (description and URL) are downloaded on demand by the commands that need them, such as \fBcpk info\fR. Prints the number of available packages and, when a previous index existed, the new and updated packages detected by diffing the previous CPKINDEX (each label shown without the \fB.cpk\fR suffix).
 .TP
 .B info
 <package> [\fI\-\-name\fR | \fI\-\-version\fR | \fI\-\-arch\fR | \fI\-\-description\fR | \fI\-\-url\fR | \fI\-\-dependencies\fR]

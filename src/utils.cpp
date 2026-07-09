@@ -311,10 +311,9 @@ void print_help_update() {
     print_message("Usage: cpk update");
     print_message("\nDescription:");
     print_message("  Must be run as root (writes under cpk_home_dir)");
-    print_message("  Download CPKINDEX from the repository, then");
-    print_message("  ensure .cpk.info for each port once (first index line = newest; skip older versions)");
-    print_message("  download only when that .cpk.info is missing or invalid");
-    print_message("  Summary lists new and updated packages (vs. previous cache) for fetched entries");
+    print_message("  Download CPKINDEX from the repository (embeds each port's .cpk and deps)");
+    print_message("  .cpk.info metadata (description/URL) is fetched on demand, not here");
+    print_message("  Summary lists new and updated packages by diffing the previous CPKINDEX");
     print_message("\nExamples:");
     print_message("  cpk update");
     print_general_options();

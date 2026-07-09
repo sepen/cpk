@@ -3,6 +3,7 @@
 #include "../fs_compat.h"
 #include <fstream>
 #include <string>
+#include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
@@ -34,7 +35,30 @@ static std::string index_pkgname(const std::string& pkg_line) {
     return pkg_line.substr(0, h);
 }
 
+// Map each port name to the label of its newest revision (first CPKINDEX line
+// per port name wins). Returns false only if the file cannot be opened.
+static bool read_index_labels(const std::string& index_file,
+                              std::unordered_map<std::string, std::string>& labels) {
+    std::ifstream in(index_file);
+    if (!in.is_open()) {
+        return false;
+    }
+    std::string line;
+    while (std::getline(in, line)) {
+        const std::string trimmed = trim_index_line(line);
+        if (!cpk_index_line_valid(trimmed)) {
+            continue;
+        }
+        const std::string pkg_line = cpk_index_line_package(trimmed);
+        const std::string pkgname = index_pkgname(pkg_line);
+        labels.emplace(pkgname, index_package_label(pkg_line));
+    }
+    return true;
+}
+
 void cmd_update(const std::vector<std::string>& args) {
+    (void)args;
+
     if(!fs::is_directory(CPK_HOME_DIR)) {
         print_message("Home directory does not exists " + CPK_HOME_DIR, RED);
         return;
@@ -46,13 +70,24 @@ void cmd_update(const std::vector<std::string>& args) {
     }
 
     const std::string index_file = get_cpkindex_path();
+    const bool had_index = fs::exists(index_file);
     if (CPK_VERBOSE) {
-        if (!fs::exists(index_file)) {
+        if (!had_index) {
             print_header("Initializing index of available packages", BLUE);
         }
         else {
             print_header("Updating index of available packages", BLUE);
         }
+    }
+
+    // Snapshot the previous index so new/updated packages can be reported by
+    // diffing CPKINDEX alone: every port label (name#ver-rel.arch) already
+    // lives in the index, so .cpk.info metadata is no longer fetched here.
+    // Description/URL (the only fields absent from CPKINDEX) are downloaded
+    // on demand by the commands that need them (e.g. cpk info).
+    std::unordered_map<std::string, std::string> old_labels;
+    if (had_index) {
+        read_index_labels(index_file, old_labels);
     }
 
     const std::string index_url = cpk_repo_join("CPKINDEX");
@@ -62,16 +97,9 @@ void cmd_update(const std::vector<std::string>& args) {
     }
     cpk_invalidate_cpkindex_deps_cache();
 
-    if (CPK_VERBOSE) {
-        print_header("Syncing .cpk.info metadata for indexed packages", BLUE);
-    }
-
-    int new_info = 0;
-    int version_changes = 0;
-    int info_failures = 0;
     std::vector<std::string> new_labels;
     std::vector<std::string> updated_labels;
-    std::unordered_set<std::string> info_synced_pkgname;
+    std::unordered_set<std::string> seen;
 
     std::ifstream index_in(index_file);
     if (!index_in.is_open()) {
@@ -87,68 +115,19 @@ void cmd_update(const std::vector<std::string>& args) {
         }
         const std::string pkg_line = cpk_index_line_package(trimmed);
 
-        // Only the first index row per port name needs .cpk.info (newest revision is listed first).
+        // Only the first index row per port name is the newest revision.
         const std::string pkgname = index_pkgname(pkg_line);
-        if (info_synced_pkgname.count(pkgname)) {
-            continue;
-        }
-
-        const std::string info_path = get_cache_file(pkg_line + ".info");
-        const bool had_file = fs::exists(info_path);
-        std::string old_name, old_ver, old_arch, old_desc, old_url, old_deps;
-        bool old_ok = false;
-        if (had_file) {
-            old_ok = parse_cpk_info(info_path, old_name, old_ver, old_arch, old_desc, old_url, old_deps);
-        }
-
-        // Valid local .cpk.info: keep it (no network fetch)
-        if (old_ok) {
-            info_synced_pkgname.insert(pkgname);
-            continue;
-        }
-
-        const std::string info_url = cpk_repo_join(url_encode(pkg_line + ".info"));
-        const std::string tmp_path = info_path + ".tmp";
-        if (fs::exists(tmp_path)) {
-            fs::remove(tmp_path);
-        }
-        if (!download_file(info_url, tmp_path, true)) {
-            if (fs::exists(tmp_path)) {
-                fs::remove(tmp_path);
-            }
-            ++info_failures;
-            info_synced_pkgname.insert(pkgname);
-            continue;
-        }
-
-        std::string name, ver, arch, desc, url, deps;
-        if (!parse_cpk_info(tmp_path, name, ver, arch, desc, url, deps)) {
-            fs::remove(tmp_path);
-            ++info_failures;
-            info_synced_pkgname.insert(pkgname);
-            continue;
-        }
-
-        try {
-            fs::rename(tmp_path, info_path);
-        } catch (const fs::filesystem_error&) {
-            fs::remove(tmp_path);
-            ++info_failures;
-            info_synced_pkgname.insert(pkgname);
+        if (!seen.insert(pkgname).second) {
             continue;
         }
 
         const std::string label = index_package_label(pkg_line);
-
-        if (!had_file) {
-            ++new_info;
+        auto it = old_labels.find(pkgname);
+        if (it == old_labels.end()) {
             new_labels.push_back(label);
-        } else if (old_ok && ver != old_ver) {
-            ++version_changes;
+        } else if (it->second != label) {
             updated_labels.push_back(label);
         }
-
-        info_synced_pkgname.insert(pkgname);
     }
     index_in.close();
 
@@ -156,19 +135,22 @@ void cmd_update(const std::vector<std::string>& args) {
 
     int package_count = get_number_of_packages();
     print_message("Packages available: " + std::to_string(package_count));
-    if (new_info > 0) {
-        print_message("New packages: " + std::to_string(new_info));
+
+    // On the first initialization every port is trivially new; only report the
+    // new/updated breakdown against a pre-existing index.
+    if (!had_index) {
+        return;
+    }
+    if (!new_labels.empty()) {
+        print_message("New packages: " + std::to_string(new_labels.size()));
         for (const std::string& p : new_labels) {
             print_message("- " + p);
         }
     }
-    if (version_changes > 0) {
-        print_message("Updated packages: " + std::to_string(version_changes));
+    if (!updated_labels.empty()) {
+        print_message("Updated packages: " + std::to_string(updated_labels.size()));
         for (const std::string& p : updated_labels) {
             print_message("- " + p);
         }
-    }
-    if (info_failures > 0) {
-        print_message(std::to_string(info_failures) + " .cpk.info sync failures (missing or invalid on server?)", YELLOW);
     }
 }
