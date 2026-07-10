@@ -790,7 +790,7 @@ std::string cpk_index_line_deps(const std::string& index_line) {
 // Helper function to find package details
 // package_name is either "pkgname" (newest version in index) or "pkgname#version-release"
 // (exact version; architecture prefers get_system_architecture() when several match).
-bool find_package(const std::string& package_name, std::string& package, std::string& pkgname, std::string& pkgver, std::string& pkgarch) {
+bool find_package(const std::string& package_name, std::string& package, std::string& pkgname, std::string& pkgver, std::string& pkgarch, bool report_missing) {
     const std::string index_file = get_cpkindex_path();
 
     std::string requested_name = package_name;
@@ -812,11 +812,14 @@ bool find_package(const std::string& package_name, std::string& package, std::st
     std::string best_version;  // Store the newest version (unpinned queries only)
     bool pinned_have_system_arch = false;
 
+    bool index_opened = false;
+
     std::ifstream file(index_file);
     if (!file.is_open()) {
         cpk_print_missing_index_error();
         result = false;
     } else {
+            index_opened = true;
             std::string index_line;
             while (std::getline(file, index_line)) {
                 if (!cpk_index_line_valid(index_line)) {
@@ -871,6 +874,12 @@ bool find_package(const std::string& package_name, std::string& package, std::st
                 }
             }
         file.close();
+    }
+
+    // Index was readable but the package name is simply not listed: tell the
+    // caller so single-package commands don't fail silently.
+    if (!result && index_opened && report_missing) {
+        print_message("Package not found in the index: " + package_name, RED);
     }
 
     return result;
@@ -1280,7 +1289,7 @@ std::string get_cpkindex_path() {
 }
 
 // Writable cache: CPK_HOME_DIR when writable, else ~/.cpk (never used for CPKINDEX).
-std::string get_cache_dir() {
+static std::string resolve_cache_dir() {
     // Check if we can write to CPK_HOME_DIR
     if (fs::exists(CPK_HOME_DIR) && fs::is_directory(CPK_HOME_DIR)) {
         // Try to create a test file to check write permissions
@@ -1327,6 +1336,18 @@ std::string get_cache_dir() {
 
     // If all else fails, return CPK_HOME_DIR
     return CPK_HOME_DIR;
+}
+
+// Memoize: resolve the cache dir once so the write probe and the verbose
+// "Using user cache directory" notice happen a single time per run.
+std::string get_cache_dir() {
+    static std::string cached;
+    static bool resolved = false;
+    if (!resolved) {
+        cached = resolve_cache_dir();
+        resolved = true;
+    }
+    return cached;
 }
 
 std::string get_cache_file(const std::string &filename) {

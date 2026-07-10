@@ -26,7 +26,7 @@ void cmd_info(const std::vector<std::string>& args) {
     }
 
     std::string package, pkgname, pkgver, pkgarch;
-    if (!find_package(pkg_name, package, pkgname, pkgver, pkgarch)) {
+    if (!find_package(pkg_name, package, pkgname, pkgver, pkgarch, true)) {
         return;
     }
 

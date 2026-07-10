@@ -20,7 +20,7 @@ void cmd_verify(const std::vector<std::string>& args) {
     }
 
     std::string package, pkgname, pkgver, pkgarch;
-    if (!find_package(args[0], package, pkgname, pkgver, pkgarch)) return;
+    if (!find_package(args[0], package, pkgname, pkgver, pkgarch, true)) return;
 
     const std::string package_url = cpk_repo_join(url_encode(package));
     const std::string cache_dir = get_cache_dir();

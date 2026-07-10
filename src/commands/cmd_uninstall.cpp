@@ -17,7 +17,7 @@ void cmd_uninstall(const std::vector<std::string>& args) {
     }
 
     std::string package, pkgname, pkgver, pkgarch;
-    if (!find_package(args[0], package, pkgname, pkgver, pkgarch)) return;
+    if (!find_package(args[0], package, pkgname, pkgver, pkgarch, true)) return;
 
     if (!is_package_installed(pkgname)) {
         print_message("Package " + pkgname + " not installed", RED);

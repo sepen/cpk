@@ -73,7 +73,7 @@ static bool visit_for_plan(const std::string& spec,
     // Names in Depends-on lines are not always literal CPKINDEX ports (e.g. CRUX virtual "db").
     // Transitive deps may be skipped with a warning; the root spec must exist in the index.
     std::string package_dummy, pkgname_dummy, pkgver_dummy, pkgarch_dummy;
-    if (!find_package(spec, package_dummy, pkgname_dummy, pkgver_dummy, pkgarch_dummy)) {
+    if (!find_package(spec, package_dummy, pkgname_dummy, pkgver_dummy, pkgarch_dummy, !allow_skip_missing_index_dep)) {
         if (!allow_skip_missing_index_dep) {
             visit_stack.erase(spec);
             return false;
