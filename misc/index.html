@@ -712,12 +712,13 @@
       <label>Arch:
         <select id="archSelect">
           <option value="">All</option>
-          <option>arm64</option>
-          <option>armhf</option>
-          <option>armhf-efikamx</option>
           <option>x86_64</option>
           <option>i686</option>
           <option>ppc64</option>
+          <option>arm64</option>
+          <option>armhf</option>
+          <option>armhf-efikamx</option>
+          <option>armhf-imapx200</option>
         </select>
       </label>
     </section>
@@ -740,13 +741,15 @@
           For this tree, version <strong>3.8</strong> is available under the paths below:
         </p>
         <ul class="noscript-arch-list">
-          <li><a href="/3.8/arm64/">/3.8/arm64/</a></li>
-          <li><a href="/3.8/armhf/">/3.8/armhf/</a></li>
-          <li><a href="/3.8/armhf-efikamx/">/3.8/armhf-efikamx/</a></li>
           <li><a href="/3.8/x86_64/">/3.8/x86_64/</a></li>
           <li><a href="/3.8/i686/">/3.8/i686/</a></li>
           <li><a href="/3.8/ppc64/">/3.8/ppc64/</a></li>
-        </ul>
+          <li><a href="/3.8/arm64/">/3.8/arm64/</a></li>
+          <li><a href="/3.8/armhf/">/3.8/armhf/</a></li>
+          <li><a href="/3.8/armhf-efikamx/">/3.8/armhf-efikamx/</a></li>
+          <li><a href="/3.8/armhf-imapx200/">/3.8/armhf-imapx200/</a></li>
+          <li><a href="/3.2/armhf-imapx200/">/3.2/armhf-imapx200/</a></li>
+	</ul>
         <p class="noscript-hint">
           Under each path the server will show a directory listing; there you will find
           <strong>.cpk</strong> packages and their <strong>.cpk.info</strong> metadata files.
@@ -793,7 +796,7 @@
 
 // Edit these arrays to reflect your repository versions and arches
 const versions = ["3.8"];
-const arches = ["arm64", "armhf", "armhf-efikamx", "x86_64", "i686", "ppc64"];
+const arches = ["arm64", "armhf", "armhf-efikamx", "armhf-imapx200", "x86_64", "i686", "ppc64"];
 
 // In-memory package list
 let allPackages = [];
