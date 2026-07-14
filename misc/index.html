@@ -815,16 +815,34 @@ async function fetchIndex(version, arch) {
       return [];
     }
     const text = await res.text();
-    // Split into non-empty lines; assume each line is the filename
+    // Split into non-empty lines
     const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-    // Map to objects with metadata
-    return lines.map(fn => ({
-      file: fn,                      // the raw filename string (contains '#')
-      name: fn.split("#")[0] || fn,  // base name before '#'
-      arch,
-      version,
-      // link will be built using encodeURIComponent when rendering
-    }));
+    // CPKINDEX line format: "name#ver-rel.arch.cpk: dep1 dep2" (deps may be
+    // empty). Keep only the ".cpk" filename; the "<colon> deps" suffix is not
+    // part of the file name and must not leak into download/.info URLs.
+    return lines.map(raw => {
+      if (raw.startsWith("#")) return null;      // comment line
+      const cpkIdx = raw.lastIndexOf(".cpk");
+      if (cpkIdx === -1) return null;            // not a package line
+      const afterCpk = raw.slice(cpkIdx + 4);
+      let file, deps = "";
+      if (afterCpk === "") {
+        file = raw;                              // legacy: bare filename
+      } else if (afterCpk[0] === ":") {
+        file = raw.slice(0, cpkIdx + 4);         // strip ": deps" suffix
+        deps = afterCpk.slice(1).trim();
+      } else {
+        return null;                             // ".cpk" not at filename end
+      }
+      return {
+        file,                          // the .cpk filename (contains '#')
+        name: file.split("#")[0] || file,  // base name before '#'
+        deps,
+        arch,
+        version,
+        // link will be built using encodeURIComponent when rendering
+      };
+    }).filter(Boolean);
   } catch (err) {
     console.error("Failed to fetch index:", url, err);
     return [];
