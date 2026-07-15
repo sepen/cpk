@@ -22,7 +22,7 @@
 #include <sstream>
 #include <system_error>
 
-const std::string CPK_VERSION = "0.3";
+const std::string CPK_VERSION = "0.4";
 
 std::string CPK_CONF_FILE = "/etc/cpk.conf";
 std::string CPK_REPO_URL = "https://cpk.user.ninja";

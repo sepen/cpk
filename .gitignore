@@ -1,0 +1,8 @@
+cpk.conf
+cpk
+*.deps
+*.dirstamp
+*.o
+autom4te.*
+config.*
+
