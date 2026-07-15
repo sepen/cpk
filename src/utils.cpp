@@ -895,8 +895,14 @@ bool is_package_installed(const std::string& package_name) {
     std::istringstream stream(pkginfo_output);
     std::string line;
 
+    // `pkginfo -i` prints one "name version" per line. Match the name field
+    // exactly: a substring test would treat "go" as installed whenever any
+    // package containing "go" (golang, mongodb, ...) is present.
     while (std::getline(stream, line)) {
-        if (line.find(package_name) != std::string::npos) {
+        std::istringstream line_stream(line);
+        std::string installed_name;
+        line_stream >> installed_name;
+        if (installed_name == package_name) {
             return true;  // Package found
         }
     }
