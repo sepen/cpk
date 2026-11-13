@@ -65,6 +65,9 @@ void cpk_invalidate_cpkindex_deps_cache();
 std::string get_system_architecture();
 std::vector<std::string> get_installed_packages();
 std::string calculate_sha256(const std::string &file_path);
+// Download a repository package (or reuse the cached copy) and check its
+// SHA256 against the checksum in its .cpk.info. False if it cannot be verified.
+bool fetch_verified_package(const std::string& package, const std::string& package_path);
 bool parse_cpk_info(const std::string &info_file_path, std::string &name, std::string &version, std::string &arch, std::string &description, std::string &url, std::string &dependencies);
 // Writable cache (~/.cpk when CPK_HOME_DIR is not writable): .info, .cpk downloads, extracted trees.
 std::string get_cache_dir();

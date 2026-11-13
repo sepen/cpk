@@ -177,6 +177,7 @@ For detailed help on a specific command, use `cpk help <command>`.
 - **`--upgrade`** applies only to the package named on the command line, not to dependencies pulled in automatically.
 - If installing from repository:
   - Finds the package in `CPKINDEX` (newest version, or an exact **`pkgname#version-release`** if you specify it).
+  - Downloads the `.cpk` and checks its SHA256 against the `checksum` field of its `.cpk.info` before extracting it. A package without a `.cpk.info` checksum, or whose archive does not match, is not installed. `cpk build` and `cpk verify` apply the same check.
 - If installing from local file:
   - Parses the `.cpk` filename to extract package name, version, and architecture.
   - Extracts the package to access pre/post install scripts and README.

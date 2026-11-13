@@ -17,6 +17,9 @@
 #include <iostream>
 #include <cstdio>
 #include <unistd.h>
+#include <sys/wait.h>
+#include <cerrno>
+#include <cstring>
 #include <unordered_map>
 
 bool cpk_file_readable(const std::string& path) {
@@ -545,8 +548,8 @@ bool extract_package(const std::string& tar_file, const std::string& dest_dir) {
         std::string dest_path = dest_dir + "/" + entry_name;
         archive_entry_set_pathname(entry, dest_path.c_str()); // Set the destination path for the entry
 
-        // Extract with the ARCHIVE_EXTRACT_TIME flag
-        if (archive_read_extract(a, entry, ARCHIVE_EXTRACT_TIME) != ARCHIVE_OK) {
+        // Extract keeping mtimes; refuse ".." paths
+        if (archive_read_extract(a, entry, ARCHIVE_EXTRACT_TIME | ARCHIVE_EXTRACT_SECURE_NODOTDOT) != ARCHIVE_OK) {
             if (CPK_VERBOSE > 0) {
                 std::cerr << "Error extracting file: " << archive_error_string(a) << std::endl;
             }
@@ -629,41 +632,73 @@ bool load_cpk_config(const std::string& config_file) {
     return true;
 }
 
-// Function to execute a shell command and output lines in real-time
+// Run a command and stream its output in real time.
+// The command runs with fork/execvp, not through a shell: every argument is
+// passed to the program as-is, so package names, versions or paths coming
+// from a remote CPKINDEX cannot inject shell syntax. Empty arguments are
+// skipped (the old shell-based version dropped them through word splitting).
+// stderr is merged into stdout so both are captured.
 int shellcmd(const std::string& command, const std::vector<std::string>& args, std::string* output, bool show_output) {
-    std::string full_command = command;
+    if (output) output->clear();
+
+    std::vector<std::string> argv_storage;
+    argv_storage.push_back(command);
     for (const std::string& arg : args) {
-        full_command += " " + arg;
+        if (!arg.empty()) argv_storage.push_back(arg);
     }
-    // Redirect stderr to stdout so both are captured
-    full_command += " 2>&1";
+    std::vector<char*> argv;
+    for (std::string& arg : argv_storage) argv.push_back(&arg[0]);
+    argv.push_back(nullptr);
 
-    char buffer[128];
-    if (output) output->clear();  // Clear the output if provided
-
-    FILE* pipe = popen(full_command.c_str(), "r"); // Start the command
-    if (!pipe) {
-        print_message("Error executing shell command: " + full_command, RED);
-        return -1; // Indicate failure to execute the command
+    int pipefd[2];
+    if (pipe(pipefd) != 0) {
+        print_message("Error creating pipe for command: " + command, RED);
+        return -1;
     }
 
-    // Read and output each line as it's received
-    while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
-        std::string line(buffer);
-        if (show_output) {
-            std::cout << line; // Real-time output
+    std::cout.flush();
+    pid_t pid = fork();
+    if (pid < 0) {
+        close(pipefd[0]);
+        close(pipefd[1]);
+        print_message("Error executing command: " + command, RED);
+        return -1;
+    }
+
+    if (pid == 0) {
+        // Child: send stdout and stderr to the pipe, then exec the program.
+        close(pipefd[0]);
+        dup2(pipefd[1], STDOUT_FILENO);
+        dup2(pipefd[1], STDERR_FILENO);
+        close(pipefd[1]);
+        execvp(argv[0], argv.data());
+        std::string err = command + ": " + std::strerror(errno) + "\n";
+        ssize_t ignored = write(STDERR_FILENO, err.c_str(), err.size());
+        (void)ignored;
+        _exit(127);
+    }
+
+    close(pipefd[1]);
+    char buffer[4096];
+    ssize_t n;
+    while ((n = read(pipefd[0], buffer, sizeof(buffer))) != 0) {
+        if (n < 0) {
+            if (errno == EINTR) continue;
+            break;
         }
-        if (output) (*output) += line; // Store the result if requested
+        if (show_output) {
+            std::cout.write(buffer, n);
+            std::cout.flush();
+        }
+        if (output) output->append(buffer, static_cast<size_t>(n));
     }
+    close(pipefd[0]);
 
-    int status = pclose(pipe); // Get the command's exit status
-    int return_code = -1;      // Default error code if abnormal termination
-
-    if (WIFEXITED(status)) {
-        return_code = WEXITSTATUS(status);
+    int status = 0;
+    while (waitpid(pid, &status, 0) < 0) {
+        if (errno != EINTR) return -1;
     }
-
-    return return_code;
+    return WIFEXITED(status) ? WEXITSTATUS(status) : -1;
 }
 
 // Helper function to run scripts
@@ -1215,6 +1250,66 @@ std::string calculate_sha256(const std::string &file_path) {
     }
 
     return checksum;
+}
+
+// Read the "checksum:" field of a .cpk.info file (empty if missing).
+static std::string read_cpk_info_checksum(const std::string& info_path) {
+    std::ifstream infile(info_path);
+    std::string line;
+    while (std::getline(infile, line)) {
+        if (line.compare(0, 9, "checksum:") != 0) continue;
+        std::string value = ltrim(line.substr(9));
+        size_t end = value.find_last_not_of(" \t\r\n");
+        value = (end == std::string::npos) ? std::string() : value.substr(0, end + 1);
+        std::transform(value.begin(), value.end(), value.begin(), ::tolower);
+        return value;
+    }
+    return "";
+}
+
+// Expected SHA256 of a repository package, from its .cpk.info.
+// A fresh copy from the repository wins; a readable copy under cpk_home_dir
+// is the fallback when the download fails.
+static std::string expected_package_checksum(const std::string& package) {
+    const std::string info_bn = package + ".info";
+    const std::string info_write = get_cache_file(info_bn);
+    if (download_file(cpk_repo_join(url_encode(info_bn)), info_write, true)) {
+        std::string checksum = read_cpk_info_checksum(info_write);
+        if (!checksum.empty()) return checksum;
+    }
+    const std::string info_read = resolve_cpk_metadata_read_path(info_bn);
+    if (cpk_file_readable(info_read)) {
+        return read_cpk_info_checksum(info_read);
+    }
+    return "";
+}
+
+bool fetch_verified_package(const std::string& package, const std::string& package_path) {
+    const std::string expected = expected_package_checksum(package);
+    if (expected.empty()) {
+        print_message("No checksum available for " + package + " (missing .cpk.info); refusing to use it", RED);
+        return false;
+    }
+
+    const std::string package_url = cpk_repo_join(url_encode(package));
+    // A cached copy may be stale or tampered with: on mismatch, download it again once.
+    for (int attempt = 0; attempt < 2; ++attempt) {
+        if (!download_file(package_url, package_path, attempt > 0)) {
+            return false;
+        }
+        const std::string actual = calculate_sha256(package_path);
+        if (actual == expected) {
+            if (CPK_VERBOSE) print_message("Checksum OK for " + package);
+            return true;
+        }
+        fs::remove(package_path);
+        if (attempt > 0) {
+            print_message("Checksum mismatch for " + package, RED);
+            print_message("  expected " + expected, RED);
+            print_message("  got      " + (actual.empty() ? std::string("(could not compute)") : actual), RED);
+        }
+    }
+    return false;
 }
 
 // Function to parse a .cpk.info file

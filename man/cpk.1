@@ -52,7 +52,7 @@ Must be run as \fBroot\fR. Build a package from source files.
 .br
 .B install
 [\fI\-\-upgrade\fR] [\fI\-\-no\-deps\fR] <path/to/package.cpk>
-Must be run as \fBroot\fR. Install or upgrade packages on the system. By default reads metadata from the repository (or the local .cpk), resolves direct dependencies recursively, and installs those dependencies before the requested package. Use \fI\-\-no\-deps\fR to install only the named package. Use \fI\-\-upgrade\fR to upgrade an already installed package; \fI\-\-upgrade\fR applies only to the package given on the command line, not to dependencies pulled in automatically.
+Must be run as \fBroot\fR. Install or upgrade packages on the system. By default reads metadata from the repository (or the local .cpk), resolves direct dependencies recursively, and installs those dependencies before the requested package. Use \fI\-\-no\-deps\fR to install only the named package. Use \fI\-\-upgrade\fR to upgrade an already installed package; \fI\-\-upgrade\fR applies only to the package given on the command line, not to dependencies pulled in automatically. Repository packages are checked against the SHA256 \fBchecksum\fR in their .cpk.info before they are extracted; a package that cannot be verified is not installed.
 .TP
 .B add
 [\fI\-\-upgrade\fR] [\fI\-\-no\-deps\fR] <package>

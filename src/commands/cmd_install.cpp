@@ -148,14 +148,13 @@ static bool install_package_spec(const std::string& spec, bool allow_upgrade_if_
             }
         }
     } else {
-        std::string package_url = cpk_repo_join(url_encode(package));
         std::string package_path = get_cache_file(package);
 
-        if (!fs::is_directory(package_source)) {
-            if (!download_file(package_url, package_path) || !extract_package(package_path, cache_dir)) {
-                print_message("Failed to retrieve package sources", RED);
-                return false;
-            }
+        // Always verify the archive and re-extract it: an extracted tree left
+        // in the cache (e.g. by 'cpk info') may not have been verified.
+        if (!fetch_verified_package(package, package_path) || !extract_package(package_path, cache_dir)) {
+            print_message("Failed to retrieve package sources", RED);
+            return false;
         }
 
         package_file = find_pkg_file(package_source, pkgname, pkgver);

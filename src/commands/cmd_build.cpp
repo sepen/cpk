@@ -18,12 +18,11 @@ void cmd_build(const std::vector<std::string>& args) {
     std::string package, pkgname, pkgver, pkgarch;
     if (!find_package(args[0], package, pkgname, pkgver, pkgarch, true)) return;
 
-    std::string package_url = cpk_repo_join(url_encode(package));
     std::string package_source = CPK_HOME_DIR + "/" + pkgname + "/" + pkgver;
     std::string package_path = CPK_HOME_DIR + "/" + package;
 
     if (!fs::is_directory(package_source)) {
-        if (!download_file(package_url, package_path) || !extract_package(package_path, CPK_HOME_DIR)) {
+        if (!fetch_verified_package(package, package_path) || !extract_package(package_path, CPK_HOME_DIR)) {
             print_message("Failed to retrieve package info", RED);
             return;
         }

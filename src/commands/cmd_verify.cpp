@@ -22,14 +22,13 @@ void cmd_verify(const std::vector<std::string>& args) {
     std::string package, pkgname, pkgver, pkgarch;
     if (!find_package(args[0], package, pkgname, pkgver, pkgarch, true)) return;
 
-    const std::string package_url = cpk_repo_join(url_encode(package));
     const std::string cache_dir = get_cache_dir();
     std::string package_source = resolve_package_extract_dir(pkgname, pkgver);
     const std::string package_path = get_cache_file(package);
 
     if (!fs::is_directory(package_source) || !fs::exists(package_source + "/Pkgfile")) {
         package_source = cache_dir + "/" + pkgname + "/" + pkgver;
-        if (!download_file(package_url, package_path) || !extract_package(package_path, cache_dir)) {
+        if (!fetch_verified_package(package, package_path) || !extract_package(package_path, cache_dir)) {
             print_message("Failed to retrieve package info", RED);
             return;
         }
